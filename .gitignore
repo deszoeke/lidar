@@ -1,5 +1,7 @@
 Manifest.toml
 
+*.mat
+*.nc
 *.png
 *.eps
 *.svg
