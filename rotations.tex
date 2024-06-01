@@ -1,0 +1,194 @@
+% XeLaTeX can use any Mac OS X font. See the setromanfont command below.
+% Input to XeLaTeX is full Unicode, so Unicode characters can be typed directly into the source.
+
+% The next lines tell TeXShop to typeset with xelatex, and to open and save the source with Unicode encoding.
+
+%!TEX TS-program = xelatex
+%!TEX encoding = UTF-8 Unicode
+
+\documentclass[12pt]{article}
+\usepackage{geometry}                % See geometry.pdf to learn the layout options. There are lots.
+\geometry{letterpaper}                   % ... or a4paper or a5paper or ... 
+%\geometry{landscape}                % Activate for for rotated page geometry
+%\usepackage[parfill]{parskip}    % Activate to begin paragraphs with an empty line rather than an indent
+\usepackage{graphicx}
+\usepackage{amssymb}
+\usepackage{amsmath}
+
+% Will Robertson's fontspec.sty can be used to simplify font choices.
+% To experiment, open /Applications/Font Book to examine the fonts provided on Mac OS X,
+% and change "Hoefler Text" to any of these choices.
+
+\usepackage{fontspec,xltxtra,xunicode}
+\defaultfontfeatures{Mapping=tex-text}
+\setromanfont[Mapping=tex-text]{Hoefler Text}
+\setsansfont[Scale=MatchLowercase,Mapping=tex-text]{Gill Sans}
+\setmonofont[Scale=MatchLowercase]{Andale Mono}
+
+\title{Computing the turbulent kinetic energy dissipation rate from lidar quasi-vertical
+stares}
+\author{Simon de Szoeke}
+%\date{}                                           % Activate to display a given date or no date
+
+\begin{document}
+\maketitle
+
+% For many users, the previous commands will be enough.
+% If you want to directly input Unicode, add an Input Menu or Keyboard to the menu bar 
+% using the International Panel in System Preferences.
+% Unicode must be typeset using a font containing the appropriate characters.
+% Remove the comment signs below for examples.
+
+% \newfontfamily{\A}{Geeza Pro}
+% \newfontfamily{\H}[Scale=0.9]{Lucida Grande}
+% \newfontfamily{\J}[Scale=0.85]{Osaka}
+
+% Here are some multilingual Unicode fonts: this is Arabic text: {\A السلام عليكم}, this is Hebrew: {\H שלום}, 
+% and here's some Japanese: {\J 今日は}.
+
+The stabilization table was rolling with the ship, so it sampled some
+component of the mean horizontal wind.
+
+%\hypertarget{the-ship-coordinate-system}{%
+\section{The ship coordinate
+system}\label{the-ship-coordinate-system}%}
+
+Define the ship coordinate to be ``northward'' toward the bow and
+``eastward'' to starboard. The direction angle of the wind is from is 0° for wind
+from the north, and 90° for wind from the east. The \(x\) coordinate points forward
+(north), and the \(y\) coordinate points to
+starboard (east). \(z\) is downward for a right-handed north, east, down (NED) coordinate system.
+
+Pitch \(\theta\) (y-axis) and roll \(\phi\) (x axis) rotations are
+defined in this coordinate system. Positive roll angle is a rotation of
+the port upward; positive pitch angle is a rotation of the bow upward.
+
+%\hypertarget{winds}{%
+\section{Winds}\label{winds}%}
+
+The vertical wind is \(w\). The ship-relative wind is \(W\).
+Ship-relative horizontal wind is 
+$ (U, V) = $ (-speed cos(dir), -speed
+sin(dir)).
+The Doppler lidar measures the radial velocity away from the lidar \(\hat{w}\) and 
+\[
+\hat{w}^2 = (-U \sin\theta)^2 
++ (V \cos \theta \sin \phi)^2 
++ (W \cos \theta \cos \phi)^2.
+\]
+We solve this for the air
+velocity, \[
+W^2 = \frac{ \hat{w}^2 
+- (U \sin\theta)^2 
+- (V \cos\theta \sin\phi)^2 }
+{(\cos\theta \cos\phi)^2}
+\].
+
+%\hypertarget{vectors-among-the-lidar-and-two-target-volumes}{%
+\section{Vectors among the lidar, and two target
+volumes}\label{vectors-among-the-lidar-and-two-target-volumes}%}
+
+The radial vector to the target volume is \[
+{\bf \hat{r}} =
+\begin{pmatrix}
+{\hat x} \\ 
+{\hat y} \\ 
+{\hat z}
+\end{pmatrix}
+=
+{\rm range}
+\begin{pmatrix}
+-\sin\theta \\
+ \cos\theta \sin\phi \\
+ \cos\phi \cos\theta
+\end{pmatrix}
+\]
+The displacement between two \emph{simultaneous} target volumes is \[
+\bf{\hat r_1 - \hat r_2} = 
+\begin{pmatrix}
+{\hat x} \\
+{\hat y} \\
+{\hat z}
+\end{pmatrix}
+=
+{\rm range}
+\begin{pmatrix}
+-\sin \theta_1-(-\sin \theta_2) \\
+ \cos\theta_2 \sin \phi_1 - \cos\theta_2 \sin \phi_2 \\
+ \cos\theta_1 \cos \phi_1 - \cos\theta_2 \cos\phi_2
+\end{pmatrix}
+\]
+
+In the time \(\tau\) the ship moves relative to the air a horizontal
+displacement of \((X, Y) = \tau(U,V)\). The total displacement of the
+sample volumes is \[
+{\bf r_2 - r_1} = 
+\begin{pmatrix}
+{\hat x} + X\\
+{\hat y} + Y\\
+{\hat z}
+\end{pmatrix}
+\] Expanding, the distance between the sample volumes is \[
+r = |{\bf r_2 - r_1}| =
+\left|
+\begin{pmatrix}
+\tau U - {\rm range}(\sin\theta_1 + \sin\theta_2) \\
+\tau V + {\rm range}(\cos\theta_1 \sin\phi_1 - \cos\theta_2 \sin\phi_2) \\
+  {\rm range}(\cos\theta_1 \cos\phi_1 - \cos\theta_2 \cos\phi_2)
+\end{pmatrix}
+\right|
+\] This is the displacement argument of the (second order) structure
+function \[
+D(r) = \overline{(w_2-w_1)^2},
+\] which behaves as \(D = N + Ar^{2/3}\). The structure function is
+averaged as a function of \(r\). We will retain sample pairs of
+\((D,r)\) and bin average in \(r\), perhaps with bins equally populated
+by sample pairs.
+
+%\hypertarget{ship-motion-fluctuations}{%
+\section{Ship motion fluctuations}\label{ship-motion-fluctuations}%}
+
+The ship heave, pitch, and roll also induce fluctuating velocities in
+the transmitter that must be added. (The separation of scale between the
+mean ship-relative velocity and these fast fluctuations breaks down in
+maneuvers where the ship changes direction quickly.) Heave, pitch, and
+roll is either measured at the lidar on the stabilization table, where
+it can be added directly to the radial Doppler \(\hat w\), measured in
+the ship orientation at the location of the lidar, or at a reference
+location on the ship (see survey).
+
+Presently, I read a Notre Dame VectorNav file for measuring and
+correcting the motion of the table, but I don't know the quantities and
+units. The ship's POSMV IMU is also available from a reference location.
+If we use the POSMV, we need to calculate the velocities and moments
+from the heave and angular rates.
+
+Assuming the ship is rigid, the heave is the same everywhere. Angular
+rates induce motion in proportion to the moment
+\({\bf L} = (L_x, L_y, L_z)\) be the displacement vector from the
+reference location (of the POSMV) to the lidar. At the lidar the ship
+moves by \[
+\dot{x} = -\dot\theta L_z\\
+\dot{y} = \dot\phi L_z\\
+\dot{z} = \dot\theta L_x - \dot\phi L_y.
+\] 
+Varying yaw is ignored.
+
+\section{The structure function for arbitrary displacements}
+
+We sample the vertical component of the Doppler (radial) velocity along
+arbitrary displacements \(\mathbf{r}\), which may be either longitudinally oriented
+along the resolved velocity component, or longitudinal to it. The Kolmogorov 
+similarity for second order structure functions is in general
+\[
+D_{ij}(\mathbf{r}) = C_2 \epsilon^{2/3}r^{2/3} (4\delta_{ij} - r_ir_j/r^2)/3
+\]
+where \(C_2\) is a universal constant.
+For sampling only the vertical coordinate \(i=j=1\),
+\[
+D_{11}(\mathbf{r}) = C_2 \epsilon^{2/3} r^{2/3} (4 - r_1^2/r^2)/3.
+\]
+where \(r_1\) is the vertical (longitudinal) displacement and \(r = |\mathbf{r}|\) is the scalar
+distance between samples.
+
+\end{document}  
