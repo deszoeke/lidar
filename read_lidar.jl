@@ -20,6 +20,7 @@ m2n(x) = ismissing(x) ? NaN : x
 
 ### read stares functions
 # functions for reading hpl files
+lidardir = "./data/lidar"
 
 "count the headlines before a line that starts with ****"
 function numheaderlines(file)
@@ -151,16 +152,32 @@ end
 
 """
 beams, h = read_streamlinexr(file_path)
-Read the Photonics StreamLineXR .hpl file data and header.
+Read the hourly Photonics StreamLineXR Stare_... .hpl file data and header.
 """
-function read_streamlinexr_stare(file_path, nheaderlines=17)
-    # use header information in h
+# function read_streamlinexr_stare( d::Date )
+#     # index by directory contents
+#     files = readdir(joinpath(lidardir,datestamp,starefile)
+#     read_streamlinexr_stare( file_path )
+# end
+# !! Must specify hourly files.
+function read_streamlinexr_stare( dt::DateTime )
+    yyyymmdd    = Dates.format( dt, dateformat"yyyymmdd" )
+    yyyymmdd_HH = Dates.format( dt, dateformat"yyyymmdd_HH" )
+    starefile = "Stare_116_$(yyyymmdd_HH).hpl"
+    file_path = joinpath(lidardir,yyyymmdd,starefile)
+    read_streamlinexr_stare( file_path )
+end
+
+function read_streamlinexr_stare(file_path::AbstractString, nheaderlines=17)
+    # Not implemented: could loop over a vector of files.
+
+    # use header information in h 
     h = read_streamlinexr_head(file_path)
     nlines = h[:nlines]
     ngates = h[:ngates]
 
     # beams could be rays or times
-    nbeams = round(Int, (nlines-17) / (1+ngates)) # = nrays*ntimes
+    nbeams = round(Int, (nlines-nheaderlines) / (1+ngates)) # = nrays*ntimes
     # initialize a beams Dict
     beams = Dict(
         :time      => Vector{Union{Float32,Missing}}(missing, nbeams), # decimal hours
@@ -182,6 +199,45 @@ function read_streamlinexr_stare(file_path, nheaderlines=17)
     return beams, h
 end
 
+#=
+## multiple files NOT IMPLEMENTED YET
+function read_streamlinexr_stare(file_path::Vector{AbstractString}, nheaderlines=17)
+    # loop over a vector of files.
+    
+    # use header information in h, count lines in all files
+    nfiles = length(file_path)
+    
+    nlines = 0 
+    for file in file_path
+        h = read_streamlinexr_head(file)
+        nlines += h[:nlines]
+        ngates = h[:ngates]
+    end
+
+    # beams could be rays or times
+    nbeams = round(Int, (nlines - nheaderlines*nfiles) / (1+ngates)) # = nrays*ntimes
+    # initialize a beams Dict
+    beams = Dict(
+        :time      => Vector{Union{Float32,Missing}}(missing, nbeams), # decimal hours
+        :azimuth   => Vector{Union{Float32,Missing}}(missing, nbeams), # degrees
+        :elevangle => Vector{Union{Float32,Missing}}(missing, nbeams),
+        :pitch     => Vector{Union{Float32,Missing}}(missing, nbeams),
+        :roll      => Vector{Union{Float32,Missing}}(missing, nbeams),
+
+        :height    => Vector{Union{Float32,Missing}}(missing, ngates), # center of gate
+
+        # dependent variables (beam, gate)
+        :dopplervel => Matrix{Union{Float32,Missing}}(missing, nbeams,ngates), # m/s
+        :intensity  => Matrix{Union{Float32,Missing}}(missing, nbeams,ngates), # SNR + 1
+        :beta       => Matrix{Union{Float32,Missing}}(missing, nbeams,ngates) # m-1 sr-1  backscatter?
+        )
+
+    # read file and fill beams with data
+    for file in file_path
+        read_streamlinexr_stare!(file, h, beams, nheaderlines; line_offet=line_offset) # not supported yet
+    return beams, h
+end
+=#
 
 ### read mean wind functions
 uvdir = "./data/lidar/netcdf/"
@@ -190,7 +246,7 @@ uvdir = "./data/lidar/netcdf/"
 function get_daily_meanuv( dt::Union{Date, DateTime} )
     get_daily_meanuv( Dates.format(Date(dt), dateformat"yyyymmdd") )
 end
-function get_daily_meanuv( yymmdddd::AbstractString )
+function get_daily_meanuv( yyyymmdd::AbstractString )
     Dataset(joinpath(uvdir,"ekamsat_lidar_uv_$(yyyymmdd).nc"))
 end
 
@@ -201,7 +257,7 @@ Vndir = "./data/lidar/table/" # uses symbloic link ./data in cwd
 function read_daily_Vn( dt::Union{Date, DateTime} )
     read_daily_Vn( Dates.format(Date(dt), dateformat"yyyymmdd") )
 end
-function read_daily_Vn( yymmdddd::AbstractString )
+function read_daily_Vn( yyyymmdd::AbstractString )
     Vn = JLD2.load(joinpath(Vndir, "VectorNavTable_$(yyyymmdd).jld2"))
 end
 
