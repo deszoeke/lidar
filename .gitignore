@@ -8,7 +8,7 @@ Manifest.toml
 *.hpl
 
 # directories
-data/
+data
 lidar2019/plots/
 lidar2019/data/
 epsilon_data/
