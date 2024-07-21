@@ -686,12 +686,12 @@ end
 function read_pashr_dict(fullfiles; nheader=0, nsample=sum(countlines.(fullfiles) .- nheader))
     # read the data into the omnivector
     X, nl = read_pashr_data(fullfiles; nheader=nheader, nsample=nsample)
-    #       1    2    3          4       5       6           7    8     9     10            11             12               13                     14              15
-    #       date time nmeastring gpstime heading trueheading roll pitch heave roll_accuracy pitch_accuracy heading_accuracy gps_update_qualiy_flag ins_Status_flag checksum
-    #            1               2       3       4           5    6     7     8             9              10               11                     12              13            
+    #       1    2    3          4       5       6           7    8     9     10            11             12               13                      14              15
+    #       date time nmeastring gpstime heading trueheading roll pitch heave roll_accuracy pitch_accuracy heading_accuracy gps_update_quality_flag ins_Status_flag checksum
+    #            1               2       3       4           5    6     7     8             9              10               11                      12              13            
     
     pashrkeys = Symbol.(
-    split("     time            gpstime heading trueheading roll pitch heave roll_accuracy pitch_accuracy heading_accuracy gps_update_qualiy_flag ins_Status_flag checksum"))
+    split("      time            gpstime heading trueheading roll pitch heave roll_accuracy pitch_accuracy heading_accuracy gps_update_quality_flag ins_Status_flag checksum"))
    
     D = Dict{Symbol, Any}()
 
