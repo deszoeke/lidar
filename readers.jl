@@ -632,6 +632,26 @@ function get_posmv_file(msg, dt::AbstractVector{T} where T<:TimeType; path=navdi
     return flatten(filenames) # supports lazy iteration; might want to collect()
 end
 
+# instrument="GYRO-01", msg="HDT"
+"""
+get_nav_file(instrument, msg, dt; path)
+returns matching POSMV filename(s)
+"""
+# single date method
+function get_nav_file(instrument, msg, dt::TimeType; path=navdir) 
+    # POSMV-V5-PASHR-RAW_20240510-000001.Raw
+    ds = Dates.format(dt, dateformat"yyyymmdd")
+    joinpath.( path, 
+        filter(s -> startswith(s,"$(instrument)-$(uppercase(msg))-RAW_$ds") 
+                    && endswith(s,".Raw"), readdir(path)) )
+end
+
+# iterable date method
+function get_nav_file(instrument, msg, dt::AbstractVector{T} where T<:TimeType; path=navdir)
+    filenames = (get_nav_file(instrument, msg, d, path=path) for d in dt)
+    return flatten(filenames) # supports lazy iteration; sometimes need to collect()
+end
+
 # generator expression
 # filenames = (get_posmv_file(msg, d, path=path) for d in dt)
 
@@ -709,13 +729,13 @@ end
 function read_gyro_data( fullfiles; nheader=0, nsample=sum(map(x->countlines(x)-nheader, fullfiles)) )
     # column designations for POSMV PASHR file
     colnames = split("date time nmeastring heading headingistrue checksum")
-    coltypes = [Date; Time; String; Float32; Bool; UInt8]
+    coltypes = [Date; Time; String; Union{Missing,Float32}; Bool; UInt8]
     colparsers = [  s -> Date(s, dateformat"mm/dd/yyyy");
                     s -> Time(s, dateformat"HH:MM:SS.sss");
                     s -> s;
-                    s -> parse(Float32, s)
-                    s -> s == "T"
-                    s -> parse(UInt8, s) ]
+                    s -> isempty(s) ? missing : parse(Float32, s);
+                    s -> s == "T";
+                    s -> parse(UInt8, s, base=16) ]
     ncol = length(colnames) # 6
 
     # initialize vectors in X to receive data
@@ -728,6 +748,7 @@ function read_gyro_data( fullfiles; nheader=0, nsample=sum(map(x->countlines(x)-
     # read the file
     nl = 0
     for file in itr_expand(fullfiles)
+        # print(file*"\n")
         open(file) do f
             for line in readlines(f)
                 s = split(line, r",|\*")
@@ -755,8 +776,8 @@ function read_gyro_dict(fullfiles; nheader=0, nsample=sum(countlines.(fullfiles)
     D[:time] = X[1][1:nl] .+ X[2][1:nl] # make a datetime
     # assign the data columns to X, truncating to number of lines read
     # start at 3rd column
-    for (i, k) in enumerate(kys[2:end])
-        D[k] = X[i+3][1:nl]
+    for (i, k) in enumerate(kys[3:end])
+        D[k] = X[i+2][1:nl]
     end
     return D
 end
