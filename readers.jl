@@ -638,12 +638,12 @@ end
 "expand scalars to make iterable, keep vectors as they are"
 itr_expand(x) = x isa Vector ? x : Ref(x)
 
-"read PSDMV-PASHR into a vector of columns X"
+"read POSMV-PASHR into a vector of columns X"
 # function read_pashr_data( fullfiles; nheader=0, nsample=sum(countlines.(fullfiles) .- nheader))
 # countiles for vector fullfiles
 function read_pashr_data( fullfiles; nheader=0, nsample=sum(map(x->countlines(x)-nheader, fullfiles)) )
     # column designations for POSMV PASHR file
-    colnames = split("date time nmeastring gpstime heading trueheading roll pitch heave roll_accuracy pitch_accuracy heading_accuracy gps_update_qualiy_flag ins_Status_flag checksum")
+    colnames = split("date time nmeastring gpstime heading headingistrue roll pitch heave roll_accuracy pitch_accuracy heading_accuracy gps_update_qualiy_flag ins_Status_flag checksum")
     coltypes = [Date; Time; String; Time; Float32; Bool; fill(Float32,6); UInt8; UInt8; String]
     colparsers = [  s -> Date(s, dateformat"mm/dd/yyyy");
                     s -> Time(s, dateformat"HH:MM:SS.sss");
@@ -698,6 +698,64 @@ function read_pashr_dict(fullfiles; nheader=0, nsample=sum(countlines.(fullfiles
     D[:time] = X[1][1:nl] .+ X[2][1:nl] # make a datetime
     # assign the data columns to X, truncating to number of lines read
     for (i, k) in enumerate(pashrkeys[2:end])
+        D[k] = X[i+3][1:nl]
+    end
+    return D
+end
+
+"read GYRO data into a vector of columns X"
+# function read_pashr_data( fullfiles; nheader=0, nsample=sum(countlines.(fullfiles) .- nheader))
+# countiles for vector fullfiles
+function read_gyro_data( fullfiles; nheader=0, nsample=sum(map(x->countlines(x)-nheader, fullfiles)) )
+    # column designations for POSMV PASHR file
+    colnames = split("date time nmeastring heading headingistrue checksum")
+    coltypes = [Date; Time; String; Float32; Bool; UInt8]
+    colparsers = [  s -> Date(s, dateformat"mm/dd/yyyy");
+                    s -> Time(s, dateformat"HH:MM:SS.sss");
+                    s -> s;
+                    s -> parse(Float32, s)
+                    s -> s == "T"
+                    s -> parse(UInt8, s) ]
+    ncol = length(colnames) # 6
+
+    # initialize vectors in X to receive data
+    X = Vector{Any}(undef, ncol)
+    for (ci, ct) in enumerate(coltypes)
+        X[ci] = Vector{ct}(undef, nsample)
+    end
+    # index as X[col][line]
+
+    # read the file
+    nl = 0
+    for file in itr_expand(fullfiles)
+        open(file) do f
+            for line in readlines(f)
+                s = split(line, r",|\*")
+                if s[3] == "\$HEHDT"
+                    nl += 1
+                    # parse and write the data to X
+                    for (ci, cp) in enumerate(colparsers)
+                        X[ci][nl] = cp(s[ci])
+                    end
+                end
+            end
+        end
+    end
+    return X, nl
+end
+
+function read_gyro_dict(fullfiles; nheader=0, nsample=sum(countlines.(fullfiles) .- nheader))
+    # read the data into the omnivector
+    X, nl = read_gyro_data(fullfiles; nheader=nheader, nsample=nsample)
+   
+    kys = Symbol.( split( "date time nmeastring heading headingistrue checksum" ) )
+   
+    D = Dict{Symbol, Any}()
+
+    D[:time] = X[1][1:nl] .+ X[2][1:nl] # make a datetime
+    # assign the data columns to X, truncating to number of lines read
+    # start at 3rd column
+    for (i, k) in enumerate(kys[2:end])
         D[k] = X[i+3][1:nl]
     end
     return D
