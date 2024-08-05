@@ -199,22 +199,24 @@ function read_streamlinexr_stare(file_path::AbstractString, nheaderlines=17)
     return beams, h
 end
 
-#=
-## multiple files NOT IMPLEMENTED YET
-function read_streamlinexr_stare(file_path::Vector{AbstractString}, nheaderlines=17)
+# multiple files NOT IMPLEMENTED YET
+function read_streamlinexr_stare(file_path::AbstractVector{AbstractString}, nheaderlines=17)
     # loop over a vector of files.
     
     # use header information in h, count lines in all files
     nfiles = length(file_path)
-    
-    nlines = 0 
-    for file in file_path
+    nbeams = zeros(Int32, nfiles)
+    ngates = -1
+    # read number of lines for each file
+    for (i,file) in enumerate(file_path)
         h = read_streamlinexr_head(file)
-        nlines += h[:nlines]
+        nlines = h[:nlines]
         ngates = h[:ngates]
+        # beams could be rays or times; get number of beams for each file
+        nbeams[i] = round(Int, (nlines - nheaderlines*nfiles) / (1+ngates))
     end
 
-    # beams could be rays or times
+
     nbeams = round(Int, (nlines - nheaderlines*nfiles) / (1+ngates)) # = nrays*ntimes
     # initialize a beams Dict
     beams = Dict(
@@ -233,11 +235,15 @@ function read_streamlinexr_stare(file_path::Vector{AbstractString}, nheaderlines
         )
 
     # read file and fill beams with data
-    for file in file_path
-        read_streamlinexr_stare!(file, h, beams, nheaderlines; line_offet=line_offset) # not supported yet
+    nbeams0 = 0
+    for (i,file) in enumerate(file_path)
+        h = read_streamlinexr_head(file) # reread header for each file
+        read_streamlinexr_stare!(file, h, beams, nheaderlines; nbeams0=count)
+        # modifies beams[keys][count .+ (1:nbeams[i])]
+        nbeams0 += nbeams[i]
     return beams, h
 end
-=#
+
 
 ### read mean wind functions
 uvdir = "./data/lidar/netcdf/"
