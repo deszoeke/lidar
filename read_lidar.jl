@@ -201,7 +201,7 @@ function read_streamlinexr_stare(file_path::AbstractString, nheaderlines=17)
 end
 
 "read multiple files"
-function read_streamlinexr_stare(file_path::AbstractVector{AbstractString}, nheaderlines=17)
+function read_streamlinexr_stare(file_path::AbstractVector{T}, nheaderlines=17) where {T<:AbstractString}
     # loop over a vector of files.
     
     # use header information in h, count lines in all files
@@ -283,7 +283,7 @@ end
 
 
 "read multiple file time and angle data"
-function read_streamlinexr_beam_timeangles(file_path::AbstractVector{AbstractString}, nheaderlines=17)
+function read_streamlinexr_beam_timeangles(file_path::AbstractVector{T}, nheaderlines=17) where {T<:AbstractString}
     # loop over a vector of files.
     
     # use header information in h, count lines in all files
