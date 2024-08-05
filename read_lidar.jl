@@ -101,7 +101,7 @@ end
 modifying read_streamlinexr_data!(file_path, header, beams)
 Read data and fill in the beams.
 """
-function read_streamlinexr_stare!(file_path, h, beams, nheaderlines=17)
+function read_streamlinexr_stare!(file_path, h, beams, nheaderlines=17; nbeams0=0)
     # use header information in h
     nlines = h[:nlines]
     ngates = h[:ngates]
@@ -136,18 +136,19 @@ function read_streamlinexr_stare!(file_path, h, beams, nheaderlines=17)
 
     # parse the variables into the dict beams
     # by beam
-    beams[:time     ] .= beam_timeangles[:,1] # decimal hours
-    beams[:azimuth  ] .= beam_timeangles[:,2] # degrees
-    beams[:elevangle] .= beam_timeangles[:,3] # degrees
-    beams[:pitch    ] .= beam_timeangles[:,4]
-    beams[:roll     ] .= beam_timeangles[:,5]
+    bb = nbeams0 .+ (1:nbeams) # for the output array dimension nbeams
+    beams[:time     ][bb] .= beam_timeangles[:,1] # decimal hours
+    beams[:azimuth  ][bb] .= beam_timeangles[:,2] # degrees
+    beams[:elevangle][bb] .= beam_timeangles[:,3] # degrees
+    beams[:pitch    ][bb] .= beam_timeangles[:,4]
+    beams[:roll     ][bb] .= beam_timeangles[:,5]
     # by gate
     beams[:height   ] .= (beam_velrad[1,:,1].+0.5) .* h[:gatelength] # center of gate, assumes same for all beams
 
     # dependent variables (beam, gate)
-    beams[:dopplervel] .= beam_velrad[:,:,2] # m/s
-    beams[:intensity ] .= beam_velrad[:,:,3] # SNR + 1
-    beams[:beta      ] .= beam_velrad[:,:,4] # m-1 sr-1  backscatter?
+    beams[:dopplervel][bb,:] .= beam_velrad[:,:,2] # m/s
+    beams[:intensity ][bb,:] .= beam_velrad[:,:,3] # SNR + 1
+    beams[:beta      ][bb,:] .= beam_velrad[:,:,4] # m-1 sr-1  backscatter?
 end
 
 """
@@ -212,36 +213,34 @@ function read_streamlinexr_stare(file_path::AbstractVector{AbstractString}, nhea
         h = read_streamlinexr_head(file)
         nlines = h[:nlines]
         ngates = h[:ngates]
-        # beams could be rays or times; get number of beams for each file
-        nbeams[i] = round(Int, (nlines - nheaderlines*nfiles) / (1+ngates))
+        # beams could be rays or times
+        nbeams[i] = round(Int, (nlines - nheaderlines) / (1+ngates)) # number of beams for each file
     end
 
-
-    nbeams = round(Int, (nlines - nheaderlines*nfiles) / (1+ngates)) # = nrays*ntimes
     # initialize a beams Dict
+    nb = sum(nbeams) # total number of beams in all files
     beams = Dict(
-        :time      => Vector{Union{Float32,Missing}}(missing, nbeams), # decimal hours
-        :azimuth   => Vector{Union{Float32,Missing}}(missing, nbeams), # degrees
-        :elevangle => Vector{Union{Float32,Missing}}(missing, nbeams),
-        :pitch     => Vector{Union{Float32,Missing}}(missing, nbeams),
-        :roll      => Vector{Union{Float32,Missing}}(missing, nbeams),
+        :time      => Vector{Union{Float32,Missing}}(missing, nb), # decimal hours
+        :azimuth   => Vector{Union{Float32,Missing}}(missing, nb), # degrees
+        :elevangle => Vector{Union{Float32,Missing}}(missing, nb),
+        :pitch     => Vector{Union{Float32,Missing}}(missing, nb),
+        :roll      => Vector{Union{Float32,Missing}}(missing, nb),
 
         :height    => Vector{Union{Float32,Missing}}(missing, ngates), # center of gate
 
         # dependent variables (beam, gate)
-        :dopplervel => Matrix{Union{Float32,Missing}}(missing, nbeams,ngates), # m/s
-        :intensity  => Matrix{Union{Float32,Missing}}(missing, nbeams,ngates), # SNR + 1
-        :beta       => Matrix{Union{Float32,Missing}}(missing, nbeams,ngates) # m-1 sr-1  backscatter?
+        :dopplervel => Matrix{Union{Float32,Missing}}(missing, nb,ngates), # m/s
+        :intensity  => Matrix{Union{Float32,Missing}}(missing, nb,ngates), # SNR + 1
+        :beta       => Matrix{Union{Float32,Missing}}(missing, nb,ngates) # m-1 sr-1  backscatter?
         )
 
-    # read file and fill beams with data
+    # read each file and fill beams with data
     nbeams0 = 0
     for (i,file) in enumerate(file_path)
         h = read_streamlinexr_head(file) # reread header for each file
-        read_streamlinexr_stare!(file, h, beams, nheaderlines; nbeams0=count)
-        # modifies beams[keys][count .+ (1:nbeams[i])]
-        nbeams0 += nbeams[i]
-    return beams, h
+        read_streamlinexr_stare!(file, h, beams, nheaderlines; nbeams0=nbeams0) # updates beams[keys][nbeams0 .+ (1:nbeams[i])]
+        nbeams0 += nbeams[i] # number of beams now read
+    return beams, h, nbeams0
 end
 
 
