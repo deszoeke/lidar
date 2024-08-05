@@ -99,7 +99,7 @@ end
 
 """
 modifying read_streamlinexr_data!(file_path, header, beams)
-Read data and fill in the beams.
+Read data and fill in the beams for a single file.
 """
 function read_streamlinexr_stare!(file_path, h, beams, nheaderlines=17; nbeams0=0)
     # use header information in h
@@ -200,7 +200,7 @@ function read_streamlinexr_stare(file_path::AbstractString, nheaderlines=17)
     return beams, h
 end
 
-# multiple files NOT IMPLEMENTED YET
+"read multiple files"
 function read_streamlinexr_stare(file_path::AbstractVector{AbstractString}, nheaderlines=17)
     # loop over a vector of files.
     
@@ -243,6 +243,79 @@ function read_streamlinexr_stare(file_path::AbstractVector{AbstractString}, nhea
     return beams, h, nbeams0
 end
 
+"update beam time and angle data read from a single file"
+function read_streamlinexr_beam_timeangles!(file_path, h, beams, nheaderlines=17; nbeams0=0)
+    # use header information in h
+    nlines = h[:nlines]
+    ngates = h[:ngates]
+
+    # beams could be rays or times
+    nbeams = round(Int, (nlines-nheaderlines) / (1+ngates)) # = nrays*ntimes
+    beam_timeangles = zeros(nbeams, 5)
+
+    # for User wind profiles beam <--> VAD ray
+    # for Stare beam <--> time
+
+    # open and read the file
+    open(file_path) do file
+        for _ in 1:nheaderlines # skip header lines
+            readline(file)
+        end
+
+        # now read parameter data for each beam
+        for ibeam = 1:nbeams
+            line = readline(file)
+            beam_timeangles[ibeam,:] .= parse.(Float64, split(line))
+            # skip reading the beam velocity and backscatter data
+            [readline(file) for i in 1:ngates]
+        end
+    end # close the file
+
+    # put the beam parameter variables into the dict beams
+    bb = nbeams0 .+ (1:nbeams) # for the output array dimension nbeams
+    beams[:time     ][bb] .= beam_timeangles[:,1] # decimal hours
+    beams[:azimuth  ][bb] .= beam_timeangles[:,2] # degrees
+    beams[:elevangle][bb] .= beam_timeangles[:,3] # degrees
+    beams[:pitch    ][bb] .= beam_timeangles[:,4]
+    beams[:roll     ][bb] .= beam_timeangles[:,5]
+end
+
+
+"read multiple file time and angle data"
+function read_streamlinexr_beam_timeangles(file_path::AbstractVector{AbstractString}, nheaderlines=17)
+    # loop over a vector of files.
+    
+    # use header information in h, count lines in all files
+    nfiles = length(file_path)
+    nbeams = zeros(Int32, nfiles)
+    ngates = -1
+    # read number of lines for each file
+    for (i,file) in enumerate(file_path)
+        h = read_streamlinexr_head(file)
+        nlines = h[:nlines]
+        ngates = h[:ngates]
+        # beams could be rays or times
+        nbeams[i] = round(Int, (nlines - nheaderlines) / (1+ngates)) # number of beams for each file
+    end
+
+    # initialize a beams Dict
+    nb = sum(nbeams) # total number of beams in all files
+    beams = Dict(
+        :time      => Vector{Union{Float32,Missing}}(missing, nb), # decimal hours
+        :azimuth   => Vector{Union{Float32,Missing}}(missing, nb), # degrees
+        :elevangle => Vector{Union{Float32,Missing}}(missing, nb),
+        :pitch     => Vector{Union{Float32,Missing}}(missing, nb),
+        :roll      => Vector{Union{Float32,Missing}}(missing, nb),
+        )
+
+    # read each file and fill beams with data
+    nbeams0 = 0
+    for (i,file) in enumerate(file_path)
+        h = read_streamlinexr_head(file) # reread header for each file
+        read_streamlinexr_stare!(file, h, beams, nheaderlines; nbeams0=nbeams0) # updates beams[keys][nbeams0 .+ (1:nbeams[i])]
+        nbeams0 += nbeams[i] # number of beams now read
+    return beams, h, nbeams0
+end
 
 ### read mean wind functions
 uvdir = "./data/lidar/netcdf/"
