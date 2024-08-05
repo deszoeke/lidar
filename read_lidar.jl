@@ -12,7 +12,7 @@ using JLD2
 
 export read_streamlinexr_stare #, read_streamlinexr_head
 export get_daily_meanuv, read_daily_Vn
-
+export read_streamlinexr_beam_timeangles
 
 ### utilites
 pd = permutedims
