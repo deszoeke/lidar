@@ -98,7 +98,7 @@ function read_streamlinexr_head(file_path)
 end
 
 """
-modifying read_streamlinexr_data!(file_path, header, beams)
+modifying read_streamlinexr_stare!(file_path, header, beams)
 Read data and fill in the beams for a single file.
 """
 function read_streamlinexr_stare!(file_path, h, beams, nheaderlines=17; nbeams0=0)
@@ -152,7 +152,7 @@ function read_streamlinexr_stare!(file_path, h, beams, nheaderlines=17; nbeams0=
 end
 
 """
-beams, h = read_streamlinexr(file_path)
+beams, h = read_streamlinexr_stare(file_path)
 Read the hourly Photonics StreamLineXR Stare_... .hpl file data and header.
 """
 # function read_streamlinexr_stare( d::Date )
@@ -240,6 +240,7 @@ function read_streamlinexr_stare(file_path::AbstractVector{AbstractString}, nhea
         h = read_streamlinexr_head(file) # reread header for each file
         read_streamlinexr_stare!(file, h, beams, nheaderlines; nbeams0=nbeams0) # updates beams[keys][nbeams0 .+ (1:nbeams[i])]
         nbeams0 += nbeams[i] # number of beams now read
+    end
     return beams, h, nbeams0
 end
 
@@ -314,6 +315,7 @@ function read_streamlinexr_beam_timeangles(file_path::AbstractVector{AbstractStr
         h = read_streamlinexr_head(file) # reread header for each file
         read_streamlinexr_stare!(file, h, beams, nheaderlines; nbeams0=nbeams0) # updates beams[keys][nbeams0 .+ (1:nbeams[i])]
         nbeams0 += nbeams[i] # number of beams now read
+    end
     return beams, h, nbeams0
 end
 
