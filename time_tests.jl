@@ -1,5 +1,6 @@
 # find and sorting start and end of stare chunks
 
+using Revise
 using Dates
 include("read_lidar.jl")
 using .read_lidar
@@ -7,8 +8,10 @@ using .read_lidar
 
 # Request chunk subscripts and start and end times in any time window.
 
-# get pickets marking start and end of chunks
-fullfiles = joinpath.(pwd(),"data","20240531",files)
+# get pickets marking start and end of chunks for one day
+datapath = joinpath.(pwd(),"data","20240531")
+files = filter(startswith("Stare"), readdir(datapath))
+fullfiles = joinpath.(datapath, files)
 ta, hdr, nbeams = read_lidar.read_streamlinexr_beam_timeangles(fullfiles)
 
 # identify chunks from gaps
@@ -58,6 +61,8 @@ iisub = ii[ ist1 .>= ii .>= lastien ] # start-end ... start-end ; no orphans
 # iisub parity switched from ii
 istsub = iisub[1:2:end]
 iensub = iisub[2:2:end] # even ends follow odd starts of same chunk
+
+##
 
 # Which file(s) is a chunk in?
 # time index hierarchy:
