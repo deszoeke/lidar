@@ -307,7 +307,8 @@ function read_streamlinexr_beam_timeangles(file_path::AbstractVector{T}, nheader
         :elevangle => Vector{Union{Float32,Missing}}(missing, nb),
         :pitch     => Vector{Union{Float32,Missing}}(missing, nb),
         :roll      => Vector{Union{Float32,Missing}}(missing, nb),
-        # :nbeams1   => Vector{Union{Int32,Missing}}(missing, nfiles) # first index of each file
+        :nbeam1    => Vector{Union{Int32,Missing}}(missing, nfiles), # index of first beam in file
+        :nbeams    => Vector{Union{Int32,Missing}}(missing, nfiles)  # number of beams in each file
         )
 
     # read each file and fill beams with data
@@ -316,6 +317,8 @@ function read_streamlinexr_beam_timeangles(file_path::AbstractVector{T}, nheader
     for (i,file) in enumerate(file_path)
         h = read_streamlinexr_head(file) # reread header for each file
         read_streamlinexr_beam_timeangles!(file, h, beams, nheaderlines; nbeams0=nbeams0) # updates beams[keys][nbeams0 .+ (1:nbeams[i])]
+        beams[:nbeam1][i] = nbeams0 + 1 # index of first beam in file
+        beams[:nbeams][i] = nbeams      # number of beams in this file
         nbeams0 += nbeams[i] # number of beams now read
     end
     return beams, h, nbeams0
