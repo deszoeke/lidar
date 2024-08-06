@@ -1,4 +1,5 @@
 # find and sorting start and end of stare chunks
+# OLD: updated functionized versions in lidar_turbulence.ipynb
 
 using Revise
 using Dates
