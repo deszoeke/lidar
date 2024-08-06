@@ -10,6 +10,8 @@ using .read_lidar
 # get pickets marking start and end of chunks
 fullfiles = joinpath.(pwd(),"data","20240531",files)
 ta, hdr, nbeams = read_lidar.read_streamlinexr_beam_timeangles(fullfiles)
+
+# identify chunks from gaps
 ien = findall( diff(ta[:time]) .> 0.01 ) # gap of more than a few tens of seconds
 ist = ien .+ 1 # start of the next chunk
 
@@ -58,4 +60,16 @@ istsub = iisub[1:2:end]
 iensub = iisub[2:2:end] # even ends follow odd starts of same chunk
 
 # Which file(s) is a chunk in?
-# need to collect data start (and ending?) times of all files
+# time index hierarchy:
+#
+# beam
+#   chunk [start, end]
+#       file [start, end]
+
+# Collect data start indices times of all files in ibeam1
+# number of beams in each file nbeam
+# so last beam index in a file is ibeam1+nbeam-1
+get_start_fileidx(tidx) = findlast(t-> ibeam1<=t, tidx)
+get_end_fileidx(tidx) = findfirst(t-> ibeam1+nbeam-1>=t, tidx)
+get_stare_files(tidx, files) = files[get_fileidx(tidx)]
+
