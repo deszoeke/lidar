@@ -318,7 +318,7 @@ function read_streamlinexr_beam_timeangles(file_path::AbstractVector{T}, nheader
         h = read_streamlinexr_head(file) # reread header for each file
         read_streamlinexr_beam_timeangles!(file, h, beams, nheaderlines; nbeams0=nbeams0) # updates beams[keys][nbeams0 .+ (1:nbeams[i])]
         beams[:ibeam1][i] = nbeams0 + 1 # index of first beam in file
-        beams[:nbeams][i] = nbeams      # number of beams in this file
+        beams[:nbeams][i] = nbeams[i]   # number of beams in this file
         nbeams0 += nbeams[i] # number of beams now read
     end
     return beams, h, nbeams0
