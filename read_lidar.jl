@@ -307,6 +307,7 @@ function read_streamlinexr_beam_timeangles(file_path::AbstractVector{T}, nheader
         :elevangle => Vector{Union{Float32,Missing}}(missing, nb),
         :pitch     => Vector{Union{Float32,Missing}}(missing, nb),
         :roll      => Vector{Union{Float32,Missing}}(missing, nb),
+        # :nbeams1   => Vector{Union{Int32,Missing}}(missing, nfiles) # first index of each file
         )
 
     # read each file and fill beams with data
