@@ -417,10 +417,7 @@ function read_streamlinexr_beam_times(file_path::AbstractVector{T}, nheaderlines
     #     )
     times  = Vector{Union{Float32,Missing}}(missing, nb)    # decimal hours
     ibeam1 = Vector{Union{Int32,Missing}}(missing, nfiles)  # index of first beam in file
-    nbeams = Vector{Union{Int32,Missing}}(missing, nfiles)  # number of beams in each file
-
-
-    # read each file and fill beams with data
+    # read each file and fill beams with time and index data
     nbeams0 = 0
     h = read_streamlinexr_head(file_path[1]) # first header
     for (i,file) in enumerate(file_path)
