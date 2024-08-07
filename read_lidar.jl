@@ -185,17 +185,22 @@ function read_streamlinexr_stare( dt::DateTime )
     read_streamlinexr_stare( file_path )
 end
 
-function read_streamlinexr_stare(file_path::AbstractString, nheaderlines=17)
-    # Not implemented: could loop over a vector of files.
-
+"read a single Stare file"
+function read_streamlinexr_stare(file_path::AbstractString, nheaderlines=17; startat=1, endat_=0)
     # use header information in h 
     h = read_streamlinexr_head(file_path)
     nlines = h[:nlines]
     ngates = h[:ngates]
 
-    # beams could be rays or times
-    nbeams = round(Int, (nlines-nheaderlines) / (1+ngates)) # = nrays*ntimes
-    # initialize a beams Dict
+    # for single-file
+    # beams contain data from rays at particular times
+    nbeamsmax = round(Int, (nlines-nheaderlines) / (1+ngates)) # = nrays*ntimes
+    nbeamsmax = round(Int, (nlines-nheaderlines) / (1+ngates)) # = nrays*ntimes # total number available
+    # but nbeams may be reduced by startat, endat
+    endat = mod(endat_-1, nbeamsmax) + 1
+    nbeams = min(endat - startat + 1, nbeamsmax) # actual number of beams requested, or total number available
+
+    # initialize a beams Dict with exactly nbeams
     beams = Dict(
         :time      => Vector{Union{Float32,Missing}}(missing, nbeams), # decimal hours
         :azimuth   => Vector{Union{Float32,Missing}}(missing, nbeams), # degrees
@@ -212,11 +217,12 @@ function read_streamlinexr_stare(file_path::AbstractString, nheaderlines=17)
         )
 
     # read file and fill beams with data
-    read_streamlinexr_stare!(file_path, h, beams, nheaderlines)
+    # read_streamlinexr_stare!(file_path, h, beams, nheaderlines)
+    read_streamlinexr_stare!(file_path, h, beams, nheaderlines; nbeams0=0, startat=startat, endat=endat)
     return beams, h
 end
 
-"read multiple files"
+"read multiple Stare files"
 function read_streamlinexr_stare(file_path::AbstractVector{T}, nheaderlines=17) where {T<:AbstractString}
     # loop over a vector of files.
     
