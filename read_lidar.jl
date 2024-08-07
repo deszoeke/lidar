@@ -101,13 +101,25 @@ end
 modifying read_streamlinexr_stare!(file_path, header, beams)
 Read data and fill in the beams for a single file.
 """
-function read_streamlinexr_stare!(file_path, h, beams, nheaderlines=17; nbeams0=0)
+function read_streamlinexr_stare!(file_path, h, beams, nheaderlines=17; nbeams0=0, startat=1, endat_=0)
+    # nbeams0 is the number of beams alread read into the Dict beams
+    #   writing to the Dict fills in from there.
+    # startat = max(0,ist1-filest[fj]) + 1 is the first index of the file to be read into the Dict
+    # endat = min(lastien,fileen[fj]) - filest[fj] + 1
+    # nbeamsmax = fileen[fj]
+
+
     # use header information in h
     nlines = h[:nlines]
     ngates = h[:ngates]
 
     # beams could be rays or times
-    nbeams = round(Int, (nlines-nheaderlines) / (1+ngates)) # = nrays*ntimes
+    nbeamsmax = round(Int, (nlines-nheaderlines) / (1+ngates)) # = nrays*ntimes # total number available
+    # but nbeams may be reduced by startat, endat
+    endat = mod(endat_-1, nbeamsmax) + 1
+    nbeams = min(endat - startat + 1, nbeamsmax) # actual number of beams requested, or total number available
+    
+    # allocates for each file; this is not too much to affect perfomance
     beam_timeangles = zeros(nbeams, 5)
     beam_velrad = zeros(nbeams, ngates, 4)
 
@@ -119,8 +131,11 @@ function read_streamlinexr_stare!(file_path, h, beams, nheaderlines=17; nbeams0=
         for _ in 1:nheaderlines # skip header lines
             readline(file)
         end
+        for _ in 1:( (1+ngates) * (startat-1) ) # skip beams before startat
+            readline(file)
+        end
 
-        # now read data
+        # now read data # nbeams is already limited by endat-startat+1
         for ibeam = 1:nbeams
             # beam described by a batch of 1+ngates lines
             # Read the beam parameter line
@@ -136,6 +151,7 @@ function read_streamlinexr_stare!(file_path, h, beams, nheaderlines=17; nbeams0=
 
     # parse the variables into the dict beams
     # by beam
+    # offset bb by beam0, indices already read into Dict beam
     bb = nbeams0 .+ (1:nbeams) # for the output array dimension nbeams
     beams[:time     ][bb] .= beam_timeangles[:,1] # decimal hours
     beams[:azimuth  ][bb] .= beam_timeangles[:,2] # degrees
