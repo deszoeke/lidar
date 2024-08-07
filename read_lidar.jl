@@ -101,7 +101,7 @@ end
 modifying read_streamlinexr_stare!(file_path, header, beams)
 Read data and fill in the beams for a single file.
 """
-function read_streamlinexr_stare!(file_path, h, beams, nheaderlines=17; nbeams0=0, startat=1, endat_=0)
+function read_streamlinexr_stare!(file_path, h, beams, nheaderlines=17; nbeams0=0, startat=1, endat=0)
     # nbeams0 is the number of beams alread read into the Dict beams
     #   writing to the Dict fills in from there.
     # startat = max(0,ist1-filest[fj]) + 1 is the first index of the file to be read into the Dict
@@ -116,7 +116,7 @@ function read_streamlinexr_stare!(file_path, h, beams, nheaderlines=17; nbeams0=
     # beams could be rays or times
     nbeamsmax = round(Int, (nlines-nheaderlines) / (1+ngates)) # = nrays*ntimes # total number available
     # but nbeams may be reduced by startat, endat
-    endat = mod(endat_-1, nbeamsmax) + 1
+    endat = mod(endat-1, nbeamsmax) + 1 # clobbers name but does not write to original argument
     nbeams = min(endat - startat + 1, nbeamsmax) # actual number of beams requested, or total number available
     
     # allocates for each file; this is not too much to affect perfomance
@@ -223,25 +223,89 @@ function read_streamlinexr_stare(file_path::AbstractString, nheaderlines=17; sta
 end
 
 "read multiple Stare files"
-function read_streamlinexr_stare(file_path::AbstractVector{T}, nheaderlines=17; bigstartat, bigendat) where {T<:AbstractString}
+function read_streamlinexr_stare(file_path::AbstractVector{T}, filest, bigendat, bigstartat=1, nheaderlines=17) where {T<:AbstractString}
+    # loop over a vector of files.
+    # bigstartat (default 1) is the first requested start index of all the data in the files
+    # bigendat is the last requested end index of all the data in the files.
+    # bigendat must be specified to infer the length of data to read.
+
+    # set up
+    nfiles = length(file_path)
+    nbeams  = zeros(Int32, nfiles)
+    h = read_streamlinexr_head(file_path[1]) # use header information in h
+    ngates = h[:ngates]
+
+    # number of beams total already known outside and can be calculated
+    nb = bigendat - bistartat + 1 # total number of beams in requested stares
+    # # NOW read headers once in one inline pass through the files
+    # # for (fi,file) in enumerate(file_path)
+    # #     h = read_streamlinexr_head(file)
+    # #     nlines = h[:nlines]
+    # #     ngates = h[:ngates]
+    # #     nbeamsmax = round(Int, (nlines - nheaderlines) / (1+ngates)) # number of beams for each file
+    # #     # startat[fi] = max(1, min( mod(startat_-1, nbeamsmax) + 1, nbeamsmax )) # mod provides max min limits anyway
+    # #     # endat[fi] = mod(endat_-1, nbeamsmax) + 1 # 0 goes to nbeamsmax (end)
+    # #     nbeams[fi] = min(endat - startat + 1, nbeamsmax) # actual number of beams requested, or total number available
+    # # end
+
+    # initialize a beams Dict
+    beams = Dict(
+        :time      => Vector{Union{Float32,Missing}}(missing, nb), # decimal hours
+        :azimuth   => Vector{Union{Float32,Missing}}(missing, nb), # degrees
+        :elevangle => Vector{Union{Float32,Missing}}(missing, nb),
+        :pitch     => Vector{Union{Float32,Missing}}(missing, nb),
+        :roll      => Vector{Union{Float32,Missing}}(missing, nb),
+
+        :height    => Vector{Union{Float32,Missing}}(missing, ngates), # center of gate
+
+        # dependent variables (beam, gate)
+        :dopplervel => Matrix{Union{Float32,Missing}}(missing, nb,ngates), # m/s
+        :intensity  => Matrix{Union{Float32,Missing}}(missing, nb,ngates), # SNR + 1
+        :beta       => Matrix{Union{Float32,Missing}}(missing, nb,ngates) # m-1 sr-1  backscatter?
+        )
+
+    # read each file and write data in Dict beams
+    nbeams0 = 0
+    for (fi, file) in enumerate(file_path)
+        h = read_streamlinexr_head(file) # reread header for each file
+        nlines = h[:nlines]
+        nbeamsmax = round(Int, (nlines - nheaderlines) / (1+ngates)) # number of beams for each file
+        # set startat, endat if in first and/or last file, otherwise 1, nbeamsmax
+        if fi == 1
+            startat = bigstartat - filest[fi] + 1 # index referenced to file
+        else
+            startat = 1
+        end
+        if fi == nfiles
+            endat = bigendat - filest[fi] + 1
+        else
+            endat = nbeamsmax
+        end
+        # read and update beams[keys][nbeams0 .+ (1:nbeams[i])]
+        read_streamlinexr_stare!(file, h, beams, nheaderlines; nbeams0=nbeams0, startat=startat, endat=endat) 
+        nbeams0 += nbeams[fi] # increment number of beams now read
+    end
+    return beams, h, nbeams0
+end
+
+"""
+Read multiple whole files.
+provide no refined query indices.
+"""
+function read_streamlinexr_stare(file_path::AbstractVector{T}, nheaderlines=17) where {T<:AbstractString}
     # loop over a vector of files.
     
     # use header information in h, count lines in all files
     nfiles = length(file_path)
-    startat = zeros(Int32, nfiles)
-    endat   = zeros(Int32, nfiles)
-    nbeams  = zeros(Int32, nfiles)
-    ngates = -1 # need to allocate outside loop
+    nbeams = zeros(Int32, nfiles)
+    ngates = -1
     # read number of lines for each file
     for (i,file) in enumerate(file_path)
         h = read_streamlinexr_head(file)
         nlines = h[:nlines]
         ngates = h[:ngates]
-        nbeamsmax = round(Int, (nlines - nheaderlines) / (1+ngates)) # number of beams for each file
-        startat[i] = max(1, min( mod(startat_-1, nbeamsmax) + 1, nbeamsmax )) # mod provides max min limits anyway
-        endat[i] = mod(endat_-1, nbeamsmax) + 1 # 0 goes to nbeamsmax (end)
-        nbeams[i] = min(endat - startat + 1, nbeamsmax) # actual number of beams requested, or total number available
-        # nbeams[i] = round(Int, (nlines - nheaderlines) / (1+ngates)) # number of beams for each file
+        # beams could be rays or times
+        nbeams[i] = round(Int, (nlines - nheaderlines) / (1+ngates)) # number of beams for each file
     end
 
     # initialize a beams Dict
@@ -341,17 +405,17 @@ function read_streamlinexr_beam_timeangles(file_path::AbstractVector{T}, nheader
     # read each file and fill beams with data
     nbeams0 = 0
     h = read_streamlinexr_head(file_path[1]) # first header
-    for (i,file) in enumerate(file_path)
+    for (fi, file) in enumerate(file_path)
         h = read_streamlinexr_head(file) # reread header for each file
         read_streamlinexr_beam_timeangles!(file, h, beams, nheaderlines; nbeams0=nbeams0) # updates beams[keys][nbeams0 .+ (1:nbeams[i])]
-        beams[:ibeam1][i] = nbeams0 + 1 # index of first beam in file
-        beams[:nbeams][i] = nbeams[i]   # number of beams in this file
-        nbeams0 += nbeams[i] # number of beams now read
+        beams[:ibeam1][fi] = nbeams0 + 1 # index of first beam in file
+        beams[:nbeams][fi] = nbeams[fi]   # number of beams in this file
+        nbeams0 += nbeams[fi] # number of beams now read
     end
     return beams, h, nbeams0
 end
 
-# quicker: just read time data
+# just reading time data is not actually quicker than timeangles
 "update beam time data read from a single file"
 function read_streamlinexr_beam_times!(file_path, h, times, nheaderlines=17; nbeams0=0)
     # use header information in h
@@ -420,11 +484,11 @@ function read_streamlinexr_beam_times(file_path::AbstractVector{T}, nheaderlines
     # read each file and fill beams with time and index data
     nbeams0 = 0
     h = read_streamlinexr_head(file_path[1]) # first header
-    for (i,file) in enumerate(file_path)
+    for (fi, file) in enumerate( file_path )
         h = read_streamlinexr_head(file) # reread header for each file
         read_streamlinexr_beam_times!(file, h, times, nheaderlines; nbeams0=nbeams0) # updates beams[keys][nbeams0 .+ (1:nbeams[i])]
-        ibeam1[i] = nbeams0 + 1 # index of first beam in file
-        nbeams0 += nbeams[i]    # number of total beams now read
+        ibeam1[fi] = nbeams0 + 1 # index of first beam in file
+        nbeams0 += nbeams[fi]    # number of total beams now read
     end
     return times, ibeam1, nbeams, h  # note changed outputs
 end
