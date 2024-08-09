@@ -8,6 +8,7 @@ export get_das_filenames, get_das_pathfiles
 export yday, psldatetime, decimal_hour
 export read_das_dict
 export read_lsr_dict
+export cat_dicts
 
 # utility functions
 # m2n(x) = ismissing(x) ? NaN : x
@@ -853,6 +854,19 @@ function read_fps_data(pathfilename::Vector{<:AbstractString};
     end
 
     return psldt[1:nl], X[1:nl]
+end
+
+"""
+Concatenate Array variables from two Dicts into one
+along the dimension dim
+that are values of the same key of dict1 and dict2.
+"""
+function cat_dicts(dict1::Dict, dict2::Dict; dim=1)
+    result_dict = typeof(dict1)()
+    for key in intersect( keys(dict1), keys(dict2) )
+        result_dict[key] = cat(dict1[key], dict2[key], dims=dim)
+    end
+    return result_dict
 end
 
 end
