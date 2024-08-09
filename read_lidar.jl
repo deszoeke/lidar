@@ -502,6 +502,8 @@ function get_daily_meanuv( yyyymmdd::AbstractString )
 end
 
 ### read VectorNav functions
+# JLD2 files created by vectornav.ipynb
+
 Vndir = "./data/lidar/table/" # uses symbloic link ./data in cwd
 
 "read daily JLD2 as a Dict"
