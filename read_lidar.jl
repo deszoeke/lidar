@@ -515,3 +515,110 @@ function read_daily_Vn( yyyymmdd::AbstractString )
 end
 
 end # module read_lidar
+
+
+module read_vecnav
+# functions to read the VectorNav file # MOVE TO read_lidar
+
+export read_vecnav_dict
+
+# VectorNav data line:
+# Tue Mar 28 13:17:11 2023 +0000, 9431257000, -163.267792, -1.067281, -1.441135, -0.011044, 0.011087, -0.989255, 0.145364, 0.000000, 0.000000, 0.000000, 0.234963, -0.005458, 0.101274, 0.432598, -0.534912, -9.797964, 0.000000, 0.000000, 0.000000
+#
+# 21 science data fields delimited by commas
+
+function read_vecnav_data( file::AbstractString )
+    # allocate arrays
+    nlmax = countlines(file)
+    dt = Vector{DateTime}(undef, nlmax)
+    intdata = Matrix{Int64}(undef, nlmax, 2)
+    data = Matrix{Float32}(undef, nlmax, 19)
+
+    # read it     >>BLACK PUMAS<<
+    nl = 0
+    df = dateformat"uuuHH:MM:SSyyyy"
+    open( file ) do f
+        for line in readlines(f)
+            # Tue Mar 28 13:17:11 2023 +0000, 9431257000, -163.267792, -1.067281, -1.441135, -0.011044, 0.011087, -0.989255, 0.145364, 0.000000, 0.000000, 0.000000, 0.234963, -0.005458, 0.101274, 0.432598, -0.534912, -9.797964, 0.000000, 0.000000, 0.000000
+            nl += 1
+            spl = split(line, r"[\ ,]+")
+            try
+                dt[nl] = ( 
+                    DateTime(spl[2], dateformat"u") + Day(parse(Int8, spl[3])) 
+                  + Year(parse(Int16, spl[5])-1) 
+                  +(DateTime(spl[4], dateformat"HH:MM:SS") - DateTime(1,1,1)) )
+                intdata[nl,:] .= parse.(Int64, spl[6:7])  #  2
+                data[nl,:] .= parse.(Float32, spl[8:end]) # 19
+            catch
+                @show line
+            end
+        end
+    end
+
+    # trim uninitialized times off the start
+    # i0 = findfirst(diff(intdata[1:nl,2]) .> 1e17) + 1 # broken
+    i0 = findfirst(intdata[1:nl,2] .> GPS_MORETHAN)
+    return dt[i0:nl], intdata[i0:nl,:], data[i0:nl,:]
+end
+
+function read_vecnav_data( files::AbstractVector )
+    # allocate arrays
+    nlmax = sum( countlines.(files) )
+    dt = Vector{DateTime}(undef, nlmax)
+    intdata = Matrix{Int64}(undef, nlmax, 2)
+    data = Matrix{Float32}(undef, nlmax, 19)
+
+    # read files
+    nl = 0
+    df = dateformat"uuuHH:MM:SSyyyy"
+    for file in files
+        open( file ) do f
+            for line in readlines(f)
+                # Tue Mar 28 13:17:11 2023 +0000, 9431257000, -163.267792, -1.067281, -1.441135, -0.011044, 0.011087, -0.989255, 0.145364, 0.000000, 0.000000, 0.000000, 0.234963, -0.005458, 0.101274, 0.432598, -0.534912, -9.797964, 0.000000, 0.000000, 0.000000
+                spl = split(line, r"[\ ,]+")
+                try
+                    id = parse.(Int64, spl[6:7])
+                    if id[2] > GPS_MORETHAN  # use only initialized GPS times
+                        nl += 1 # get data
+                        dt[nl] = ( 
+                            DateTime(spl[2], dateformat"u") + Day(parse(Int8, spl[3])) 
+                        + Year(parse(Int16, spl[5])-1) 
+                        +(DateTime(spl[4], dateformat"HH:MM:SS") - DateTime(1,1,1)) )
+                        intdata[nl,:] .= id                       #  2
+                        data[nl,:] .= parse.(Float32, spl[8:end]) # 19
+                    end
+                catch
+                    @show line
+                end
+            end
+        end
+    end
+
+    return dt[1:nl], intdata[1:nl,:], data[1:nl,:]
+end
+
+function read_vecnav_dict( file )
+
+    D = Dict{Symbol, Any}()
+    vnkeys = Symbol.( [
+    "Yaw", "Pitch", "Roll",
+    "Quat0", "Quat1", "Quat2", "Quat3",
+    "Latitude", "Longitude", "Altitude",
+    "MagNED0", "MagNED1", "MagNED2",
+    "LinAcc0", "LinAcc1", "LinAcc2",
+    "VelNED0", "VelNED1", "VelNED2" ] )
+
+    dt, gpstime, data = read_vecnav_data( file )
+
+    D[:time] = dt
+    D[:GpsTime] = gpstime[:,2]
+    for (i,k) in enumerate(vnkeys)
+        D[k] = data[:,i]
+    end
+    return D
+end
+
+"Read VectorNav data previously concatenated and saved as a JLD2 file. Much faster than reading the text files."
+read_vecnav_dict() = Dict(Symbol(key) => value for (key, value) in load("./data/table/ASTraL_lidarVectorNav.jld2")) # Dict{Symbol, Any}
+
+end # module read_vecnav
