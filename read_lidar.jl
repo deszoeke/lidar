@@ -520,7 +520,17 @@ end # module read_lidar
 module read_vecnav
 # functions to read the VectorNav file # MOVE TO read_lidar
 
+using Dates
+using JLD2
+
+#using .timing_lidar # mightcould wanna use this
+
 export read_vecnav_dict
+
+# Define the GPS epoch
+const GPS_EPOCH = DateTime(1980, 1, 6) # DateTime
+dt2gpsns(dt) = Dates.value(Millisecond( dt-GPS_EPOCH )) * 1_000_000 # -> Integer
+GPS_MORETHAN = dt2gpsns(DateTime(2024,1,1))
 
 # VectorNav data line:
 # Tue Mar 28 13:17:11 2023 +0000, 9431257000, -163.267792, -1.067281, -1.441135, -0.011044, 0.011087, -0.989255, 0.145364, 0.000000, 0.000000, 0.000000, 0.234963, -0.005458, 0.101274, 0.432598, -0.534912, -9.797964, 0.000000, 0.000000, 0.000000
@@ -619,6 +629,7 @@ function read_vecnav_dict( file )
 end
 
 "Read VectorNav data previously concatenated and saved as a JLD2 file. Much faster than reading the text files."
-read_vecnav_dict() = Dict(Symbol(key) => value for (key, value) in load("./data/table/ASTraL_lidarVectorNav.jld2")) # Dict{Symbol, Any}
+# read_vecnav_dict() = Dict(Symbol(key) => value for (key, value) in load("./data/table/ASTraL_lidarVectorNav.jld2")) # Dict{Symbol, Any}
+read_vecnav_dict() = load("./data/table/ASTraL_lidarVectorNav.jld2")["Vn"] # Dict{Symbol, Any}
 
 end # module read_vecnav
