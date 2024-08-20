@@ -630,6 +630,7 @@ end
 
 "Read VectorNav data previously concatenated and saved as a JLD2 file. Much faster than reading the text files."
 # read_vecnav_dict() = Dict(Symbol(key) => value for (key, value) in load("./data/table/ASTraL_lidarVectorNav.jld2")) # Dict{Symbol, Any}
-read_vecnav_dict() = load("./data/table/ASTraL_lidarVectorNav.jld2")["Vn"] # Dict{Symbol, Any}
+read_vecnav_dict() = Dict( Symbol(key) => value for (key, value) in
+                           load("./data/table/ASTraL_lidarVectorNav.jld2") )
 
 end # module read_vecnav
