@@ -16,6 +16,8 @@ using Interpolations
 # using MAT
 # using PyPlot
 
+export grid_search
+
 # helper functions
 pd = permutedims
 m2n(x) = ismissing(x) ? NaN : x
@@ -288,6 +290,7 @@ function grid_search(high_freq_series, low_freq_series, factor, start_idx, epoch
     return optimal_lag #, best_cor
 end
 
+# not used; use grid_search directly
 """
 Find the lag for local epochs
 """
