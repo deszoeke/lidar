@@ -20,7 +20,8 @@ m2n(x) = ismissing(x) ? NaN : x
 
 ### read stares functions
 # functions for reading hpl files
-lidardir = "./data/lidar"
+# # lidardir = "./data/lidar"
+lidardir = "./data"
 
 "count the headlines before a line that starts with ****"
 function numheaderlines(file)
@@ -491,7 +492,8 @@ function read_streamlinexr_beam_times(file_path::AbstractVector{T}, nheaderlines
 end
 
 ### read mean wind functions
-uvdir = "./data/lidar/netcdf/"
+# uvdir = "./data/lidar/netcdf/"
+uvdir = "./data/netcdf/"
 
 "get daily mean-wind netcdf dataset"
 function get_daily_meanuv( dt::Union{Date, DateTime} )
@@ -504,7 +506,8 @@ end
 ### read VectorNav functions
 # JLD2 files created by vectornav.ipynb
 
-Vndir = "./data/lidar/table/" # uses symbloic link ./data in cwd
+# Vndir = "./data/table/" # uses symbolic link ./data in cwd
+Vndir = "./data/table/leg1" # hardcoded daily jld2 files to leg1, fails for leg2
 
 "read daily JLD2 as a Dict"
 function read_daily_Vn( dt::Union{Date, DateTime} )
