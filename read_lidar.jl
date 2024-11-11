@@ -517,6 +517,15 @@ function read_daily_Vn( yyyymmdd::AbstractString )
     Vn = JLD2.load(joinpath(Vndir, "VectorNavTable_$(yyyymmdd).jld2"))
 end
 
+#=
+module stares
+
+# MOVE chunk, gap, picket reading and subsetting from lidar_turbulence.ipynb
+# HERE
+
+end module stares
+=#
+
 end # module read_lidar
 
 
