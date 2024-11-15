@@ -14,6 +14,9 @@ export read_streamlinexr_stare #, read_streamlinexr_head
 export get_daily_meanuv, read_daily_Vn
 export read_streamlinexr_beam_timeangles
 
+export read_lidar_chunks # used
+export get_all_file_start_end_idxs # exported to test
+
 ### utilites
 pd = permutedims
 m2n(x) = ismissing(x) ? NaN : x
@@ -517,13 +520,111 @@ function read_daily_Vn( yyyymmdd::AbstractString )
     Vn = JLD2.load(joinpath(Vndir, "VectorNavTable_$(yyyymmdd).jld2"))
 end
 
+## utility functions to determine which file a chunk in and its indices in that file
+
+# !MOVE utilities for requesting, reading, and subsetting data from files
+# TO read_lidar.jl
+# include("read_lidar.jl")
+
+# internal functions:
+# get_stare_files, thisfile_idx, idx_beams_in_file, thisfile_start_end, thisfile_name
+# export read_lidar_chunks # used
+# export get_all_file_start_end_idxs # exported to test
+
+# time index hierarchy:
+#     beam
+#   stare chunk [start, end]
+# file [start, end]
+
+# Collect data start indices times of all files in ibeam1
+# number of beams in each file nbeam
+# so last beam index in a file is ibeam1+nbeam-1
+# get_start_fileidx(tidx) = findlast(t-> ibeam1<=t, tidx)
+# get_end_fileidx(tidx) = findfirst(t-> ibeam1+nbeam-1>=t, tidx)
+get_stare_files(tidx, files) = files[get_fileidx(tidx)]
+
+# vectors of all file start and end indices
+function get_all_file_start_end_idxs(ta::Dict)
+    fi1 = ta[:ibeam1][:]
+    filast = @. fi1 + ta[:nbeams] - 1
+    return fi1, filast
+end
+function get_all_file_start_end_idxs(file_paths) 
+    ta = read_streamlinexr_beam_timeangles(file_path)
+    get_all_file_start_end_idxs(ta)
+end
+
+"index of the file for which the index x falls between fi1 and filast"
+thisfile_idx(x, fi1, filast) = findfirst( fi1.<= x .<=filast)
+
+# this method superseded by one that uses fi1, filast in calling scope
+idx_beams_in_file(i, ibeam1, fi1, filast) = i - ibeam1[thisfile_idx(i, fi1, filast)] + 1
+
+function thisfile_start_end(x, fi1, filast)
+    j = thisfile_idx(x, fi1, filast)
+    return fi1[j], filast[j]
+end
+
+"get name of a file corresponding to a time or index"
+thisfile_name(x::Integer, fi1, filast, files=fullfiles) = files[thisfile_idx(x, fi1, filast)]
+function thisfile_name(dtx::DateTime, dt::Vector{DateTime}, files=fullfiles) 
+    fi1, filast = get_all_file_start_end_idxs(files)
+    thisfile_name( findlast(dt .<= dtx), fi1, filast, files)
+end
+
+"read chunks inclusive between [firstdtq lastdq] from vector of files"
+function read_lidar_chunks(files, firstdtq, lastdtq)
+    # read all times
+    ta, hdr, nbeams = read_lidar.read_streamlinexr_beam_timeangles(files) # 5 s per day
+
+    # TODO append day hour to the decimal hour...
+    hdr[:start_time]
+    # finding indices
+    ien, ist = all_gaps(ta[:time]) # identify indices of chunks from gaps
+    ii, jj = all_start_end_indices(ien, ist)
+
+    # Request some beam times. Low-level query takes indices.
+    # # find indices qst, qen for the request
+    # dt = @. DateTime(2024,5,31) + Millisecond(round(Int64, ta[:time] * 3_600_000)) # ta[:time] is decimal hour
+    # # problem: date not defined in ta
+    # qst = findfirst(dt .>= DateTime(2024,5,31,5))
+    # qen = findlast( dt .<  DateTime(2024,5,31,10))
+    qst = findfirst(dt .>= firstdtq)
+    qen = findlast( dt .<  lastdtq)
+
+    # request the first and last chunks
+    (ist1,ien1, lastist,lastien) = query_start_end_chunks(qst, qen; ien=ien, ist=ist)
+    # request start and end of all the chunks between ist1 and lastien
+    istsub, iensub = all_chunks(ist1, lastien)
+
+    # sort the chunks by file
+
+    # Subset the data within the file to the reuqested chunks
+    # could be done by skipping to start_beam, and stopping at stop_beam.
+    ibeam1 = ta[:ibeam1]
+    # not needed:
+    ## idx_beams_in_file(i, ibeam1) = i - ibeam1[thisfile_idx(i, ist1, lastien)] + 1
+    # start_beam = idx_beams_in_file(ist1, ibeam1, ist1, lastien) # default = 1
+    # stop_beam = idx_beams_in_file(lastien, ibeam1, ist1, lastien)      # default = ta[:nbeams]
+    
+    # only ever truncate the data read by a file because of a
+    # intentional scientific user-level query
+
+    # @show ist1, lastien
+    # @show [fi1 filast]
+
+    # read the beam data between ist1 and lastien
+    beams, h, nbeams0 = read_lidar.read_streamlinexr_stare(files, fi1, filast, ist1, lastien)
+    return beams, h, ien, ist
+end
+
 #=
-module stares
+module stare
 
 # MOVE chunk, gap, picket reading and subsetting from lidar_turbulence.ipynb
 # HERE
 
-end module stares
+end # module stare
 =#
 
 end # module read_lidar
