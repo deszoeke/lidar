@@ -6,6 +6,7 @@ Manifest.toml
 *.eps
 *.svg
 *.hpl
+*.jld2
 
 # directories
 doc
