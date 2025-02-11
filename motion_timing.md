@@ -1,10 +1,12 @@
-# Timing of motion data for the Halo Photonics lidar from VectorNav and POSMV: A Report 
-## gleaned from experiments in [timing_lidar.jl](timing_lidar.jl) and [lidar_turbulence.jl](lidar_turbulence.jl)
+# Timing of motion data for the Halo Photonics lidar from VectorNav and POSMV
+
+## A Report gleaned from experiments in [timing_lidar.jl](timing_lidar.jl) and [lidar_turbulence.jl](lidar_turbulence.jl)
+No calculations are done in this file.
 
 ## Leg 1 
 Leg 1 has VectorNav data, presumably initially
 physically aligned with the coordinate system of the lidar. 
-At least its heave is aligned with the vertically-staring 
+VN heave (at least) is always aligned with the vertically-staring 
 lidar beams.
 
 VectorNav clock drifts a few seconds and then corrects, 
@@ -12,8 +14,10 @@ or precesses, with a 13-hour cycle
 (previously seemed like a 51-hour cycle), compared to the POSMV. 
 The time lag offset (in discrete steps) is computed by matching the phase of the VectorNav roll to the POSMV pitch. Relative time offset is computed by counting 0.05 seconds per timestep.
 
+These appear synced to within ~1 s. The recording resolution of the POSMV is 0.5 s.
+
 <!-- figure -->
-not as good:
+-deprecated- seems not as good:
 ![POSMV](./Vn-POSMV_lag.png "VectorNav-POSMV lag")
 seems like a better match was achieved this time:
 ![VectorNav-POSMV time offset](./Vn-POSMV_lag_0601-0605.png)
@@ -47,3 +51,12 @@ around 5.18.
 
 Synchronization of pitch and roll
 is demonstrated in `vectornav.ipynb`.
+
+VN reference times are `vndt` and `posmvdt`.
+The VN rotation was found to lead POSMV by 0.6 s, but lagging it does not improve the phase 
+of the fit. Since the 0.6 second lag does NOT improve the synchronization between the motion of the VN and the POSMV, it's probably a discretization issue having to do with the 0.5 s resolution of the POSMV,
+and probably noncentered averaging recording the motion at a later time on the POSMV.
+
+So take as correct and use either `posmvdt` (UTC time) and `vndt` (GPS time) as reference times.
+
+In leg 2, sync the beam heave with the beam-mean Doppler velocity.
