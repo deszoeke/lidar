@@ -223,7 +223,7 @@ function cross_correlation(lag, high_freq_series, low_freq_series, factor, start
         # neg lag shifts both high and low freq series
         high_freq_offset = factor + lag%factor
         hfi = round(Integer, high_freq_offset%factor + 1)
-        x = epx( high_freq_series[hfi:factor:end] ) # this line errors out of bounds!
+        x = epx( high_freq_series[round.(Integer, hfi:factor:end)] ) # this line errors out of bounds!
         # positive offset for start of y
         low_freq_offset = round( Integer, -floor(lag / factor) )
         lfi = round(Integer, low_freq_offset + 1)
@@ -248,7 +248,8 @@ function grid_search(high_freq_series, low_freq_series, factor, start_idx, epoch
     # find lag of max correlation with method from Optim, or brute force argmax
     crosscor_f(lag) = cross_correlation(lag, high_freq_series, low_freq_series, factor, start_idx, epoch_length)
     # find max correlation by brute force
-    bruteforce_optimal_lag( lags::AbstractVector ) = lags[ argmax(crosscor_f.(lags)) ]
+    # bruteforce_optimal_lag( lags::AbstractVector ) = lags[ argmax(crosscor_f.(lags)) ]
+    bruteforce_optimal_lag( lags::AbstractVector ) = round( Int32, lags[ argmax(crosscor_f.(lags)) ] )
     "index the epoch from/as a low frequency view"
     # epx(lf) = lf[start_idx .+ (0:epoch_length-1)]
     eplen(lf) = min(epoch_length, length(lf)-start_idx+1) # emulates length of epx() windows
