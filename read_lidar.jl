@@ -510,14 +510,15 @@ end
 # JLD2 files created by vectornav.ipynb
 
 # Vndir = "./data/table/" # uses symbolic link ./data in cwd
-Vndir = "./data/table/leg1" # hardcoded daily jld2 files to leg1, fails for leg2
 
 "read daily JLD2 as a Dict"
 function read_daily_Vn( dt::Union{Date, DateTime} )
-    read_daily_Vn( Dates.format(Date(dt), dateformat"yyyymmdd") )
+    Vndir = dt < DateTime(2024,5,31) ? "./data/table/leg1" : "./data/table/leg2"
+    yyyymmdd = Dates.format(Date(dt), dateformat"yyyymmdd")
+    read_daily_Vn( joinpath(Vndir, "VectorNavTable_$(yyyymmdd).jld2") )
 end
-function read_daily_Vn( yyyymmdd::AbstractString )
-    Vn = JLD2.load(joinpath(Vndir, "VectorNavTable_$(yyyymmdd).jld2"))
+function read_daily_Vn( filename::AbstractString )
+    Vn = JLD2.load( filename )
 end
 
 ## utility functions to determine which file a chunk in and its indices in that file
@@ -621,6 +622,8 @@ end
 # stare functions to find and use start and end indices of stare chunks
 
 module stare
+
+using Dates
 
 # used in read_lidar_chunks and tests
 export hour_beams

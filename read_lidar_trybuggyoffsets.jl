@@ -1,3 +1,5 @@
+# deprecated!
+
 # using Revise
 # using Pkg; Pkg.activate("/Users/deszoeks/Projects/ASTRAL/lidar")
 
@@ -367,12 +369,12 @@ end
 ### read VectorNav functions
 Vndir = "./data/lidar/table/" # uses symbloic link ./data in cwd
 
-"read daily JLD2 as a Dict"
-function read_daily_Vn( dt::Union{Date, DateTime} )
-    read_daily_Vn( Dates.format(Date(dt), dateformat"yyyymmdd") )
-end
-function read_daily_Vn( yyyymmdd::AbstractString )
-    Vn = JLD2.load(joinpath(Vndir, "VectorNavTable_$(yyyymmdd).jld2"))
-end
+# "read daily JLD2 as a Dict"
+# function read_daily_Vn( dt::Union{Date, DateTime} )
+#     read_daily_Vn( Dates.format(Date(dt), dateformat"yyyymmdd") )
+# end
+# function read_daily_Vn( yyyymmdd::AbstractString )
+#     Vn = JLD2.load(joinpath(Vndir, "VectorNavTable_$(yyyymmdd).jld2"))
+# end
 
 end # module read_lidar
