@@ -618,14 +618,98 @@ function read_lidar_chunks(files, firstdtq, lastdtq)
     return beams, h, ien, ist
 end
 
-#=
+# stare functions to find and use start and end indices of stare chunks
+
 module stare
 
-# MOVE chunk, gap, picket reading and subsetting from lidar_turbulence.ipynb
-# HERE
+# used in read_lidar_chunks and tests
+export hour_beams
+export all_gaps
+export all_start_end_indices
+export query_start_end_chunks
+export all_chunks
+
+# Request chunk subscripts and start and end times in any time window.
+"return time as a decimal hour from the start time"
+function hour_beams(time, ibeam1, start_time)
+    # time is decimal hour of the day
+    # ibeam1 is the index of time corresponding to start_time
+    # start_time is the DateTime when a new file starts
+    
+    # expand time axis to include day and decimal hour
+    ibeam_expand = [ findlast( ibeam1 .<= i ) for i in eachindex(time) ]
+    dtbeams = @. floor(start_time, Day)[ibeam_expand] 
+    hourbeams = @. 24*Dates.value(Day(dtbeams-dtbeams[1])) + time
+end
+"hour_beams(timeangles::Dict)"
+hour_beams(ta::Dict) = hour_beams(ta[:time], ta[:ibeam1], ta[:start_time])
+
+# identify indices of chunks from gaps
+function all_gaps(t)
+    ien = findall( diff(t) .> 0.01 ) # gap of more than a few tens of seconds
+    ist = ien .+ 1 # start of the next chunk
+    return ien, ist
+end
+
+function all_start_end_indices(ien, ist)
+    # ii increasing-order vector of all start and end indices
+    ii = sort( permutedims([ien ist])[:] ) # ordered; this should sort them, but sort() for good measure
+    jj = LinearIndices(ii) # jj indexes ii
+    # ii alternates end start-end ... start ii[jjen] == ien; ii[jjst] == ist
+    jjen = jj[1:2:end]
+    jjst = jj[2:2:end] # even starts of next chunks follow previous odd ends
+    # NOTE: a view can change the parity of starts and ends
+    return ii,jj, jjen,jjst
+end
+# ii is the big array of start and end indices
+
+# functions to check if an index i is an end point; or a start point
+isend(i) = in(i, Ref(ien)) # Boolean true for interval chunk end points of ii
+isstart(i) = in(i, Ref(ist)) # Boolean true for interval chunk start points of ii
+
+# NOTE ii default is computed by all_start_end_indices, but not available in the lexical scope
+# so ii MUST be provided in the call
+
+# end index corresponding to a start indes
+# get the index j such that i = ii[j]
+thisj(i, ii) = findfirst(ii.==i)
+# get the end index ien corresponding to the start index ist of the same chunk
+chunken(ist, ii) = ii[thisj(ist, ii) + 1]
+# get the start index ist corresp to the end index ien of the same chunk
+chunkst(ien, ii) = ii[thisj(ien, ii) - 1]
+
+# index the next chunk
+nextchunki(i, ii) = ii[thisj(i, ii) + 2]
+# index the previous chunk
+prevchunki(i, ii) = ii[thisj(i, ii) - 2]
+
+# Find chunks within query start and end times.
+"""
+Request start and end chunks based on time indices.
+Inclusive: include chunks for which query falls in the middle.
+"""
+function query_start_end_chunks(qst, qen; ien=ien, ist=ist)
+    ien1 = ien[findfirst(x-> x>=qst , ien)] # end index of first queried chunk     # do in this order
+    ist1 = ist[findlast( x-> x <ien1, ist)] # start index of first queried chunk
+    lastist = ist[findlast( x-> x<=qen   , ist)] # start index of last queried chunk
+    lastien = ien[findfirst(x-> x>lastist, ien)] # end index of last queried chunk
+    ist1,ien1, lastist,lastien
+end
+
+"""
+request all start indices and all end indices between 
+index of start of first chunk and end of last chunk lastien
+"""
+function all_chunks(ist1, lastien, ii)
+    # pickets of queried subset
+    iisub = ii[ findall(x-> ist1<=x<=lastien, ii) ] # start-end ... start-end ; no orphans
+
+    istsub = iisub[1:2:end] # iisub parity switched from ii
+    iensub = iisub[2:2:end] # even ends follow odd starts of same chunk
+    return istsub, iensub # start-end pairs
+end
 
 end # module stare
-=#
 
 end # module read_lidar
 
