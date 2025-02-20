@@ -510,6 +510,7 @@ end
 # JLD2 files created by vectornav.ipynb
 
 # Vndir = "./data/table/" # uses symbolic link ./data in cwd
+# no daily leg2 jld2 files; use 
 
 "read daily JLD2 as a Dict"
 function read_daily_Vn( dt::Union{Date, DateTime} )

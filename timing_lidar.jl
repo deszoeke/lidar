@@ -291,7 +291,6 @@ function grid_search(high_freq_series, low_freq_series, factor, start_idx, epoch
     return optimal_lag #, best_cor
 end
 
-# not used; use grid_search directly in vectornav.ipynb
 """
 Find the lag for local epochs
 """
