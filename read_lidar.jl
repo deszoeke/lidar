@@ -845,7 +845,9 @@ end # module read_vecnav
 
 module chunks
 
-export read_stare_time, read_stare_chunk
+using Dates
+
+export read_stare_time, read_stare_chunk, dt_to_chunkind
 
 """
 get_time_shift(mdv, heave) positive result means mdv clock is fast.
