@@ -1,6 +1,12 @@
 # using Revise
 # using Pkg; Pkg.activate("/Users/deszoeks/Projects/ASTRAL/lidar")
 
+# contains code for several modules:
+# read_lidar
+# read_lidar.stares
+# read_vecnav
+# chunks
+
 module read_lidar
 
 using Dates
@@ -835,3 +841,107 @@ read_vecnav_dict() = Dict( Symbol(key) => value for (key, value) in
                            load("./data/table/ASTraL_lidarVectorNav.jld2") )
 
 end # module read_vecnav
+
+
+module chunks
+
+export read_stare_time, read_stare_chunk
+
+"""
+get_time_shift(mdv, heave) positive result means mdv clock is fast.
+sync by subtracting this lag (in 1020 millisecods) from stare_dt.
+"""
+function get_time_shift(mdv, heave)
+    # filter to make xcorr work better
+    xc = xcorr(hp(mdv[:]), hp(heave[:]))
+    # plot(-(length(mdv)-1):length(mdv)-1, xc )
+    return argmax(xc) - length(mdv)
+end
+
+"return indices of contiguous chunks (separated by < thr) from a series of datetimes"
+function dt_to_chunkind(dt, thr=Second(30))
+    pickets = findall( t -> t>thr, diff(dt) )
+    st_chunk = pickets[1:end-1] .+ 1
+    en_chunk = pickets[2:end]
+    return st_chunk, en_chunk
+end
+
+"hourly files -> chunk time indices"
+function read_stare_time( St )
+    # Lidar clock is fast (ahead) by 126832 milliseconds compared to the GPS.
+    # Moving the timeseries backward (lagging the lidar) compensates its clock error.
+    # adjust the lidar clock backward to agee with the GPS clock.
+    lidar_clock_fast_by = Millisecond( 126832 ) # first adjustment
+    stare_dt = @. (
+        DateTime(Date(dt)) 
+        + Millisecond(round(Int64, St[:time] * 3_600_000 )) 
+        .- lidar_clock_fast_by ) # 3202
+
+    # split into individual stare chunks
+    # pickets = findall( t -> t>Second(30), diff(stare_dt) )
+    # # st = [1; pickets.+1] # ignore start and end of file with a split chunk
+    # # en = [pickets; length(stare_dt)]
+    # st_chunk = pickets[1:end-1] .+ 1
+    # en_chunk = pickets[2:end]
+    st_chunk, en_chunk = dt_to_chunkind(stare_dt)
+    # subdivide into shorter chunks???
+    return st_chunk, en_chunk
+end
+
+# "subdivide interval [st en] into fac even intervals"
+# subdivide(st,en, fac) = round(Integer, st .+ (st-en)/fac .* [0:fac])
+"subdivide single interval [st en] into fac even intervals"
+subdivide(st,en, fac) = @. round(Integer, st + ((en-st)*(0:fac)/fac))
+# # test
+# subdivide(1,240, 4)
+
+"read and interpolate data to stare chunks"
+function read_stare_chunk(St, Vn, UV, st, en )
+    # time: truncate the file's datestamp to Date, add the decimal hour
+    stare_dt_raw = @. DateTime(Date(dt)) + Millisecond(round(Int64, St[:time] * 3_600_000 )) # 3202
+    lidar_clock_fast_by = Millisecond( 126832 ) # adjust for lidar clock fast (ahead) by 126832 milliseconds compared to the GPS.
+    stare_dt = stare_dt_raw .- lidar_clock_fast_by
+
+    # dopplervel (time, z) masked by intensity
+    dopplervel = masklowi.(St[:dopplervel][st:en,1:ntop], St[:intensity][st:en,1:ntop])
+    mdv = missmean(dopplervel, dims=2)[:] # conditional mean can have biases
+
+    # interpolate Ur,Vr, heave to the lidar stare grid
+    ind = findindices( stare_dt[st:en], Vn["time"] )
+    pitch = indavg( Vn["pitch"], ind) # 11-point mean
+    roll  = indavg( Vn["roll" ], ind)
+    heave = indavg( Vn["heave"], ind)
+    # resync the clock to the VactorNav heave - brittle
+    stare1dt = stare_dt[st:en] # subset
+    ind = findindices( stare1dt, Vn["time"] )
+    heave = Vn["heave"][ind]
+    shift = get_time_shift(mdv[:],heave[:])
+    # interpolate for the updated synced time
+    stare1dt .-= Millisecond((1020-80)*shift)
+    ind = findindices( stare1dt, Vn["time"] ) # this works
+    heave = indavg( Vn["heave"], ind)
+
+    # mean relative velocity
+    Ur = zeros(size(dopplervel))
+    Vr = zeros(size(dopplervel))
+    ind = findindices( Dates.value.(stare1dt), Dates.value.(UV["time"]))
+    # result must be 1:1 for stare1dt and ind
+    ls = length(stare1dt)
+    li = length(ind)
+    if li < ls # extend ind with last index of UV
+        ind = [ind; length(UV["time"]).+zeros(Int32, ls-li)]
+    end
+    for ih in 1:ntop # loop to broadcast to consistent size
+        Ur[:,ih] .= UV[:ur][ind,ih]
+        Vr[:,ih] .= UV[:vr][ind,ih]
+    end
+
+    # questionable: fill all the mean relative velocities
+    isf = isfinite.(Vr)
+    Vr[.!isf] .= mean(Vr[isf])
+    Ur[.!isf] .= mean(Ur[isf])
+    
+    return dopplervel, pitch, roll, heave, Ur, Vr, mdv
+end
+
+end # module chunks
