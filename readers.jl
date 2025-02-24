@@ -273,7 +273,20 @@ function read_lsr_dict( pathfilenames;
     D = NoaaDas.das_dict(lsrkeys, psldt[1:nl], [R[1:nl] A[1:nl] Q[1:nl]])
 end
 
+"""
+Concatenate Array variables from two Dicts into one
+along the dimension dim
+that are values of the same key of dict1 and dict2.
+"""
+function cat_dicts(dict1::Dict, dict2::Dict; dim=1)
+    result_dict = typeof(dict1)()
+    for key in intersect( keys(dict1), keys(dict2) )
+        result_dict[key] = cat(dict1[key], dict2[key], dims=dim)
+    end
+    return result_dict
 end
+
+end # module NoaaDas
 
 # GPS and heading-roll readers
 module DasGps
@@ -600,7 +613,7 @@ function read_scs_data(pathfilename::Vector{<:AbstractString};
     return psldt[1:nl], X[1:nl, 1:maxcol]
 end
 
-end
+end # module DasScs
 
 
 "read POSMV data, esp. PASHR pitch, roll, heave messages"
@@ -783,7 +796,7 @@ function read_gyro_dict(fullfiles; nheader=0, nsample=sum(countlines.(fullfiles)
     return D
 end
 
-end
+end # module ShipPosmv
 
 
 "read fast pressure sensors"
@@ -854,19 +867,6 @@ function read_fps_data(pathfilename::Vector{<:AbstractString};
     end
 
     return psldt[1:nl], X[1:nl]
-end
-
-"""
-Concatenate Array variables from two Dicts into one
-along the dimension dim
-that are values of the same key of dict1 and dict2.
-"""
-function cat_dicts(dict1::Dict, dict2::Dict; dim=1)
-    result_dict = typeof(dict1)()
-    for key in intersect( keys(dict1), keys(dict2) )
-        result_dict[key] = cat(dict1[key], dict2[key], dims=dim)
-    end
-    return result_dict
 end
 
 end
