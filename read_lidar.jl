@@ -846,18 +846,70 @@ end # module read_vecnav
 module chunks
 
 using Dates
+using Statistics
 
 export read_stare_time, read_stare_chunk, dt_to_chunkind
 
+"result is x; set to missing iff i<thr"
+masklowi(x, i, thr=1.03) = i<thr ? missing : x
+
+"mean along dimension dims, skipping missing"
+missmean(X; dims=1) = mapslices(x -> mean(skipmissing(x)), X, dims=dims)
+
+"anomaly"
+anom(x; dims=1) = x.-mean(x; dims=dims)
+
+"find indices i such that each xl[i] is the first >= xs."
+function findindices(xs, xl)
+    # xs needles define quarries in haystack xl
+    xs = filter(x -> x<=last(xl), xs) # prefilter to avoid running off the end of xl
+    ind = zeros(Int64, size(xs))
+    i = 1
+    for (j,x) in enumerate(xs)
+        while xl[i] < x
+            i += 1
+        end
+        ind[j] = i
+    end
+    return ind
+end
+
+"average within +-half points of the index of xl"
+function indavg(xl, ind; half=5)
+    xm = zeros(Float64, size(ind))
+    for (i,idx) in enumerate(ind)
+        ii = max(1,idx-half) : min(length(xl),idx+half)
+        xm[i] = sum(Float64.(xl[ii])) / (2*half+1)
+    end
+    return xm
+end
+
+"""
+fit_offset(dt_lidar_chunk) returns offset (seconds) that lidar needs to advance to match the VN,
+using hardcoded linear fit derived from pitch solid-body rotation.
+"""
+function fit_offset(dt)
+    slope = -2.4805283261947786e-5
+    # 2 pieces
+    if dt < DateTime(2024,6,6,11,15)
+        origin_time   = DateTime(2024,5,1,23,51,47,117)
+        origin_offset = 143.8 #.8062
+    else
+        origin_time   = DateTime(2024,6,6,23,33,44,321)
+        origin_offset = 126.94
+    end
+    origin_offset + Dates.value(Millisecond(dt - origin_time))/1_000 * slope
+end
+
 """
 get_time_shift(mdv, heave) positive result means mdv clock is fast.
-sync by subtracting this lag (in 1020 millisecods) from stare_dt.
+sync by subtracting this lag from stare_dt.
 """
-function get_time_shift(mdv, heave)
+function get_time_shift(x, y)
     # filter to make xcorr work better
-    xc = xcorr(hp(mdv[:]), hp(heave[:]))
+    xc = xcorr(hp(x[:]), hp(y[:]))
     # plot(-(length(mdv)-1):length(mdv)-1, xc )
-    return argmax(xc) - length(mdv)
+    return argmax(xc) - length(x)
 end
 
 "return indices of contiguous chunks (separated by < thr) from a series of datetimes"
@@ -869,24 +921,15 @@ function dt_to_chunkind(dt, thr=Second(30))
 end
 
 "hourly files -> chunk time indices"
-function read_stare_time( St )
-    # Lidar clock is fast (ahead) by 126832 milliseconds compared to the GPS.
-    # Moving the timeseries backward (lagging the lidar) compensates its clock error.
-    # adjust the lidar clock backward to agee with the GPS clock.
-    lidar_clock_fast_by = Millisecond( 126832 ) # first adjustment
-    stare_dt = @. (
-        DateTime(Date(dt)) 
-        + Millisecond(round(Int64, St[:time] * 3_600_000 )) 
-        .- lidar_clock_fast_by ) # 3202
-
-    # split into individual stare chunks
-    # pickets = findall( t -> t>Second(30), diff(stare_dt) )
-    # # st = [1; pickets.+1] # ignore start and end of file with a split chunk
-    # # en = [pickets; length(stare_dt)]
-    # st_chunk = pickets[1:end-1] .+ 1
-    # en_chunk = pickets[2:end]
-    st_chunk, en_chunk = dt_to_chunkind(stare_dt)
+function read_stare_time( St, dt=Date(2024,5,1) )
+    # dt doesn't matter for dividing into chunk indices, as long as St[:time] is contiguous.
+    lidar_stare_dt = @. ( DateTime(Date(dt)) + Millisecond(round(Int64, St[:time] * 3_600_000 )) )
+    st_chunk, en_chunk = dt_to_chunkind(lidar_stare_dt) # individual stare chunk indices
     # subdivide into shorter chunks???
+
+    # Lidar clock is fast (ahead) by ~60-150 s compared to the GPS, 
+    # but don't need to adjust to compute indices of chunks.
+    # lidar_clock_fast_by = Millisecond( 1_000 * fit_offset(lidar_stare_dt[st_chunk]) ) # first adjustment
     return st_chunk, en_chunk
 end
 
@@ -897,31 +940,65 @@ subdivide(st,en, fac) = @. round(Integer, st + ((en-st)*(0:fac)/fac))
 # # test
 # subdivide(1,240, 4)
 
+# functions to fine sync the 20 Hz VN to the 1 Hz lidar
+"true for data that results in finite arithmetic"
+good(x) = !ismissing(x) && !isnan(x)
+
+"cov ignoring missing and NaNs"
+function goodcov(x, y)
+    nn = good.(x) .& good.(y)
+    xc = cov(x[nn], y[nn])
+end
+
+"covariance between x and yhi[ind] around central indices ind, optionally lagged by r"
+xcov(x, yhi, ind=eachindex(yhi), r=0) = goodcov(x, yhi[ind .+ r])
+"for iterable rr"
+xcov(x, yhi, ind, rr::AbstractVector) = [ xcov(x, yhi, ind, r) for r in rr ] # iterate over offsets
+
+"find optimal offset r within offset_range for fine yhi[ind+r] to sync with x"
+function finelagcov(x, yhi, ind, offset_range)
+    xc = xcov(x, yhi, ind, offset_range)
+    maxcov, fine_offset = findmax(xc)
+end
+
 "read and interpolate data to stare chunks"
-function read_stare_chunk(St, Vn, UV, st, en )
+function read_stare_chunk( dt::TimeType, St, Vn, UV, st, en, ntop=80 )
     # time: truncate the file's datestamp to Date, add the decimal hour
     stare_dt_raw = @. DateTime(Date(dt)) + Millisecond(round(Int64, St[:time] * 3_600_000 )) # 3202
-    lidar_clock_fast_by = Millisecond( 126832 ) # adjust for lidar clock fast (ahead) by 126832 milliseconds compared to the GPS.
-    stare_dt = stare_dt_raw .- lidar_clock_fast_by
+    # synchronize clocks using the previously calculated offset function
+    # lidar_clock_fast_by = Millisecond( 126832 ) # adjust for lidar clock fast (ahead) by 126832 milliseconds compared to the GPS.
+    lidar_clock_fast_by = Millisecond( round(Int64, 1_000 * fit_offset(stare_dt_raw[st])) )
+    stare_dt = stare_dt_raw .- lidar_clock_fast_by # synced to within 1 s
+    stare1dt = stare_dt[st:en] # subset
 
+    # pre-subset
+    vn_ind = findall( stare_dt[st]-Second(2) .<= Vn[:vndt] .<= stare_dt[en]+Second(2) )
+
+    # fine sync the 20 Hz VN to the 1 Hz lidar
+    # St[:pitch][st:en] #  1 Hz
+    # Vn[:roll][vn_ind] # 20 Hz
+    ind0 = findindices( stare1dt, Vn[:vndt][vn_ind] ) # main indices for VN
+    fine_offset_range = -20:20 # offset indices
+    maxcov, fine_offset = finelagcov(St[:pitch][st:en], Vn[:Roll][vn_ind], ind0, fine_offset_range)
+    # fine_offset not yet used!
+    
     # dopplervel (time, z) masked by intensity
     dopplervel = masklowi.(St[:dopplervel][st:en,1:ntop], St[:intensity][st:en,1:ntop])
     mdv = missmean(dopplervel, dims=2)[:] # conditional mean can have biases
 
     # interpolate Ur,Vr, heave to the lidar stare grid
-    ind = findindices( stare_dt[st:en], Vn["time"] )
-    pitch = indavg( Vn["pitch"], ind) # 11-point mean
-    roll  = indavg( Vn["roll" ], ind)
-    heave = indavg( Vn["heave"], ind)
-    # resync the clock to the VactorNav heave - brittle
-    stare1dt = stare_dt[st:en] # subset
-    ind = findindices( stare1dt, Vn["time"] )
-    heave = Vn["heave"][ind]
-    shift = get_time_shift(mdv[:],heave[:])
-    # interpolate for the updated synced time
-    stare1dt .-= Millisecond((1020-80)*shift)
-    ind = findindices( stare1dt, Vn["time"] ) # this works
-    heave = indavg( Vn["heave"], ind)
+    ind = ind0 .+ fine_offset
+    pitch = indavg( Vn[:Pitch], ind) # 11-point centered mean around ind
+    roll  = indavg( Vn[:Roll ], ind)
+    heave = indavg( Vn[:VelNED2], ind)
+    # # resync the clock to the VactorNav heave - brittle
+    # ind = findindices( stare1dt, Vn[:vndt] )
+    # heave = Vn[:VelNED2][ind] # nearest neighbor interp to lidar times
+    # shift = get_time_shift(mdv[:],heave[:]) # to nearest second, superfluous.
+    # # interpolate for the updated synced time
+    # stare1dt .-= Millisecond((1020-80)*shift)
+    # ind = findindices( stare1dt, Vn[:vndt] ) # this works
+    # heave = indavg( Vn[:VelNED2], ind)
 
     # mean relative velocity
     Ur = zeros(size(dopplervel))
