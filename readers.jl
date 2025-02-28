@@ -278,10 +278,19 @@ Concatenate Array variables from two Dicts into one
 along the dimension dim
 that are values of the same key of dict1 and dict2.
 """
-function cat_dicts(dict1::Dict, dict2::Dict; dim=1)
+function cat_dicts(dict1::Dict, dict2::Dict; dim=1) # binary method
     result_dict = typeof(dict1)()
     for key in intersect( keys(dict1), keys(dict2) )
         result_dict[key] = cat(dict1[key], dict2[key], dims=dim)
+    end
+    return result_dict
+end
+
+"concatenate the elements from a tuple of dicts"
+function cat_dict(TD::Tuple{Dict}; dim=1)
+    result_dict = typeof(TD[1])
+    for key in intersect(keys.(TD)...)
+        result_dict[key] = cat(getindex.(TD, key)..., dims=dim)
     end
     return result_dict
 end
