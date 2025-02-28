@@ -978,19 +978,22 @@ function read_stare_chunk( dt::TimeType, St, Vn, UV, st, en, ntop=80 )
     # St[:pitch][st:en] #  1 Hz
     # Vn[:roll][vn_ind] # 20 Hz
     ind0 = findindices( stare1dt, Vn[:vndt][vn_ind] ) # main indices for VN
-    fine_offset_range = -20:20 # offset indices
-    maxcov, fine_offset = finelagcov(St[:pitch][st:en], Vn[:Roll][vn_ind], ind0, fine_offset_range)
-    # fine_offset not yet used!
+    # fine_offset_range = -20:20 # offset indices
+    # maxcov, fine_offset = finelagcov(St[:pitch][st:en], Vn[:Roll][vn_ind], ind0, fine_offset_range)
+    # fine_offset seems to introduce phase errors
     
-    # dopplervel (time, z) masked by intensity
+    # dopplervel (time, z) masked by intensity threshold
     dopplervel = masklowi.(St[:dopplervel][st:en,1:ntop], St[:intensity][st:en,1:ntop])
     mdv = missmean(dopplervel, dims=2)[:] # conditional mean can have biases
 
     # interpolate Ur,Vr, heave to the lidar stare grid
-    ind = ind0 .+ fine_offset
-    pitch = indavg( Vn[:Pitch], ind) # 11-point centered mean around ind
-    roll  = indavg( Vn[:Roll ], ind)
-    heave = indavg( Vn[:VelNED2], ind)
+    # ind = ind0 .+ fine_offset
+    ind = ind0 #.- fine_offset
+    pitch = indavg( Vn[:Pitch][vn_ind], ind) # 11-point centered mean around ind
+    roll  = indavg( Vn[:Roll ][vn_ind], ind)
+    VelNED0 = indavg( Vn[:VelNED1][vn_ind], ind) # note VN mounted 90-degrees off
+    VelNED1 = indavg( Vn[:VelNED0][vn_ind], ind)
+    VelNED2 = indavg( Vn[:VelNED2][vn_ind], ind) # +down
     # # resync the clock to the VactorNav heave - brittle
     # ind = findindices( stare1dt, Vn[:vndt] )
     # heave = Vn[:VelNED2][ind] # nearest neighbor interp to lidar times
@@ -1020,7 +1023,7 @@ function read_stare_chunk( dt::TimeType, St, Vn, UV, st, en, ntop=80 )
     Vr[.!isf] .= mean(Vr[isf])
     Ur[.!isf] .= mean(Ur[isf])
     
-    return dopplervel, pitch, roll, heave, Ur, Vr, mdv
+    return dopplervel, pitch, roll, VelNED0, VelNED1, VelNED2, Ur, Vr, mdv
 end
 
 end # module chunks
