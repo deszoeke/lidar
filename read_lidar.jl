@@ -849,6 +849,7 @@ using Dates
 using Statistics
 
 export read_stare_time, read_stare_chunk, dt_to_chunkind
+export fit_offset
 
 "result is x; set to missing iff i<thr"
 masklowi(x, i, thr=1.03) = i<thr ? missing : x

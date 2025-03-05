@@ -16,7 +16,7 @@ using Interpolations
 # using MAT
 # using PyPlot
 
-export grid_search
+export grid_search, meandt
 
 # helper functions
 pd = permutedims
