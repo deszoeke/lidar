@@ -607,7 +607,7 @@ function read_lidar_chunks(files, firstdtq, lastdtq)
 
     # sort the chunks by file
 
-    # Subset the data within the file to the reuqested chunks
+    # Subset the data within the file to the requested chunks
     # could be done by skipping to start_beam, and stopping at stop_beam.
     ibeam1 = ta[:ibeam1]
     # not needed:
@@ -658,6 +658,12 @@ hour_beams(ta::Dict) = hour_beams(ta[:time], ta[:ibeam1], ta[:start_time])
 function all_gaps(t)
     ien = findall( diff(t) .> 0.01 ) # gap of more than a few tens of seconds
     ist = ien .+ 1 # start of the next chunk
+    return ien, ist
+end
+
+function all_gaps(dt::Vector{DateTime})
+    ien = findall( diff(dt) .> Seconds(36) )
+    ist = ien .+ 1
     return ien, ist
 end
 
