@@ -13,7 +13,8 @@ doc
 data
 lidar2019/plots/
 lidar2019/data/
-#epsilon_data/
+epsilon_data/
+pluto
 
 VectorNavTable.jld2
 doc/VN300 User Manual (UM3000-R0).pdf
