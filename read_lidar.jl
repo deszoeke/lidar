@@ -662,7 +662,7 @@ function all_gaps(t)
 end
 
 function all_gaps(dt::Vector{DateTime})
-    ien = findall( diff(dt) .> Seconds(36) )
+    ien = findall( diff(dt) .> Second(36) )
     ist = ien .+ 1
     return ien, ist
 end
