@@ -991,7 +991,9 @@ function read_stare_chunk( dt::TimeType, St, Vn, UV, st, en, ntop=80 )
     
     # dopplervel (time, z) masked by intensity threshold
     dopplervel = masklowi.(St[:dopplervel][st:en,1:ntop], St[:intensity][st:en,1:ntop])
-    mdv = missmean(dopplervel, dims=2)[:] # conditional mean can have biases
+    # mdv = missmean(dopplervel, dims=2)[:] # conditional mean can have biases
+    jj = all( isfinite.(dopplervel), dims=1) # heights with all good data
+    mdv = mean(dopplervel[:,jj], dims=2)[:] # mean of filled heights
 
     # interpolate Ur,Vr, heave to the lidar stare grid
     # ind = ind0 .+ fine_offset
