@@ -971,12 +971,13 @@ end
 "read and interpolate data to stare chunks"
 function read_stare_chunk( dt::TimeType, St, Vn, UV, st, en, ntop=80 )
     # time: truncate the file's datestamp to Date, add the decimal hour
+    nx = length( St[:time] )
     stare_dt_raw = @. DateTime(Date(dt)) + Millisecond(round(Int64, St[:time] * 3_600_000 )) # 3202
     # synchronize clocks using the previously calculated offset function
     # lidar_clock_fast_by = Millisecond( 126832 ) # adjust for lidar clock fast (ahead) by 126832 milliseconds compared to the GPS.
     lidar_clock_fast_by = Millisecond( round(Int64, 1_000 * fit_offset(stare_dt_raw[st])) )
     stare_dt = stare_dt_raw .- lidar_clock_fast_by # synced to within 1 s
-    stare1dt = stare_dt[st:en] # subset
+    stare1dt = stare_dt[mod1.(st:en, nx)] # subset
 
     # pre-subset
     vn_ind = findall( stare_dt[st]-Second(2) .<= Vn[:vndt] .<= stare_dt[en]+Second(2) )
