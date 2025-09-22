@@ -57,6 +57,9 @@ end
 
 "read and interpolate data to stare chunks"
 function read_stare_chunk( dt::TimeType, St, Vn, UV, st, en, ntop=80 )
+    noisethr = 1.03
+    f(x) = !ismissing(x) && x > noisethr
+
     # 2025 09 20
     stare_dt_raw = @. DateTime(Date(dt)) + Millisecond(round(Int64, St[:time][st:en] * 3_600_000 )) # 3202
     # synchronize clocks using the previously calculated offset function
@@ -67,7 +70,8 @@ function read_stare_chunk( dt::TimeType, St, Vn, UV, st, en, ntop=80 )
 
     # dopplervel (time, z) masked by intensity threshold
     dopplervel = masklowi.(St[:dopplervel][st:en,1:ntop], St[:intensity][st:en,1:ntop])
-    mdv = get_mdv(f, St[:intensity][st:en,1:ntop], dopplervel)[:]
+    pr_(v) = ismissing(v) ? v : v[:]
+    mdv = pr_( get_mdv(f, St[:intensity][st:en,1:ntop], dopplervel) )
 
     # pre-subset
     vn_ind = findall( stare1dt[1]-Second(2) .<= Vn[:vndt] .<= stare1dt[end]+Second(2) )
@@ -916,7 +920,9 @@ function pcolor_lidar_stare(fig, beams, LidarDt, st, en, noisethr=1.03)
     # get data
     height = beams[:height]
     # subset the variables for the present chunk
-    time = beams[:time][st:en] # decimal hours
+    tmp = beams[:time][st:en] # decimal hours
+    # re-center around first time
+    time = tmp[1] .+ (mod.(tmp .- tmp[1] .+ 0.5, 1.0) .- 0.5) # hours
     kys = Symbol.(split("beta dopplervel intensity"))
     (beta, dopplervel, intensity) = (beams[k][st:en,:] for k in kys)
     noisemask = intensity .>= noisethr
@@ -931,8 +937,11 @@ function pcolor_lidar_stare(fig, beams, LidarDt, st, en, noisethr=1.03)
     clf()
     # plot_stare(time, height, beta, dopplervel, intensity)
     subplot(2,1,1)
-    pcolormesh((time.%1)*60, height[4:end]/1e3, pd(beta[:,4:end]),
+    pcolormesh(time*60, height[4:end]/1e3, pd(beta[:,4:end]),
         cmap=ColorMap("RdYlBu_r"), vmin=0, vmax=0.2*maximum(beta[:,4:end]))
+    xtl = round(time[1]*60) : 1 : round(time[end]*60)
+    xticks(xtl)
+    gca().set_xticklabels(xtl.%60)
     ylim([0, 2])
     ylabel("height (km)")
     xlabel("time (minute)")
@@ -941,8 +950,11 @@ function pcolor_lidar_stare(fig, beams, LidarDt, st, en, noisethr=1.03)
 
         # true for valid, false for noise
     subplot(2,1,2)
-    pcolormesh((time.%1)*60, height[4:end]/1e3, pd(nannoise.(noisemask, vel)[:,4:end]),
+    pcolormesh(time*60, height[4:end]/1e3, pd(nannoise.(noisemask, vel)[:,4:end]),
         cmap=ColorMap("RdYlBu_r"), vmin=-2, vmax=2)
+    xtl = round(time[1]*60) : 1 : round(time[end]*60)
+    xticks(xtl)
+    gca().set_xticklabels(xtl.%60)
     ylim([0, 2])
     ylabel("height (km)")
     xlabel("time (minute)")
@@ -1006,70 +1018,85 @@ icvn = findfirst( dtime_st .>= Vn[:vndt][1] ):findlast( dtime_en .<= Vn[:vndt][e
 # periodic buffer for data
 nx = 4000 
 nz = 80
-# x = zeros(nx,nz) # Doppler vel, backscatter, etc.
-# P = PeriodicMatrix( x )
-# dtx = PeriodicVector( fill(DateTime(0), nx) )
-beams = init_periodic_beams(nx, nz)
-h = Dict # initialize globals
-bb = 1:1
 
-# TKE dissipation chunk output data array
-epsi_tmp = zeros(Float64, length(iens), nz) .- 5 
-# -5 is uncomputed missing value.
-# Record posibilities for why dissipation could be missing as sentinel
-# negative values, since physical TKE dissipation is always positive.
-indmiss(x) = ismissing(x) ? -3 : x # individually missing calculated values = -3
+let # local scope
+    # x = zeros(nx,nz) # Doppler vel, backscatter, etc.
+    # P = PeriodicMatrix( x )
+    # dtx = PeriodicVector( fill(DateTime(0), nx) )
+    h = read_lidar.read_streamlinexr_head(ff[1]) # initialize globals
+    beams = init_periodic_beams(nx, nz)
 
-fig = gcf()
+    # TKE dissipation chunk output data array
+    epsi_tmp = zeros(Float64, length(iens), nz) .- 5 
+    # -5 is uncomputed missing value.
+    # Record posibilities for why dissipation could be missing as sentinel
+    # negative values, since physical TKE dissipation is always positive.
+    indmiss(x) = ismissing(x) ? -3 : x # individually missing calculated values = -3
 
-ifile = 0
-bigind_file_end = 0 # forces initial read in loop
-bigind_file_start = 0
-ifile = 176
-bigind_file_end = 0 # forces initial read in loop
-for ic in 1055:5793 # icvn # eachindex(iens[1:15]) # loop over all chunks in the record
-    ien = iens[ic]; ist = ists[ic]
-    while ien > bigind_file_end # need to load more data
-        global ifile, bigind_file_end, bigind_file_start, h, bb, beams
+    fig = gcf()
 
-        # increment file
-        ifile += 1
-        bigind_file_end = bigind_file_ends[ifile]
-        bigind_file_start  = bigind_file_starts[ ifile]
-        print("\nfile $(ifile) $(bigind_file_start)---$(bigind_file_end) chunk ")
-        # load data
-        h = read_lidar.read_streamlinexr_head(ff[ifile])
-        bb = bigind_file_start:bigind_file_end
-        read_streamlinexr_stare!(ff[ifile], h, beams, bb)
-        # beams[:key][bb] is the data loaded for this file
-        # beams[:key][ist:ien] is the data for a chunk
-    end
-    # process one chunk
-    print("$(ist)-$(ien) ")
-
-    # compute dissipation for the chunk
-    # try # read a chunk, collocate wind and VN data
-        # read_stare_chunk organizes and aligns lidar, motion, and wind data
-        # should also work for periodic arrays in beams
-        dt = Date(h[:start_time])
-        dopplervel, pitch, roll, vn0, vn1, vn2, Ur, Vr, mdv = read_stare_chunk( dt, beams, Vn, UV, ist, ien )
-        if any(isfinite.(Ur)) && any(isfinite.(Vr)) # there is wind data
-            w = dopplervel .- mdv 
-            D2bin, rhobin, A, noise = D2_rho_stare( w, pitch*pi/180, roll*pi/180, Ur, Vr )
-            epsi_tmp[ic,:] .= @. indmiss( epsilon(max(0,A)) )
-            # sets individually missing dissipation values to -3
-        else
-            epsi_tmp[ic,:] .= -4 # code for missing wind
+    # start from beginning of cruise
+    ifile = 1
+    bigind_file_end = bigind_file_ends[ifile] # forces initial read in loop
+    bigind_file_start = bigind_file_starts[ifile]
+    #=
+    # test nasssty litte casessses
+    # special treatment for starting in the middle
+    ifile = 187
+    bigind_file_end = bigind_file_ends[ifile]
+    bigind_file_start = bigind_file_starts[ifile]
+    =#
+    # initial read
+    tmp = read_lidar.read_streamlinexr_head(ff[ifile])
+    [ h[k] = tmp[k] for k in keys(h) ] # update h wo rebinding it
+    bb = bigind_file_start:bigind_file_end
+    read_streamlinexr_stare!(ff[ifile], h, beams, bb)
+    for ic in icvn #1118:5793 # icvn # eachindex(iens[1:15]) # loop over all chunks in the record
+        ien = iens[ic]; ist = ists[ic]
+        if ien > bigind_file_end # need to load more data; if doesn't create local scope
+            while ien > bigind_file_end # need to load more data
+                ifile += 1
+                bigind_file_end = bigind_file_ends[ifile]
+            end
+            bigind_file_start  = bigind_file_starts[ifile]
+            print("\nfile $(ifile) $(bigind_file_start)---$(bigind_file_end) chunk ")
+            # load data
+            tmp = read_lidar.read_streamlinexr_head(ff[ifile])
+            [ h[k] = tmp[k] for k in keys(h) ] # update h wo rebinding it
+            bb = bigind_file_start:bigind_file_end
+            read_streamlinexr_stare!(ff[ifile], h, beams, bb)
+            # beams[:key][bb] is the data loaded for this file
+            # beams[:key][ist:ien] is the data for a chunk
         end
-    # catch
-    #         epsi_tmp[ic,:] .= -5 # code for missing data, probably VN missing
-    # end
+        # process one chunk
+        print("$(ist)-$(ien) ")
 
-    # make and save figure for the chunk, stamped with the chunk start time
-    clf()
-    pcolor_lidar_stare(fig, beams, LidarDt, ist, ien)
-    dstr = Dates.format(LidarDt["dtime"][ist], dateformat"yyyymmdd_HHMM")
-    savefig(joinpath("data","plot","Chunk1_$(dstr).png"))
+        # compute dissipation for the chunk
+        # try # read a chunk, collocate wind and VN data
+            # read_stare_chunk organizes and aligns lidar, motion, and wind data
+            # should also work for periodic arrays in beams
+            dt = Date(h[:start_time])
+            # print(beams[:time][ist], ", ",beams[:time][ien], ", ") # OK
+            # print(UV[:ur][1,1]) # probably OK
+            dopplervel, pitch, roll, vn0, vn1, vn2, Ur, Vr, mdv = read_stare_chunk( dt, beams, Vn, UV, ist, ien )
+            if any(isfinite.(Ur)) && any(isfinite.(Vr)) # there is wind data
+                w = dopplervel .- mdv
+                D2bin, rhobin, A, noise = D2_rho_stare( w, pitch*pi/180, roll*pi/180, Ur, Vr )
+                epsi_tmp[ic,:] .= @. indmiss( epsilon(max(0,A)) )
+                # sets individually missing dissipation values to -3
+            else
+                epsi_tmp[ic,:] .= -4 # code for missing wind
+            end
+        # catch
+        #         epsi_tmp[ic,:] .= -5 # code for missing data, probably VN missing
+        # end
+
+        # make and save figure for the chunk, stamped with the chunk start time
+        clf()
+        pcolor_lidar_stare(fig, beams, LidarDt, ist, ien)
+        dstr = Dates.format(LidarDt["dtime"][ist], dateformat"yyyymmdd_HHMM")
+        savefig(joinpath("data","plot","Chunk1_$(dstr).png"))
+    end
 end
 
 epsi = epsi_tmp

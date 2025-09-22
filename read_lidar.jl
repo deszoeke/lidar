@@ -51,7 +51,7 @@ function read_streamlinexr_head(file_path)
     # put the header in a Dict
     h = Dict(
         :nlines => countlines(file_path),
-        :nheaderlines => 
+        :nheaderlines => 17,
         # variables defined outside the do block, defaults will be overwritten.
         :ngates => Int32(104),
         :gatelength => 30.0,
