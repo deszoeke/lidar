@@ -17,6 +17,11 @@ using .read_lidar
 using .read_lidar.stare
 using .read_vecnav: read_vecnav_dict
 import .chunks
+# explicitly load into Main global scope
+read_stare_time  = Main.chunks.read_stare_time
+# read_stare_chunk = Main.chunks.read_stare_chunk # redefined below
+fit_offset = Main.chunks.fit_offset
+
 include("./timing_lidar.jl")
 using .timing_lidar
 include("./readers.jl")
@@ -35,30 +40,70 @@ function PyObject(a::Array{Union{T,Missing},N}) where {T,N}
     pycall(numpy_ma.array, Any, coalesce.(a,zero(T)), mask=ismissing.(a))
 end
 
-#   Transform from ship inertial (external) to a lidar body (gimbaled) frame
-#   ––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––––
-# 
-#   Paraphrasing VectorNav paragraph on their coordinate system,
-# 
-#   │  There are many different combinations of Euler angles, however,
-#   │  the (3-2-1) set of Euler angles corresponding to yaw-pitch-roll is
-#   │  considered to be the standard, especially in terrestrial
-#   │  applications. These rotations are applied sequentially in a
-#   │  particular order, with each rotation specified about the specified
-#   │  body frame axis as it exists following the previous rotations.
-#   │  Figure 2.5a shows the body frame and NED frame initially aligned.
-#   │  Figure 2.5b shows the yaw rotation around the [original] Z1-axis.
-#   │  This is followed in Figure 2.5c by the pitch rotation about the
-#   │  new Y2-axis. Finally, there is a roll rotation about the newest
-#   │  X3-axis in Figure 2.5d to achieve the final orientation of the
-#   │  aircraft.
-# 
-#   [https://www.vectornav.com/resources/inertial-navigation-primer/math-fundamentals/math-attituderep#:~:text="Euler%20Angles%20(Yaw%2DPitch%2D,final%20orientation%20of%20the%20aircraft."](https://www.vectornav.com/resources/inertial-navigation-primer/math-fundamentals/math-attituderep#:~:text="Euler%20Angles%20(Yaw%2DPitch%2D,final%20orientation%20of%20the%20aircraft.")
-# 
-#   Then from
-#   (https://www.vectornav.com/resources/inertial-navigation-primer/examples/atttransform)[https://www.vectornav.com/resources/inertial-navigation-primer/examples/atttransform]
-#   the rotation matrix is formed by a series of left-multiplications, with the
-#   first rotation being the yaw (Z1) rotation.
+# redefine read_stare_chunk
+"""
+Motion from Doppler velocity, by inferring displacement of the median velocity 
+by the platform motion at each time.
+"""
+function get_mdv(f, intensity, dopplervel)
+    # levels with Doppler data at all times in the chunk
+    goodlevels = findall(all(f, intensity; dims=1)[:]) # bool --> indices
+    # median over whole chunk, continuously available levels
+    chunkmedian = median(dopplervel[:,goodlevels]) # over both dims
+    # median over vertical dim at each time
+    timeslicemedian = median(dopplervel[:,goodlevels], dims=2)
+    mdv = timeslicemedian .- chunkmedian
+end
+
+"read and interpolate data to stare chunks"
+function read_stare_chunk( dt::TimeType, St, Vn, UV, st, en, ntop=80 )
+    # 2025 09 20
+    stare_dt_raw = @. DateTime(Date(dt)) + Millisecond(round(Int64, St[:time][st:en] * 3_600_000 )) # 3202
+    # synchronize clocks using the previously calculated offset function
+    # lidar_clock_fast_by = Millisecond( 126832 ) # adjust for lidar clock fast (ahead) by 126832 milliseconds compared to the GPS.
+    lidar_clock_fast_by = Millisecond( round(Int64, 1_000 * fit_offset(stare_dt_raw[1])) )
+    stare_dt = stare_dt_raw .- lidar_clock_fast_by # synced to within 1 s
+    stare1dt = stare_dt[:] # subset
+
+    # dopplervel (time, z) masked by intensity threshold
+    dopplervel = masklowi.(St[:dopplervel][st:en,1:ntop], St[:intensity][st:en,1:ntop])
+    mdv = get_mdv(f, St[:intensity][st:en,1:ntop], dopplervel)[:]
+
+    # pre-subset
+    vn_ind = findall( stare1dt[1]-Second(2) .<= Vn[:vndt] .<= stare1dt[end]+Second(2) )
+    if length(vn_ind) > 0
+        ind = findindices( stare1dt, Vn[:vndt][vn_ind] ) # main indices for VN
+        pitch = indavg( Vn[:Pitch][vn_ind], ind) # 11-point centered mean around ind
+        roll  = indavg( Vn[:Roll ][vn_ind], ind)
+        VelNED0 = indavg( Vn[:VelNED1][vn_ind], ind) # note VN mounted 90-degrees off
+        VelNED1 = indavg( Vn[:VelNED0][vn_ind], ind)
+        VelNED2 = indavg( Vn[:VelNED2][vn_ind], ind) # +down
+    else # no motion data
+        pitch = roll = VelNED0 = VelNED1 = VelNED2 = fill(missing, length(stare1dt))
+    end
+
+    # mean relative velocity
+    Ur = zeros(size(dopplervel))
+    Vr = zeros(size(dopplervel))
+    ind = findindices( Dates.value.(stare1dt), Dates.value.(UV["time"]))
+    # result must be 1:1 for stare1dt and ind
+    ls = length(stare1dt)
+    li = length(ind)
+    if li < ls # extend ind with last index of UV
+        ind = [ind; length(UV["time"]).+zeros(Int32, ls-li)]
+    end
+    for ih in 1:ntop # loop to broadcast to consistent size
+        Ur[:,ih] .= UV[:ur][ih, ind] # 2025 09 20 fixed swapped subscripts
+        Vr[:,ih] .= UV[:vr][ih, ind]
+    end
+
+    # questionable: fill all the mean relative velocities
+    isf = isfinite.(Vr)
+    Vr[.!isf] .= mean(Vr[isf])
+    Ur[.!isf] .= mean(Ur[isf])
+    
+    return dopplervel, pitch, roll, VelNED0, VelNED1, VelNED2, Ur, Vr, mdv
+end
 
 # function library with utility functions,  functions for subsetting, for displacements, and for structure functions
 
@@ -115,11 +160,16 @@ by the platform motion at each time.
 function get_mdv(f, intensity, dopplervel)
     # levels with Doppler data at all times in the chunk
     goodlevels = findall(all(f, intensity; dims=1)[:]) # bool --> indices
-    # median over whole chunk, continuously available levels
-    chunkmedian = median(dopplervel[:,goodlevels]) # over both dims
-    # median over vertical dim at each time
-    timeslicemedian = median(dopplervel[:,goodlevels], dims=2)
-    mdv = timeslicemedian .- chunkmedian
+    if length(goodlevels) < 5
+        mdv = missing # not enough levels with data
+    else
+        # median over whole chunk, continuously available levels
+        chunkmedian = median(dopplervel[:,goodlevels]) # over both dims
+        # median over vertical dim at each time
+        timeslicemedian = median(dopplervel[:,goodlevels], dims=2)
+        mdv = timeslicemedian .- chunkmedian
+    end
+    return mdv
 end
 # UNTESTED!!
 # This modification circumvents issues with sampling and better separates the motion estimate
@@ -127,8 +177,23 @@ end
 # unchanged, and the Doppler velocity is merely shifted at each time by the platform motion,
 # but with zero average shift since mean(motion) = median(motion) = 0.
 
-remove_mdv(f, intensity, dopplervel) = dopplervel .- get_mdv(f, intensity, dopplervel)
-remove_mdv!(f, intensity, dopplervel) = (dopplervel .-= get_mdv(f, intensity, dopplervel))
+# Remove median Doppler velocity.
+# Still plot dopplervel even if mdv scalar missing
+# prevents dissipation calculation.
+function remove_mdv(f, intensity, dopplervel)
+    mdv = get_mdv(f, intensity, dopplervel)
+    if ismissing(mdv)
+        return dopplervel # not enough good data to compute mdv
+    else
+        return dopplervel .- mdv
+    end
+end
+function remove_mdv!(f, intensity, dopplervel)
+    mdv = get_mdv(f, intensity, dopplervel)
+    if !ismissing(mdv)
+        dopplervel .-= mdv
+    end
+end
 
 "anomaly"
 anom(x; dims=1) = x.-mean(x; dims=dims)
@@ -328,7 +393,8 @@ ci1,ci2, li1,li2, it1,iz1,it2,iz2 = lidarindices(1000, 80)
 
 # functions for displacments and structure functions 
 
-rangegate = 24.0 # for ASTRAL 2024 Halo Photonics StreamLineXR
+rangegate = 24.0 # m # for ASTRAL 2024 Halo Photonics StreamLineXR
+timestep = 1.02 # s # time between samples
 
 """
 zm, dr2, dz2, D2 = displacements( ci1,ci2, Udt,Vdt, pitch,roll, w; rangegate=rangegate)
@@ -366,6 +432,89 @@ end
 
 "dr^2/3 (1-(dz/dr)^2/4) displacement function for computing dissipation from structure function pairs"
 rhopair(dr2, dz2) = dr2^(1/3) * (1 - dz2/(4*dr2))
+
+# structure function dissipation functions
+
+# stucture function constants
+C2ll = 2.0
+epsilon(A) = sqrt(3/4 * A/C2ll)^3
+# struf(epsilon, r,r1) = C2ll * epsilon^(2/3) * r^(2/3) * (4 - (r1/r)^2)/3
+# instruf(w1,w2) = (w1-w2)^2
+# rho(r1,r) = r^(2/3) * (1 - ((r1/r)^2)/4)
+# zmid(z1,z2) = (z1 + z2) / 2
+# plot bin averaged instruf vs rho
+# fit 
+# D = A*rho + noise
+# for A and noise
+# A = 4/3 * C2ll * epsilon^(2/3)
+
+"bin average D2 in equally-populated bins of rho"
+function equal_bin(rho, D2; nbin=200, nbin_out_max=17 )
+    ii = findall(.!ismissing.(rho) .& .!ismissing.(D2) )
+    nrho = length(ii)
+    if nrho >= 20
+        sp = sortperm(rho[ii])
+        srho = rho[ii][sp]
+        step = max(1,round(Int32,nrho/nbin))
+        rhobin = [ 0; rho[ii][sp[step:step:nrho]] ]
+        jj = findall(.!ismissing.(rhobin) .& isfinite.(rhobin))
+        D2inbin = binavg(D2[ii], rho[ii], rhobin[jj])
+        rhoinbin = binavg(rho[ii], rho[ii], rhobin[jj])
+        nbin_out = min(nbin_out_max, length(rhobin))
+        return nbin_out, rhobin[1:nbin_out], D2inbin[1:nbin_out], rhoinbin[1:nbin_out]
+    else
+        return 1, [missing], [missing], [missing]
+    end
+end
+
+"""
+structure function D2, rho, A, epsilon at each level from w stare
+D2bin, rhobin, A, noise = D2_rho_stare( w, pitch, roll, Ur, Vr; out=17 )
+"""
+function D2_rho_stare( w, pitch, roll, Ur, Vr; nbin_out_max=17 )
+
+    nbin_out = nbin_out_max
+    
+    (nt, nz) = size(w)
+    A      = Vector{Union{Missing,Float64}}(missing, nz)
+    noise  = Vector{Union{Missing,Float64}}(missing, nz)
+    rhobin = Matrix{Union{Missing,Float64}}(missing, nbin_out, nz)
+    D2bin  = Matrix{Union{Missing,Float64}}(missing, nbin_out, nz)
+    for izo in 1:nz # loop vertically
+        #=
+        ci1,ci2, li1,li2, it1,iz1,it2,iz2 = lidarindices(nt, nz, izo) # might do outside the loop
+        zm, dr2, dz2, D2 = displacements( ci1,ci2, Ur*timestep,Vr*timestep,
+                                          pitch,roll, w; timestep=timestep )
+        rho = rhopair.(dr2, dz2) # approx r^2/3
+        # bin average str fcn D2 in equally-populated bins of rho
+        @show size(rho), size(D2)
+        rhobin_, D2inbin_, rhoinbin_ = equal_bin(rho, D2)
+        rhobin[:,izo] .= rhoinbin_[1:nbin_out]
+        D2bin[ :,izo] .= D2inbin_[ 1:nbin_out]
+        # regress to get A
+        ii = .!ismissing.(rhobin[:,izo]) .& .!ismissing.(D2bin[:,izo])
+        if sum(ii) > 2
+            A[izo] = anom(rhobin[:,izo][ii]) \ anom(D2bin[:,izo][ii])
+            noise[izo] = mean(D2bin[:,izo][ii]) - A[izo] * mean(rhobin[:,izo][ii]) # noise
+        end
+        =#
+        ci1,ci2, li1,li2, it1,iz1,it2,iz2 = lidarindices(nt, nz, izo) # might do outside the loop
+        zm, dr2, dz2, D2 = displacements( ci1,ci2, Ur*timestep,Vr*timestep,
+                                          pitch,roll, w; timestep=timestep )
+        rho = rhopair.(dr2, dz2) # approx r^2/3
+        # bin average str fcn D2 in equally-populated bins of rho
+        nbin_actual, rhobin_, D2inbin_, rhoinbin_ = equal_bin(rho, D2; nbin_out_max=nbin_out_max)
+        rhobin[1:nbin_actual,izo] .= rhoinbin_
+        D2bin[ 1:nbin_actual,izo] .= D2inbin_
+        # regress to get A
+        ii = .!ismissing.(rhobin[1:nbin_actual,izo]) .& .!ismissing.(D2bin[1:nbin_actual,izo])
+        if sum(ii) > 2
+            A[izo] = anom(rhobin[1:nbin_actual,izo][ii]) \ anom(D2bin[1:nbin_actual,izo][ii])
+            noise[izo] = mean(D2bin[1:nbin_actual,izo][ii]) - A[izo] * mean(rhobin[1:nbin_actual,izo][ii]) # noise
+        end
+    end
+    return D2bin, rhobin, A, noise
+end
 
 # functions for subsetting and finding the offset with max covariance
 # newer: 2025-02
@@ -460,6 +609,7 @@ dtl, yl, dts, ys = load_vn_lidar_data(thisdt, Vn)
 limdt = thisdt + Hour(1) + Minute(1) .+ Minute.([0, 3])
 
 # test computing one covariance
+#=
 offset = Second(126)
 
 jl = findall(limdt[1] .<= dtl-offset .<= limdt[2])
@@ -485,6 +635,7 @@ plot(Dates.value.(rangeoffset), rangecovs)
 plot(Dates.value.(rangeoffset[imax]), maxcov, marker="o")
 title("max=$(maxcov), std=$(std(rangecovs))")
 gcf()
+=#
 
 #   Positive offsets make the l window select from forward in the original l
 #   timeseries, and shift the data in this window backward to compare with an
@@ -548,17 +699,6 @@ else
     LidarDt = load("lidar_dt.jld2")
 end
 
-# fix ist, ien
-if false # only needs to be fixed once
-    dtime = LidarDt["dtime"]
-    ien, ist = all_gaps(LidarDt["dtime"]) # the gaps
-    # cat first and last time indices
-    ist = [1; ist]
-    ien = [ien; length(dtime)]
-    # [ist ien]
-    @save "lidar_dt.jld2" dtime ist ien
-end
-
 # part out the data among the individual files
 lidarstemdir = "./data"
 starefiles = filter(startswith("Stare_116_"), readdir(joinpath(lidarstemdir, "all")))
@@ -573,6 +713,7 @@ else # slow reload
     nheaderlines = 17
     # read number of lines for each file
     for (i,file) in enumerate(ff)
+        global h, ngates
         h = read_lidar.read_streamlinexr_head(file)
         nlines = h[:nlines]
         ngates = h[:ngates]
@@ -813,8 +954,7 @@ end
 
  # check indices loop through chunks. advance to next file as data is needed
  # BUT do nothing
-
-if false
+#=
 let
     bigind_file_ends = FileInds["bigind_file_end"]
     bigind_file_starts  = FileInds["bigind_file_start" ]
@@ -840,10 +980,10 @@ let
         print("$(ist)-$(ien) ")
     end
 end
-end
+=#
 
 # load cruiselong data
-if false | true # save time
+if false | true # do once, otherwise save time
     Vn = read_vecnav_dict() # Dict{Symbol, Any}
     # load all-2024 relative horizontal winds
     UV = NCDataset(joinpath("data/netcdf", "ekamsat_lidar_uv_20240428-20240604.nc")) # NCDataset
@@ -858,59 +998,8 @@ LidarDt["dtime"]
 dtime_st = LidarDt["dtime"][ists]
 dtime_en = LidarDt["dtime"][iens]
 
-# when VectorNav data is available
+# chunk indices for which VectorNav data is available
 icvn = findfirst( dtime_st .>= Vn[:vndt][1] ):findlast( dtime_en .<= Vn[:vndt][end] )
-dtime_st[1], Vn[:vndt][1]
-
-clf()
-plot(beams[:time][:])
-plot(ismissing.(beams[:time][:])) # bc times not read yet
-gcf()
-
-# test 1 file
-fig = gcf()
-ifile = 1
-bigind_file_end = bigind_file_ends[ifile]
-bigind_file_start  = bigind_file_starts[ ifile]
-print("\nfile $(ifile) $(bigind_file_start)---$(bigind_file_end) chunk ")
-# load data
-h = read_lidar.read_streamlinexr_head(ff[ifile])
-dt = Date(h[:start_time])
-bb = bigind_file_start:bigind_file_end
-read_streamlinexr_stare!(ff[ifile], h, beams, bb)
-ic = icvn[1]
-ist = ists[ic]; ien = iens[ic]
-dopplervel, pitch, roll, vn0, vn1, vn2, Ur, Vr, mdv = read_stare_chunk( dt, beams, Vn, UV, ist, ien , 80)
-
-if any(isfinite.(Ur)) && any(isfinite.(Vr)) # there is wind data
-    w = dopplervel .- mdv 
-    D2bin, rhobin, A, noise = D2_rho_stare( w, pitch*pi/180, roll*pi/180, Ur, Vr )
-    epsi_tmp[ic,:] .= @. epsilon.(max(0,A))
-else
-    epsi_tmp[ic,:] .= -4 # code for missing wind
-end
-
-# plots OK
-clf()
-pcolor_lidar_stare(fig, beams, LidarDt, bigind_file_start, bigind_file_end)
-gcf()
-
-
-# recompute mdv - should be same as returned by read_stare_chunk
-# jj = all( isfinite.(dopplervel), dims=1) # heights with all good data
-# mdv = mean(dopplervel[:,jj], dims=2)[:] # mean of filled heights --> replace with median
-if any(isfinite.(Ur)) && any(isfinite.(Vr)) # there is wind data
-    w = dopplervel .- mdv 
-    D2bin, rhobin, A, noise = D2_rho_stare( w, pitch*pi/180, roll*pi/180, Ur, Vr )
-    epsi_tmp[ic,:] .= @. epsilon.(max(0,A))
-else
-    epsi_tmp[ic,:] .= -4 # code for missing wind
-end
-
-# plots OK
-clf()
-pcolor_lidar_stare(fig, beams, LidarDt, bigind_file_start, bigind_file_end)
-gcf()
 
 # loop through all chunks, load next file as data is needed
 
@@ -921,16 +1010,28 @@ nz = 80
 # P = PeriodicMatrix( x )
 # dtx = PeriodicVector( fill(DateTime(0), nx) )
 beams = init_periodic_beams(nx, nz)
+h = Dict # initialize globals
+bb = 1:1
 
-# TKE dissipation output data array
-epsi_tmp = zeros(Float64, length(iens), nz) .- 5 # dissipation for chunks; -5 is missing value
+# TKE dissipation chunk output data array
+epsi_tmp = zeros(Float64, length(iens), nz) .- 5 
+# -5 is uncomputed missing value.
+# Record posibilities for why dissipation could be missing as sentinel
+# negative values, since physical TKE dissipation is always positive.
+indmiss(x) = ismissing(x) ? -3 : x # individually missing calculated values = -3
+
 fig = gcf()
 
 ifile = 0
 bigind_file_end = 0 # forces initial read in loop
-for ic in icvn # eachindex(iens[1:15]) # loop over all chunks in the record
+bigind_file_start = 0
+ifile = 176
+bigind_file_end = 0 # forces initial read in loop
+for ic in 1055:5793 # icvn # eachindex(iens[1:15]) # loop over all chunks in the record
     ien = iens[ic]; ist = ists[ic]
-    if ien > bigind_file_end # need to load more data
+    while ien > bigind_file_end # need to load more data
+        global ifile, bigind_file_end, bigind_file_start, h, bb, beams
+
         # increment file
         ifile += 1
         bigind_file_end = bigind_file_ends[ifile]
@@ -947,24 +1048,22 @@ for ic in icvn # eachindex(iens[1:15]) # loop over all chunks in the record
     print("$(ist)-$(ien) ")
 
     # compute dissipation for the chunk
-    try # read a chunk, collocate wind and VN data
+    # try # read a chunk, collocate wind and VN data
         # read_stare_chunk organizes and aligns lidar, motion, and wind data
         # should also work for periodic arrays in beams
         dt = Date(h[:start_time])
         dopplervel, pitch, roll, vn0, vn1, vn2, Ur, Vr, mdv = read_stare_chunk( dt, beams, Vn, UV, ist, ien )
-        # recompute mdv - should be same as returned by read_stare_chunk
-        jj = all( isfinite.(dopplervel), dims=1) # heights with all good data
-        mdv = mean(dopplervel[:,jj], dims=2)[:] # mean of filled heights
         if any(isfinite.(Ur)) && any(isfinite.(Vr)) # there is wind data
             w = dopplervel .- mdv 
             D2bin, rhobin, A, noise = D2_rho_stare( w, pitch*pi/180, roll*pi/180, Ur, Vr )
-            epsi_tmp[ic,:] .= @. epsilon.(max(0,A))
+            epsi_tmp[ic,:] .= @. indmiss( epsilon(max(0,A)) )
+            # sets individually missing dissipation values to -3
         else
             epsi_tmp[ic,:] .= -4 # code for missing wind
         end
-    catch
-            epsi_tmp[ic,:] .= -5 # code for missing data, probably VN missing
-    end
+    # catch
+    #         epsi_tmp[ic,:] .= -5 # code for missing data, probably VN missing
+    # end
 
     # make and save figure for the chunk, stamped with the chunk start time
     clf()
