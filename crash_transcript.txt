@@ -1,0 +1,26 @@
+file 911 2915373---2918565 chunk 2914896-2915412 2915413-2915948 2915949-2916484 2916485-2917020 2917021-2917556 2917557-2918092 
+file 912 2918566---2921759 chunk 2918093-2918609 2918610-2919145 2919146-2919681 2919682-2920217 ERROR: LoadError: BoundsError: attempt to access 317-element Vector{Float64} at index [[2, 3, 4, 5, 6, 7, 8, 9, 10, 11  …  533, 534, 535, 536, 534, 535, 536, 535, 536, 536]]
+Stacktrace:
+  [1] throw_boundserror(A::Vector{Float64}, I::Tuple{Vector{Int64}})
+    @ Base ./essentials.jl:14
+  [2] checkbounds
+    @ ./abstractarray.jl:699 [inlined]
+  [3] _getindex
+    @ ./multidimensional.jl:914 [inlined]
+  [4] getindex
+    @ ./abstractarray.jl:1312 [inlined]
+  [5] displacements(ci1::Vector{…}, ci2::Vector{…}, Udt::Matrix{…}, Vdt::Matrix{…}, pitch::Vector{…}, roll::Vector{…}, w::Matrix{…}; rangegate::Float64, timestep::Float64)
+    @ Main ~/Projects/ASTRAL/lidar/lidar_turbulence_cleanup.jl:422
+  [6] D2_rho_stare(w::Matrix{…}, pitch::Vector{…}, roll::Vector{…}, Ur::Matrix{…}, Vr::Matrix{…}; nbin_out_max::Int64)
+    @ Main ~/Projects/ASTRAL/lidar/lidar_turbulence_cleanup.jl:506
+  [7] D2_rho_stare(w::Matrix{…}, pitch::Vector{…}, roll::Vector{…}, Ur::Matrix{…}, Vr::Matrix{…})
+    @ Main ~/Projects/ASTRAL/lidar/lidar_turbulence_cleanup.jl:478
+  [8] top-level scope
+    @ ~/Projects/ASTRAL/lidar/lidar_turbulence_cleanup.jl:1084
+  [9] include(fname::String)
+    @ Main ./sysimg.jl:38
+ [10] top-level scope
+    @ REPL[9]:1
+in expression starting at /Users/deszoeks/Projects/ASTRAL/lidar/lidar_turbulence_cleanup.jl:1022
+Some type information was truncated. Use `show(err)` to see complete types.
+
