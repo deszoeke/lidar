@@ -1074,7 +1074,8 @@ let # local scope
     read_streamlinexr_stare!(ff[ifile], h, beams, bb)
     for ic in eachindex(iens) # ic:icvn[end] # 1118:5793 # loop over all chunks in the record
         ien = iens[ic]; ist = ists[ic]
-        if ien > bigind_file_end # need to load more data; if doesn't create local scope
+        if ien > bigind_file_end # need to load more data
+            # doesn't create a new local scope
             while ien > bigind_file_end # need to load more data
                 ifile += 1
                 bigind_file_end = bigind_file_ends[ifile]
