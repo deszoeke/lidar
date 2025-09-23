@@ -1139,7 +1139,8 @@ end
 #=
 test = load("epsilon_data/epsi_stare_chunks_r$(savetime).jld")
 
+norm = PyPlot.matplotlib.colors.LogNorm(vmin=1e-5, vmax=1e-2)
 clf()
-pcolormesh(dtime_st[1:16], height, pd(epsi[1:15,1:79]))
+pcolormesh(test["dtime_en"], test["height"], pd(max.(1e-6, test["epsi"])), norm=norm, cmap=ColorMap("RdYlBu_r"))
 gcf()
 =#
