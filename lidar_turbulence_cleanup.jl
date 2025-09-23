@@ -995,8 +995,7 @@ end
 =#
 
 # load cruiselong data
-if false | true # do once, otherwise save time
-    Vn = read_vecnav_dict() # Dict{Symbol, Any}
+if !@isdefined UV # | true # do once, otherwise save time
     # load all-2024 relative horizontal winds
     UV = NCDataset(joinpath("data/netcdf", "ekamsat_lidar_uv_20240428-20240604.nc")) # NCDataset
 
@@ -1019,6 +1018,23 @@ icvn = findfirst( dtime_st .>= Vn[:vndt][1] ):findlast( dtime_en .<= Vn[:vndt][e
 nx = 4000 
 nz = 80
 
+# Our way of looping does not synchronize chunks to files a priori
+# but loads files as needed. 
+# queue_indices queues up indices for record sample index i:
+"ic, ifile, ist, ien, bigind_file_start, bigind_file_end = queue_indices(i)"
+function queue_indices(i, 
+    ists=ists, iens=iens, 
+    bigind_file_starts=bigind_file_starts, bigind_file_ends=bigind_file_ends)
+    ic = findfirst(iens .>= i)
+    ifile = findfirst(bigind_file_ends .>= i)
+    bigind_file_start = bigind_file_starts[ifile]
+    bigind_file_end   = bigind_file_ends[  ifile]
+    ic, ifile, ists[ic], iens[ic], bigind_file_start, bigind_file_end
+end
+
+ic, ifile, ist, ien, bigind_file_start, bigind_file_end = queue_indices(2919682)
+# call queue_indices here to start in mid stream.
+
 let # local scope
     # x = zeros(nx,nz) # Doppler vel, backscatter, etc.
     # P = PeriodicMatrix( x )
@@ -1039,6 +1055,11 @@ let # local scope
     ifile = 1
     bigind_file_end = bigind_file_ends[ifile] # forces initial read in loop
     bigind_file_start = bigind_file_starts[ifile]
+    
+    # queue up a particular time
+    # ic, ifile, ist, ien, bigind_file_start, bigind_file_end = queue_indices(2919682)
+    # ic, ifile, ist, ien, bigind_file_start, bigind_file_end = queue_indices(3094111) # last file
+
     #=
     # test nasssty litte casessses
     # special treatment for starting in the middle
@@ -1051,7 +1072,7 @@ let # local scope
     [ h[k] = tmp[k] for k in keys(h) ] # update h wo rebinding it
     bb = bigind_file_start:bigind_file_end
     read_streamlinexr_stare!(ff[ifile], h, beams, bb)
-    for ic in icvn #1118:5793 # icvn # eachindex(iens[1:15]) # loop over all chunks in the record
+    for ic in eachindex(iens) # ic:icvn[end] # 1118:5793 # loop over all chunks in the record
         ien = iens[ic]; ist = ists[ic]
         if ien > bigind_file_end # need to load more data; if doesn't create local scope
             while ien > bigind_file_end # need to load more data
@@ -1081,7 +1102,9 @@ let # local scope
             dopplervel, pitch, roll, vn0, vn1, vn2, Ur, Vr, mdv = read_stare_chunk( dt, beams, Vn, UV, ist, ien )
             if any(isfinite.(Ur)) && any(isfinite.(Vr)) # there is wind data
                 w = dopplervel .- mdv
-                D2bin, rhobin, A, noise = D2_rho_stare( w, pitch*pi/180, roll*pi/180, Ur, Vr )
+
+                len = minimum([size(w,1), size(pitch,1), size(Ur,1)])  # trim to shortest length
+                D2bin, rhobin, A, noise = D2_rho_stare( w[1:len,:], pitch[1:len]*pi/180, roll[1:len]*pi/180, Ur[1:len,:], Vr[1:len,:] )
                 epsi_tmp[ic,:] .= @. indmiss( epsilon(max(0,A)) )
                 # sets individually missing dissipation values to -3
             else
@@ -1092,20 +1115,31 @@ let # local scope
         # end
 
         # make and save figure for the chunk, stamped with the chunk start time
+        #=
         clf()
         pcolor_lidar_stare(fig, beams, LidarDt, ist, ien)
         dstr = Dates.format(LidarDt["dtime"][ist], dateformat"yyyymmdd_HHMM")
         savefig(joinpath("data","plot","Chunk1_$(dstr).png"))
+        =#
     end
+
+    epsi = epsi_tmp
+    height = beams[:height]
+    savetime = Dates.format(now(), dateformat"yyyymmdd_HHMM")
+    @save joinpath("epsilon_data","epsi_stare_chunks_r$(savetime).jld") epsi dtime_st dtime_en height
+    print(savetime)
+
+    clf()
+    pcolormesh(dtime_st[1:16], height, pd(epsi[1:15,1:79]))
+    gcf()
+
 end
 
-epsi = epsi_tmp
-height = beams[:height]
-savetime = Dates.format(now(), dateformat"yyyymmdd_HHMM")
-@save joinpath("epsilon_data","epsi_stare_chunks_r$(savetime).jld") epsi dtime_st dtime_en height
+# test
+#=
+test = load("epsilon_data/epsi_stare_chunks_r$(savetime).jld")
 
-test = load("epsilon_data/epsi_stare_chunks_r20250920_1303.jld")
-# clf()
-# pcolormesh(dtime_st[1:16], height, pd(epsi[1:15,1:79]))
-# gcf()
-epsi[1:15,1:79] # all missing
+clf()
+pcolormesh(dtime_st[1:16], height, pd(epsi[1:15,1:79]))
+gcf()
+=#
