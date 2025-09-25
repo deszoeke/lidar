@@ -1,0 +1,26 @@
+Manifest.toml
+
+*.mat
+*.nc
+*.png
+*.eps
+*.svg
+*.hpl
+*.jld2
+
+# directories
+doc
+data
+lidar2019/plots/
+lidar2019/data/
+epsilon_data/
+pluto
+
+VectorNavTable.jld2
+doc/VN300 User Manual (UM3000-R0).pdf
+.DS_Store
+
+ASTraL_POSMV.jld2
+ASTraL_lidarVectorNav.jld2
+epsilon_leg1.pdf
+ekamsat_MABL_TKEdissipation.pdf
