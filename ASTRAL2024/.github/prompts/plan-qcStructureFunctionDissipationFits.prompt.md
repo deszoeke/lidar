@@ -5,17 +5,18 @@ Add explicit fit-quality diagnostics to the structure-function regression used f
 **Steps**
 1. Phase 1: Baseline and scope lock
 2. Confirm the active computation path in /Users/deszoeks/Projects/lidar/ASTRAL2024/lidar_turbulence_cleanup.ipynb at the structure-function cell and in /Users/deszoeks/Projects/lidar/ASTRAL2024/lidar_turbulence_cleanup.jl for parity.
+2.5 Copy the analysis to new files (for lidar_turbulence_qc-fit) to preserve the original.
 3. Treat current fit model as fixed: D2 = noise + A*rho with epsilon derived from A.
 4. Keep current physics inputs unchanged (pair construction, rho definition, equal-population binning, motion correction workflow).
 5. Phase 2: Add per-level fit diagnostics where A is estimated
 6. Extend regression logic in D2_rho_stare to compute and return all three requested diagnostics per level: R^2, normalized RMSE, and sample support (both raw pair count and binned-point count used in regression).
-7. Add guard diagnostics for physically suspicious fits: non-positive slope A, non-finite outputs, and unstable intercept/noise behavior.
+7. Add guard diagnostics for physically suspicious fits: non-positive slope A, non-finite outputs, negative noise, and unstable intercept/noise behavior.
 8. Preserve existing A and noise outputs so downstream notebooks remain compatible.
 9. Phase 3: Define confidence scoring (retain epsilon)
 10. Implement a compact confidence score in [0,1] combining the three diagnostics (R^2, normalized RMSE, sample support), with simple monotonic transforms and clipping.
 11. Keep score interpretable: 1 is excellent linear fit with adequate support; 0 is unusable fit.
-12. Derive an optional class label from the score for fast filtering (for example high/medium/low) without replacing the numeric score.
-13. On poor fits, keep epsilon but attach low confidence (do not hard-mask by default).
+12. There are 2 kinds of support, number of D2 pairs per bin, and number of bins with valid pairs used in the fit. Both should be saved and factored into confidence.
+13. We don't a priori know thresholds for poor fits. Develop graphical review of epsilon vs confidence scores to identify appropriate cutoffs.
 14. Phase 4: Propagate diagnostics through outputs
 15. Update chunk-level arrays to store A, noise, R^2, normalized RMSE, support counts, and confidence score per height level alongside epsilon.
 16. Persist these arrays in saved dissipation files so QC can be done post hoc without recomputing structure functions.
