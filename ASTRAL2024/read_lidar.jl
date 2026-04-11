@@ -869,7 +869,13 @@ anom(x; dims=1) = x.-mean(x; dims=dims)
 "find indices i such that each xl[i] is the first >= xs."
 function findindices(xs, xl)
     # xs needles define quarries in haystack xl
+    if isempty(xs) || isempty(xl)
+        return Int64[]
+    end
     xs = filter(x -> x<=last(xl), xs) # prefilter to avoid running off the end of xl
+    if isempty(xs)
+        return Int64[]
+    end
     ind = zeros(Int64, size(xs))
     i = 1
     for (j,x) in enumerate(xs)
@@ -988,7 +994,8 @@ function read_stare_chunk( dt::TimeType, St, Vn, UV, st, en, ntop=80 )
     stare1dt = stare_dt[:] # subset
 
     # pre-subset
-    vn_ind = findall( stare_dt[st]-Second(2) .<= Vn[:vndt] .<= stare_dt[en]+Second(2) )
+    # stare_dt is already subset to st:en, so index with local chunk bounds
+    vn_ind = findall( stare_dt[1]-Second(2) .<= Vn[:vndt] .<= stare_dt[end]+Second(2) )
 
     # fine sync the 20 Hz VN to the 1 Hz lidar
     # St[:pitch][st:en] #  1 Hz
@@ -1001,8 +1008,27 @@ function read_stare_chunk( dt::TimeType, St, Vn, UV, st, en, ntop=80 )
     # dopplervel (time, z) masked by intensity threshold
     dopplervel = masklowi.(St[:dopplervel][st:en,1:ntop], St[:intensity][st:en,1:ntop])
     # mdv = missmean(dopplervel, dims=2)[:] # conditional mean can have biases
-    jj = all( isfinite.(dopplervel), dims=1) # heights with all good data
-    mdv = mean(dopplervel[:,jj], dims=2)[:] # mean of filled heights
+    valid_dv = .!ismissing.(dopplervel) .& isfinite.(coalesce.(dopplervel, NaN))
+    jj = findall(vec(all(valid_dv, dims=1))) # heights with all good data
+    nt = size(dopplervel, 1)
+    if !isempty(jj)
+        mdv = mean(dopplervel[:,jj], dims=2)[:] # mean of filled heights
+    else
+        mdv = fill(NaN, nt)
+    end
+
+    # If VN data does not overlap this chunk, return NaN-filled motion/wind arrays.
+    # Caller logic will then mark this chunk as missing-wind instead of crashing.
+    if isempty(vn_ind)
+        pitch = fill(NaN, nt)
+        roll = fill(NaN, nt)
+        VelNED0 = fill(NaN, nt)
+        VelNED1 = fill(NaN, nt)
+        VelNED2 = fill(NaN, nt)
+        Ur = fill(NaN, nt, ntop)
+        Vr = fill(NaN, nt, ntop)
+        return dopplervel, pitch, roll, VelNED0, VelNED1, VelNED2, Ur, Vr, mdv
+    end
 
     # interpolate Ur,Vr, heave to the lidar stare grid
     # ind = ind0 .+ fine_offset
@@ -1022,8 +1048,13 @@ function read_stare_chunk( dt::TimeType, St, Vn, UV, st, en, ntop=80 )
     # heave = indavg( Vn[:VelNED2], ind)
 
     # mean relative velocity
-    Ur = zeros(size(dopplervel))
-    Vr = zeros(size(dopplervel))
+    Ur = Matrix{Union{Missing,Float64}}(missing, size(dopplervel))
+    Vr = Matrix{Union{Missing,Float64}}(missing, size(dopplervel))
+    if isempty(UV["time"]) # no UV data for this period: return NaN wind, keep VN motion
+        Ur .= NaN
+        Vr .= NaN
+        return dopplervel, pitch, roll, VelNED0, VelNED1, VelNED2, Ur, Vr, mdv
+    end
     ind = findindices( Dates.value.(stare1dt), Dates.value.(UV["time"]))
     # result must be 1:1 for stare1dt and ind
     ls = length(stare1dt)
@@ -1031,15 +1062,37 @@ function read_stare_chunk( dt::TimeType, St, Vn, UV, st, en, ntop=80 )
     if li < ls # extend ind with last index of UV
         ind = [ind; length(UV["time"]).+zeros(Int32, ls-li)]
     end
-    for ih in 1:ntop # loop to broadcast to consistent size
-        Ur[:,ih] .= UV[:ur][ind,ih]
-        Vr[:,ih] .= UV[:vr][ind,ih]
+    # Handle either UV layout: [range, time] or [time, range].
+    ur = UV[:ur][:,:]
+    vr = UV[:vr][:,:]
+    ntime_uv = length(UV["time"][:])
+    if size(ur, 2) == ntime_uv && size(vr, 2) == ntime_uv
+        # [range, time]
+        maxih = min(ntop, size(ur, 1), size(vr, 1))
+        for ih in 1:maxih
+            Ur[:,ih] .= ur[ih,ind] # -> time, height
+            Vr[:,ih] .= vr[ih,ind]
+        end
+    elseif size(ur, 1) == ntime_uv && size(vr, 1) == ntime_uv
+        # [time, range]
+        maxih = min(ntop, size(ur, 2), size(vr, 2))
+        for ih in 1:maxih
+            Ur[:,ih] .= ur[ind,ih]
+            Vr[:,ih] .= vr[ind,ih]
+        end
+    else
+        Ur .= NaN
+        Vr .= NaN
+        return dopplervel, pitch, roll, VelNED0, VelNED1, VelNED2, Ur, Vr, mdv
     end
 
     # questionable: fill all the mean relative velocities
-    isf = isfinite.(Vr)
-    Vr[.!isf] .= mean(Vr[isf])
-    Ur[.!isf] .= mean(Ur[isf])
+    isgoodnum(x) = !ismissing(x) && isfinite(x)
+    isf = isgoodnum.(Vr)
+    if any(isf)
+        Vr[.!isf] .= mean(Vr[isf])
+        Ur[.!isf] .= mean(Ur[isf])
+    end
     
     return dopplervel, pitch, roll, VelNED0, VelNED1, VelNED2, Ur, Vr, mdv
 end
