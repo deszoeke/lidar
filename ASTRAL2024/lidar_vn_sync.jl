@@ -232,8 +232,11 @@ function extract_sync_window(beams, env, state, Vn, UV, ic; ntop=80)
 end
 
 function finite_overlap(x, y)
-    keep = isfinite.(x) .& isfinite.(y)
-    return x[keep], y[keep], keep
+    n = min(length(x), length(y))
+    xv = x[1:n]
+    yv = y[1:n]
+    keep = isfinite.(xv) .& isfinite.(yv)
+    return xv[keep], yv[keep], keep
 end
 
 function detrend_center(x)
