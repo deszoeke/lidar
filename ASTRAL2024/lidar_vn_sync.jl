@@ -26,6 +26,7 @@ export init_periodic_beams, load_lidar_indices_and_files, read_streamlinexr_star
 export init_stream_state, extract_sync_window, coarse_and_fine_lag, run_sequential_offsets, refine_offset_20hz
 export setup_sync_context, process_sync_data, save_sync_netcdf
 export diagnostic_single_window, diagnostic_offsets
+export read_synced_motion, motion_correct_stare_velocity, read_and_motion_correct_stare
 
 const NOISE_THR = 1.03
 const BANDPASS_PERIOD = (5.0, 20.0)
@@ -216,8 +217,9 @@ function chunk_lidar_datetimes(dt_chunk, beams, ist, ien)
     return stare_dt_raw, stare_dt, lidar_clock_fast_by
 end
 
-# UV is an argument for backward compatibility with read_stare_chunk
-# but NOT USED here for the syncing of the heave and the lidar.
+# UV is threaded through because read_stare_chunk is the shared dissipation-era reader
+# and this extracted window will later feed motion correction. The sync offset fit below
+# depends only on mdv and vn2, not on Ur/Vr.
 function extract_sync_window(beams, env, state, Vn, UV, ic; ntop=80)
     info = ensure_chunk_loaded!(beams, env, state, ic)
     dt_arg = info.ist <= length(env.dtime) ? env.dtime[info.ist] : env.dtime[end]
@@ -521,13 +523,15 @@ end
 
 function refine_offset_20hz(win, sync_1s, Vn; ma_points=20, search_seconds=1.0)
     pad_s = ceil(Int, search_seconds) + 2
-    _, vndt20, vn2_20 = vn_subset_20hz(win.stare_dt, Vn; pad=Second(pad_s))
+    ind20, vndt20, vn2_20 = vn_subset_20hz(win.stare_dt, Vn; pad=Second(pad_s))
+    pitch_20 = Float64.(Vn[:Pitch][ind20])
+    roll_20 = Float64.(Vn[:Roll][ind20])
     dt20 = dt_seconds(vndt20)
     if !isfinite(dt20) || dt20 <= 0
         dt20 = 0.05
     end
 
-    fallback = (; final_offset_20hz=NaN, native_step=dt20, final_offset_native=sync_1s.final_offset, final_offset_round_s=round(Int, sync_1s.final_offset), vn2_1s_aligned=fill(NaN, length(win.stare_dt)), mdv_residual_1s=fill(NaN, length(win.stare_dt)), xcorr20=nothing, vndt20, vn2_20)
+    fallback = (; final_offset_20hz=NaN, native_step=dt20, final_offset_native=sync_1s.final_offset, final_offset_round_s=round(Int, sync_1s.final_offset), vn2_1s_aligned=fill(NaN, length(win.stare_dt)), pitch_1s_aligned=fill(NaN, length(win.stare_dt)), roll_1s_aligned=fill(NaN, length(win.stare_dt)), mdv_residual_1s=fill(NaN, length(win.stare_dt)), xcorr20=nothing, vndt20, vn2_20)
     length(vndt20) < 40 && return fallback
 
     vn2_ma = nan_safe_moving_average(vn2_20, ma_points)
@@ -540,12 +544,18 @@ function refine_offset_20hz(win, sync_1s, Vn; ma_points=20, search_seconds=1.0)
     final_round_s = round(Int, final_native)
 
     vn2_shifted = shift_signal_linear(vn2_20, final_native; dt=dt20)
+    pitch_shifted = shift_signal_linear(pitch_20, final_native; dt=dt20)
+    roll_shifted = shift_signal_linear(roll_20, final_native; dt=dt20)
     vn2_1s_aligned = one_hz_average_at_lidar_times(vndt20, vn2_shifted, win.stare_dt)
+    pitch_1s_aligned = one_hz_average_at_lidar_times(vndt20, pitch_shifted, win.stare_dt)
+    roll_1s_aligned = one_hz_average_at_lidar_times(vndt20, roll_shifted, win.stare_dt)
     mdv_residual_1s = win.mdv .- vn2_1s_aligned
 
-    return (; final_offset_20hz=xcorr20.lag_seconds, native_step=dt20, final_offset_native=final_native, final_offset_round_s=final_round_s, vn2_1s_aligned, mdv_residual_1s, xcorr20, vndt20, vn2_20)
+    return (; final_offset_20hz=xcorr20.lag_seconds, native_step=dt20, final_offset_native=final_native, final_offset_round_s=final_round_s, vn2_1s_aligned, pitch_1s_aligned, roll_1s_aligned, mdv_residual_1s, xcorr20, vndt20, vn2_20)
 end
 
+# UV is passed through for shared reader compatibility and later motion correction.
+# The timing offsets computed here are fit only from mdv and vn2.
 function process_sync_data(beams, env, Vn, UV, ic_list; ntop=80, jump_threshold_seconds=0.8, min_fine_peak=0.08, backward_windows=2, backward_tol=0.35)
     seq_results = run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=ntop, jump_threshold_seconds=jump_threshold_seconds, min_fine_peak=min_fine_peak, backward_windows=backward_windows, backward_tol=backward_tol)
 
@@ -555,7 +565,7 @@ function process_sync_data(beams, env, Vn, UV, ic_list; ntop=80, jump_threshold_
         w = extract_sync_window(beams, env, state_ref, Vn, UV, r.ic; ntop=ntop)
         s1 = coarse_and_fine_lag(w.mdv, w.vn2; prior_seconds=r.prior_offset)
         rf = refine_offset_20hz(w, s1, Vn)
-        push!(seq_ref20, (; r..., final_offset_20hz=rf.final_offset_20hz, final_offset_native=rf.final_offset_native, final_offset_round_s=rf.final_offset_round_s, vn2_1s_aligned=rf.vn2_1s_aligned, mdv_residual_1s=rf.mdv_residual_1s))
+        push!(seq_ref20, (; r..., lidar_dt=w.stare_dt, final_offset_20hz=rf.final_offset_20hz, final_offset_native=rf.final_offset_native, final_offset_round_s=rf.final_offset_round_s, vn2_1s_aligned=rf.vn2_1s_aligned, pitch_1s_aligned=rf.pitch_1s_aligned, roll_1s_aligned=rf.roll_1s_aligned, mdv_residual_1s=rf.mdv_residual_1s))
     end
 
     seq_ic = [r.ic for r in seq_ref20]
@@ -579,6 +589,7 @@ function process_sync_data(beams, env, Vn, UV, ic_list; ntop=80, jump_threshold_
     chunk_record_starts = vcat(1, chunk_record_ends[1:end-1] .+ 1)
     nrec = chunk_record_ends[end]
 
+    # Schema is uniform across test/all-data runs; only ic_list size changes the output cardinality.
     return (; seq_results, seq_ref20, seq_ic, seq_prior, seq_coarse, seq_final, seq_final_native, seq_final_native_ms, seq_jump_20hz_ms, seq_fine, seq_jump_candidate, seq_jump_accepted, chunk_lens, chunk_record_starts, chunk_record_ends, nrec)
 end
 
@@ -594,20 +605,23 @@ function save_sync_netcdf(result; nc_out=joinpath("epsilon_data", "vn_sync_offse
     record_time_ms = Vector{Int64}(undef, nrec)
     record_time_dt_str = Vector{String}(undef, nrec)
     vn1s_aligned_record = Vector{Float32}(undef, nrec)
+    pitch_record = Vector{Float32}(undef, nrec)
+    roll_record = Vector{Float32}(undef, nrec)
     mdv_residual_record = Vector{Float32}(undef, nrec)
     record_chunk_index = Vector{Int32}(undef, nrec)
 
     for (i, r) in enumerate(seq_ref20)
         irec_start = chunk_record_starts[i]
         n = length(r.vn2_1s_aligned)
-        vn_start_dt = r.start_dt + Second(r.final_offset_round_s)
         for j in 1:n
             irec = irec_start + j - 1
-            current_dt = vn_start_dt + Second(j - 1)
+            current_dt = r.lidar_dt[j]
             current_ms = Dates.datetime2epochms(current_dt)
             record_time_ms[irec] = Int64(current_ms - time_ref_ms)
             record_time_dt_str[irec] = string(current_dt)
             vn1s_aligned_record[irec] = Float32(r.vn2_1s_aligned[j])
+            pitch_record[irec] = Float32(r.pitch_1s_aligned[j])
+            roll_record[irec] = Float32(r.roll_1s_aligned[j])
             mdv_residual_record[irec] = Float32(r.mdv_residual_1s[j])
             record_chunk_index[irec] = Int32(i - 1)
         end
@@ -630,6 +644,8 @@ function save_sync_netcdf(result; nc_out=joinpath("epsilon_data", "vn_sync_offse
     v_time_str = defVar(ds, "time_dt", String, ("record",))
     v_chunk_idx_rec = defVar(ds, "record_chunk_index", Int32, ("record",))
     v_vn1 = defVar(ds, "vn2_1s_aligned", Float32, ("record",))
+    v_pitch = defVar(ds, "pitch_degrees", Float32, ("record",))
+    v_roll = defVar(ds, "roll_degrees", Float32, ("record",))
     v_res = defVar(ds, "mdv_minus_vn2_1s", Float32, ("record",))
 
     v_ic[:] = Int32.(result.seq_ic)
@@ -645,6 +661,8 @@ function save_sync_netcdf(result; nc_out=joinpath("epsilon_data", "vn_sync_offse
     v_time_str[:] = record_time_dt_str
     v_chunk_idx_rec[:] = record_chunk_index
     v_vn1[:] = vn1s_aligned_record
+    v_pitch[:] = pitch_record
+    v_roll[:] = roll_record
     v_res[:] = mdv_residual_record
 
     v_time.attrib["units"] = "milliseconds since $(Dates.format(time_ref_dt, dateformat"yyyy-mm-ddTHH:MM:SS")) UTC"
@@ -658,6 +676,14 @@ function save_sync_netcdf(result; nc_out=joinpath("epsilon_data", "vn_sync_offse
     v_off20_ms.attrib["long_name"] = "final synchronization offset from 20 Hz native refinement"
     v_jump20_ms.attrib["units"] = "milliseconds"
     v_jump20_ms.attrib["long_name"] = "chunk-to-chunk jump in 20 Hz native offset (current minus previous)"
+    v_vn1.attrib["units"] = "m s-1"
+    v_vn1.attrib["long_name"] = "VectorNav VelNED2 aligned to lidar chunk times"
+    v_pitch.attrib["units"] = "degrees"
+    v_pitch.attrib["long_name"] = "VectorNav pitch aligned to lidar chunk times"
+    v_roll.attrib["units"] = "degrees"
+    v_roll.attrib["long_name"] = "VectorNav roll aligned to lidar chunk times"
+    v_res.attrib["units"] = "m s-1"
+    v_res.attrib["long_name"] = "mean Doppler velocity minus aligned VectorNav VelNED2"
 
     ds.attrib["description"] = "Lidar-VN timing offsets with 20 Hz refinement and 1-second aligned VN series (record dimension)"
     ds.attrib["Conventions"] = "CF-1.6"
@@ -665,6 +691,42 @@ function save_sync_netcdf(result; nc_out=joinpath("epsilon_data", "vn_sync_offse
     close(ds)
 
     return nc_out
+end
+
+function read_synced_motion(nc_path=joinpath("epsilon_data", "vn_sync_offsets.nc"))
+    ds = NCDataset(nc_path, "r")
+    motion = (; 
+        time = ds["time"][:],
+        time_dt = String.(ds["time_dt"][:]),
+        record_chunk_index = ds["record_chunk_index"][:],
+        vn2_1s_aligned = Float64.(ds["vn2_1s_aligned"][:]),
+        pitch_degrees = Float64.(ds["pitch_degrees"][:]),
+        roll_degrees = Float64.(ds["roll_degrees"][:]),
+        chunk_record_start_idx = ds["chunk_record_start_idx"][:],
+        chunk_record_end_idx = ds["chunk_record_end_idx"][:],
+    )
+    close(ds)
+    return motion
+end
+
+tilt_factor(pitch_degrees, roll_degrees) = cosd.(pitch_degrees) .* cosd.(roll_degrees)
+
+function motion_correct_stare_velocity(dopplervel::AbstractVector, vn2_1s_aligned, pitch_degrees, roll_degrees)
+    scale = tilt_factor(pitch_degrees, roll_degrees)
+    return Float64.(dopplervel) ./ scale .- Float64.(vn2_1s_aligned)
+end
+
+function motion_correct_stare_velocity(dopplervel::AbstractMatrix, vn2_1s_aligned, pitch_degrees, roll_degrees)
+    scale = reshape(tilt_factor(pitch_degrees, roll_degrees), :, 1)
+    heave = reshape(Float64.(vn2_1s_aligned), :, 1)
+    return Float64.(dopplervel) ./ scale .- heave
+end
+
+function read_and_motion_correct_stare(dopplervel, nc_path=joinpath("epsilon_data", "vn_sync_offsets.nc"); record_inds=:)
+    motion = read_synced_motion(nc_path)
+    inds = record_inds isa Colon ? collect(eachindex(motion.vn2_1s_aligned)) : record_inds
+    corrected = motion_correct_stare_velocity(dopplervel, motion.vn2_1s_aligned[inds], motion.pitch_degrees[inds], motion.roll_degrees[inds])
+    return (; corrected, motion=(; time=motion.time[inds], time_dt=motion.time_dt[inds], record_chunk_index=motion.record_chunk_index[inds], vn2_1s_aligned=motion.vn2_1s_aligned[inds], pitch_degrees=motion.pitch_degrees[inds], roll_degrees=motion.roll_degrees[inds]))
 end
 
 function diagnostic_single_window(beams, Env, Vn, UV, ic; ntop=80)
@@ -738,22 +800,23 @@ function diagnostic_offsets(result)
     clf()
 
     ax1 = gca()
-    ax1.plot(result.seq_ic, result.seq_prior, marker="o", label="prior offset")
-    ax1.plot(result.seq_ic, result.seq_coarse, marker="o", label="coarse offset")
+    # ax1.plot(result.seq_ic, result.seq_prior, marker="o", label="prior offset")
+    # ax1.plot(result.seq_ic, result.seq_coarse, marker="o", label="coarse offset")
     ax1.plot(result.seq_ic, result.seq_final_native, marker="o", label="final offset (20 Hz native)")
-    ax1.plot(result.seq_ic, result.seq_fine, marker=".", alpha=0.5, label="fine residual")
+    # ax1.plot(result.seq_ic, result.seq_fine, marker=".", alpha=0.5, label="fine residual")
     ax1.set_xlabel("chunk index")
     ax1.set_ylabel("seconds")
     ax1.set_title("Sequential offsets with 20 Hz native refinement")
     ax1.grid(true)
 
-    ax2 = ax1.twinx()
-    ax2.step(result.seq_ic, result.seq_jump_20hz_ms, where="mid", color="k", linewidth=1.4, label="jump (20 Hz native, ms)")
-    ax2.set_ylabel("jump (ms)")
+    # ax2 = ax1.twinx()
+    # ax2.step(result.seq_ic, result.seq_jump_20hz_ms, where="mid", color="k", linewidth=1.4, label="jump (20 Hz native, ms)")
+    # ax2.set_ylabel("jump (ms)")
 
     h1, l1 = ax1.get_legend_handles_labels()
-    h2, l2 = ax2.get_legend_handles_labels()
-    ax1.legend(vcat(h1, h2), vcat(l1, l2), loc="best")
+    # h2, l2 = ax2.get_legend_handles_labels()
+    # ax1.legend(vcat(h1, h2), vcat(l1, l2), loc="best")
+    ax1.legend(h1, l1, loc="best")
 
     tight_layout()
     return fig
