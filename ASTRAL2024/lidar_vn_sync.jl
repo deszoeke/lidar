@@ -613,45 +613,74 @@ end
 
 # UV is passed through for shared reader compatibility and later motion correction.
 # The timing offsets computed here are fit only from mdv and vn2.
-function process_sync_data(beams, env, Vn, UV, ic_list; ntop=80, jump_threshold_seconds=0.8, min_fine_peak=0.08, backward_windows=2, backward_tol=0.35, max_gap_samples=3, offset_sentinel_seconds=-9999.0, offset_sentinel_ms=Int64(-9_999_000), nan_log_path=joinpath("epsilon_data", "nan_offset_chunks.log"), reset_nan_log=true)
+function process_sync_data(beams, env, Vn, UV, ic_list; ntop=80, jump_threshold_seconds=0.8, min_fine_peak=0.08, backward_windows=2, backward_tol=0.35, max_gap_samples=3, offset_sentinel_seconds=-9999.0, offset_sentinel_ms=Int64(-9_999_000), nan_log_path=joinpath("epsilon_data", "nan_offset_chunks.log"), reset_nan_log=true, iter_log_path=joinpath("epsilon_data", "vn_log_$(Dates.format(Dates.now(), dateformat"yyyymmdd_HHMMSS")).txt"), reset_iter_log=true)
     if reset_nan_log && isfile(nan_log_path)
         rm(nan_log_path)
     end
+    if reset_iter_log && isfile(iter_log_path)
+        rm(iter_log_path)
+    end
+    mkpath(dirname(iter_log_path))
 
     seq_results = run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=ntop, jump_threshold_seconds=jump_threshold_seconds, min_fine_peak=min_fine_peak, backward_windows=backward_windows, backward_tol=backward_tol, max_gap_samples=max_gap_samples)
 
     state_ref = init_stream_state()
     seq_ref20 = NamedTuple[]
-    for r in seq_results
-        w = extract_sync_window(beams, env, state_ref, Vn, UV, r.ic; ntop=ntop)
-        s1 = coarse_and_fine_lag(w.mdv, w.vn2; prior_seconds=r.prior_offset, max_gap_samples=max_gap_samples)
-        rf = refine_offset_20hz(w, s1, Vn; max_gap_samples=max_gap_samples)
-
-        final_20 = offset_or_sentinel(rf.final_offset_20hz; sentinel=offset_sentinel_seconds)
-        final_native = offset_or_sentinel(rf.final_offset_native; sentinel=offset_sentinel_seconds)
-        final_round = isfinite(final_native) && final_native != offset_sentinel_seconds ? round(Int, final_native) : round(Int, offset_sentinel_seconds)
-
-        if !isfinite(rf.final_offset_20hz) || !isfinite(rf.final_offset_native)
-            reason = !isfinite(rf.final_offset_native) ? "nan_native_offset" : "nan_20hz_offset"
-            append_nan_offset_log(nan_log_path;
-                ic=r.ic,
-                ist=w.ist,
-                ien=w.ien,
-                start_dt=w.stare_dt[1],
-                end_dt=w.stare_dt[end],
-                reason=reason,
-                prior_offset=s1.prior_seconds,
-                coarse_offset=s1.coarse_offset,
-                fine_residual=s1.fine.lag_seconds,
-                final_offset_1hz=s1.final_offset,
-                final_offset_20hz=rf.final_offset_20hz,
-                final_offset_native=rf.final_offset_native,
-                nvalid_mdv=count(isfinite, w.mdv),
-                nvalid_vn2=count(isfinite, w.vn2),
-            )
+    open(iter_log_path, "a") do iter_io
+        if filesize(iter_log_path) == 0
+            println(iter_io, "iter,ic,timestamp_utc,status,message")
+            flush(iter_io)
         end
 
-        push!(seq_ref20, (; r..., lidar_dt=w.stare_dt, final_offset_20hz=final_20, final_offset_native=final_native, final_offset_round_s=final_round, vn2_1s_aligned=rf.vn2_1s_aligned, pitch_1s_aligned=rf.pitch_1s_aligned, roll_1s_aligned=rf.roll_1s_aligned, mdv_residual_1s=rf.mdv_residual_1s))
+        for (iter, r) in enumerate(seq_results)
+            println(iter_io, string(iter, ",", r.ic, ",", Dates.now(Dates.UTC), ",start,"))
+            flush(iter_io)
+            status = "ok"
+            message = ""
+
+            try
+                w = extract_sync_window(beams, env, state_ref, Vn, UV, r.ic; ntop=ntop)
+                s1 = coarse_and_fine_lag(w.mdv, w.vn2; prior_seconds=r.prior_offset, max_gap_samples=max_gap_samples)
+                rf = refine_offset_20hz(w, s1, Vn; max_gap_samples=max_gap_samples)
+
+                final_20 = offset_or_sentinel(rf.final_offset_20hz; sentinel=offset_sentinel_seconds)
+                final_native = offset_or_sentinel(rf.final_offset_native; sentinel=offset_sentinel_seconds)
+                final_round = isfinite(final_native) && final_native != offset_sentinel_seconds ? round(Int, final_native) : round(Int, offset_sentinel_seconds)
+
+                if !isfinite(rf.final_offset_20hz) || !isfinite(rf.final_offset_native)
+                    reason = !isfinite(rf.final_offset_native) ? "nan_native_offset" : "nan_20hz_offset"
+                    append_nan_offset_log(nan_log_path;
+                        ic=r.ic,
+                        ist=w.ist,
+                        ien=w.ien,
+                        start_dt=w.stare_dt[1],
+                        end_dt=w.stare_dt[end],
+                        reason=reason,
+                        prior_offset=s1.prior_seconds,
+                        coarse_offset=s1.coarse_offset,
+                        fine_residual=s1.fine.lag_seconds,
+                        final_offset_1hz=s1.final_offset,
+                        final_offset_20hz=rf.final_offset_20hz,
+                        final_offset_native=rf.final_offset_native,
+                        nvalid_mdv=count(isfinite, w.mdv),
+                        nvalid_vn2=count(isfinite, w.vn2),
+                    )
+                    status = "sentinel"
+                    message = reason
+                end
+
+                push!(seq_ref20, (; r..., lidar_dt=w.stare_dt, final_offset_20hz=final_20, final_offset_native=final_native, final_offset_round_s=final_round, vn2_1s_aligned=rf.vn2_1s_aligned, pitch_1s_aligned=rf.pitch_1s_aligned, roll_1s_aligned=rf.roll_1s_aligned, mdv_residual_1s=rf.mdv_residual_1s))
+            catch err
+                status = "error"
+                message = replace(sprint(showerror, err), '\n' => " | ")
+                println(iter_io, string(iter, ",", r.ic, ",", Dates.now(Dates.UTC), ",", status, ",", message))
+                flush(iter_io)
+                rethrow(err)
+            end
+
+            println(iter_io, string(iter, ",", r.ic, ",", Dates.now(Dates.UTC), ",", status, ",", message))
+            flush(iter_io)
+        end
     end
 
     seq_ic = [r.ic for r in seq_ref20]
@@ -894,7 +923,7 @@ function diagnostic_offsets(result)
     ax1 = gca()
     # ax1.plot(result.seq_ic, result.seq_prior, marker="o", label="prior offset")
     # ax1.plot(result.seq_ic, result.seq_coarse, marker="o", label="coarse offset")
-    ax1.plot(result.seq_ic, result.seq_final_native, marker="o", label="final offset (20 Hz native)")
+    ax1.plot(result.seq_ic, result.seq_final_native, marker="o", markersize=1,label="final offset (20 Hz native)")
     # ax1.plot(result.seq_ic, result.seq_fine, marker=".", alpha=0.5, label="fine residual")
     ax1.set_xlabel("chunk index")
     ax1.set_ylabel("seconds")
