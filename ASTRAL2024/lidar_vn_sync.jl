@@ -33,6 +33,9 @@ const BANDPASS_PERIOD = (5.0, 20.0)
 const BANDPASS_HZ = (1 / BANDPASS_PERIOD[2], 1 / BANDPASS_PERIOD[1])
 const TIMESTEP = 1.02
 const RANGEGATE = 24.0
+const OFFSET_SENTINEL_S = -9999.0
+const OFFSET_SENTINEL_MS = Int64(-9_999_000)
+const NAN_OFFSET_LOG_PATH = joinpath("epsilon_data", "nan_offset_chunks.log")
 
 pd = permutedims
 
@@ -239,6 +242,48 @@ function finite_overlap(x, y)
     return xv[keep], yv[keep], keep
 end
 
+function fill_short_nan_gaps(x; max_gap=3)
+    y = Float64.(x)
+    n = length(y)
+    i = 1
+    while i <= n
+        if isfinite(y[i])
+            i += 1
+            continue
+        end
+        i0 = i
+        while i <= n && !isfinite(y[i])
+            i += 1
+        end
+        i1 = i - 1
+        gap = i1 - i0 + 1
+        if gap <= max_gap && i0 > 1 && i <= n && isfinite(y[i0 - 1]) && isfinite(y[i])
+            yl = y[i0 - 1]
+            yr = y[i]
+            for k in 0:(gap - 1)
+                w = (k + 1) / (gap + 1)
+                y[i0 + k] = (1 - w) * yl + w * yr
+            end
+        end
+    end
+    y
+end
+
+offset_or_sentinel(x; sentinel=-9999.0) = isfinite(x) ? x : sentinel
+offset_to_ms(x; sentinel_ms=Int64(-9_999_000)) = isfinite(x) ? round(Int64, x * 1000) : sentinel_ms
+
+function append_nan_offset_log(log_path; ic, ist, ien, start_dt, end_dt, reason, prior_offset, coarse_offset, fine_residual, final_offset_1hz, final_offset_20hz, final_offset_native, nvalid_mdv, nvalid_vn2)
+    mkpath(dirname(log_path))
+    write_header = !isfile(log_path)
+    open(log_path, "a") do io
+        if write_header
+            println(io, "run_utc,ic,ist,ien,start_dt,end_dt,reason,prior_offset_s,coarse_offset_s,fine_residual_s,final_offset_1hz_s,final_offset_20hz_s,final_offset_native_s,nvalid_mdv,nvalid_vn2")
+        end
+        println(io, string(Dates.now(Dates.UTC), ",", ic, ",", ist, ",", ien, ",", start_dt, ",", end_dt, ",", reason, ",", prior_offset, ",", coarse_offset, ",", fine_residual, ",", final_offset_1hz, ",", final_offset_20hz, ",", final_offset_native, ",", nvalid_mdv, ",", nvalid_vn2))
+    end
+    nothing
+end
+
 function detrend_center(x)
     y = Float64.(x)
     y .-= mean(y)
@@ -401,9 +446,11 @@ function prior_from_history(history, start_dt; recent_window=Minute(10))
     return (; prior_seconds, previous_offset, recent_offset, parent_offset)
 end
 
-function coarse_and_fine_lag(mdv, vn2; dt=TIMESTEP, prior_seconds=0.0, coarse_search_seconds=12.0, max_passes=4, fine_search_seconds=4.0)
-    mdv_bp = fft_bandpass(mdv; dt=dt)
-    vn2_bp = fft_bandpass(vn2; dt=dt)
+function coarse_and_fine_lag(mdv, vn2; dt=TIMESTEP, prior_seconds=0.0, coarse_search_seconds=12.0, max_passes=4, fine_search_seconds=4.0, max_gap_samples=3)
+    mdv_clean = fill_short_nan_gaps(mdv; max_gap=max_gap_samples)
+    vn2_clean = fill_short_nan_gaps(vn2; max_gap=max_gap_samples)
+    mdv_bp = fft_bandpass(mdv_clean; dt=dt)
+    vn2_bp = fft_bandpass(vn2_clean; dt=dt)
 
     coarse = iterative_coarse_lag(mdv_bp, vn2_bp; dt=dt, prior_seconds=prior_seconds, max_passes=max_passes, search_seconds=coarse_search_seconds)
     fine = fft_xcorr_lag(mdv_bp, coarse.vn2_bp_coarse; dt=dt, center_seconds=0.0, maxlag_seconds=fine_search_seconds)
@@ -419,14 +466,14 @@ function is_jump_candidate(prior_seconds, final_seconds, fine_peak_norm; jump_th
     abs(final_seconds - prior_seconds) >= jump_threshold_seconds && fine_peak_norm >= min_fine_peak
 end
 
-function backward_jump_robustness(beams, env, state, Vn, UV, history, post_offset; ntop=80, n_back=2)
+function backward_jump_robustness(beams, env, state, Vn, UV, history, post_offset; ntop=80, n_back=2, max_gap_samples=3)
     isempty(history) && return NaN
     ntest = min(n_back, length(history))
     deltas = Float64[]
     for k in 1:ntest
         h = history[end - k + 1]
         win_prev = extract_sync_window(beams, env, state, Vn, UV, h.ic; ntop=ntop)
-        back_sync = coarse_and_fine_lag(win_prev.mdv, win_prev.vn2; prior_seconds=post_offset)
+        back_sync = coarse_and_fine_lag(win_prev.mdv, win_prev.vn2; prior_seconds=post_offset, max_gap_samples=max_gap_samples)
         if isfinite(back_sync.final_offset) && isfinite(h.final_offset)
             push!(deltas, abs(back_sync.final_offset - h.final_offset))
         end
@@ -434,14 +481,14 @@ function backward_jump_robustness(beams, env, state, Vn, UV, history, post_offse
     isempty(deltas) ? NaN : median(deltas)
 end
 
-function run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=80, jump_threshold_seconds=0.8, min_fine_peak=0.08, backward_windows=2, backward_tol=0.35)
+function run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=80, jump_threshold_seconds=0.8, min_fine_peak=0.08, backward_windows=2, backward_tol=0.35, max_gap_samples=3)
     state = init_stream_state()
     history = NamedTuple[]
     for ic in ic_list
         start_dt = env.dtime[env.ists[ic]]
         prior = prior_from_history(history, start_dt)
         win = extract_sync_window(beams, env, state, Vn, UV, ic; ntop=ntop)
-        sync = coarse_and_fine_lag(win.mdv, win.vn2; prior_seconds=prior.prior_seconds)
+        sync = coarse_and_fine_lag(win.mdv, win.vn2; prior_seconds=prior.prior_seconds, max_gap_samples=max_gap_samples)
 
         jump_candidate = is_jump_candidate(prior.prior_seconds, sync.final_offset, sync.fine.peak_norm; jump_threshold_seconds=jump_threshold_seconds, min_fine_peak=min_fine_peak)
 
@@ -450,15 +497,15 @@ function run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=80, jump_thres
         jump_accepted = false
 
         if jump_candidate && !isempty(history)
-            post_sync = coarse_and_fine_lag(win.mdv, win.vn2; prior_seconds=sync.final_offset)
+            post_sync = coarse_and_fine_lag(win.mdv, win.vn2; prior_seconds=sync.final_offset, max_gap_samples=max_gap_samples)
             post_offset = post_sync.final_offset
-            jump_backward_metric = backward_jump_robustness(beams, env, state, Vn, UV, history, post_offset; ntop=ntop, n_back=backward_windows)
+            jump_backward_metric = backward_jump_robustness(beams, env, state, Vn, UV, history, post_offset; ntop=ntop, n_back=backward_windows, max_gap_samples=max_gap_samples)
             jump_robust = isfinite(jump_backward_metric) && jump_backward_metric <= backward_tol
             if jump_robust
                 sync = post_sync
                 jump_accepted = true
             else
-                sync = coarse_and_fine_lag(win.mdv, win.vn2; prior_seconds=prior.prior_seconds, fine_search_seconds=2.0)
+                sync = coarse_and_fine_lag(win.mdv, win.vn2; prior_seconds=prior.prior_seconds, fine_search_seconds=2.0, max_gap_samples=max_gap_samples)
             end
         end
 
@@ -524,23 +571,26 @@ function one_hz_average_at_lidar_times(vndt20, x20, lidar_dt; half_window=0.5)
     out
 end
 
-function refine_offset_20hz(win, sync_1s, Vn; ma_points=20, search_seconds=1.0)
+function refine_offset_20hz(win, sync_1s, Vn; ma_points=20, search_seconds=1.0, max_gap_samples=3)
     pad_s = ceil(Int, search_seconds) + 2
     ind20, vndt20, vn2_20 = vn_subset_20hz(win.stare_dt, Vn; pad=Second(pad_s))
     pitch_20 = Float64.(Vn[:Pitch][ind20])
     roll_20 = Float64.(Vn[:Roll][ind20])
+    base_offset = isfinite(sync_1s.final_offset) ? sync_1s.final_offset : (isfinite(sync_1s.prior_seconds) ? sync_1s.prior_seconds : -9999.0)
     dt20 = dt_seconds(vndt20)
     if !isfinite(dt20) || dt20 <= 0
         dt20 = 0.05
     end
 
-    fallback = (; final_offset_20hz=NaN, native_step=dt20, final_offset_native=sync_1s.final_offset, final_offset_round_s=round(Int, sync_1s.final_offset), vn2_1s_aligned=fill(NaN, length(win.stare_dt)), pitch_1s_aligned=fill(NaN, length(win.stare_dt)), roll_1s_aligned=fill(NaN, length(win.stare_dt)), mdv_residual_1s=fill(NaN, length(win.stare_dt)), xcorr20=nothing, vndt20, vn2_20)
+    fallback = (; final_offset_20hz=NaN, native_step=dt20, final_offset_native=base_offset, final_offset_round_s=round(Int, base_offset), vn2_1s_aligned=fill(NaN, length(win.stare_dt)), pitch_1s_aligned=fill(NaN, length(win.stare_dt)), roll_1s_aligned=fill(NaN, length(win.stare_dt)), mdv_residual_1s=fill(NaN, length(win.stare_dt)), xcorr20=nothing, vndt20, vn2_20)
     length(vndt20) < 40 && return fallback
 
     vn2_ma = nan_safe_moving_average(vn2_20, ma_points)
     mdv20 = upsample_lidar_step(win.stare_dt, win.mdv, vndt20)
+    mdv20 = fill_short_nan_gaps(mdv20; max_gap=max_gap_samples)
+    vn2_ma = fill_short_nan_gaps(vn2_ma; max_gap=max_gap_samples)
 
-    xcorr20 = fft_xcorr_lag(mdv20, vn2_ma; dt=dt20, center_seconds=sync_1s.final_offset, maxlag_seconds=search_seconds)
+    xcorr20 = fft_xcorr_lag(mdv20, vn2_ma; dt=dt20, center_seconds=base_offset, maxlag_seconds=search_seconds)
     !isfinite(xcorr20.lag_seconds) && return fallback
 
     final_native = round(xcorr20.lag_seconds / dt20) * dt20
@@ -559,16 +609,45 @@ end
 
 # UV is passed through for shared reader compatibility and later motion correction.
 # The timing offsets computed here are fit only from mdv and vn2.
-function process_sync_data(beams, env, Vn, UV, ic_list; ntop=80, jump_threshold_seconds=0.8, min_fine_peak=0.08, backward_windows=2, backward_tol=0.35)
-    seq_results = run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=ntop, jump_threshold_seconds=jump_threshold_seconds, min_fine_peak=min_fine_peak, backward_windows=backward_windows, backward_tol=backward_tol)
+function process_sync_data(beams, env, Vn, UV, ic_list; ntop=80, jump_threshold_seconds=0.8, min_fine_peak=0.08, backward_windows=2, backward_tol=0.35, max_gap_samples=3, offset_sentinel_seconds=-9999.0, offset_sentinel_ms=Int64(-9_999_000), nan_log_path=joinpath("epsilon_data", "nan_offset_chunks.log"), reset_nan_log=true)
+    if reset_nan_log && isfile(nan_log_path)
+        rm(nan_log_path)
+    end
+
+    seq_results = run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=ntop, jump_threshold_seconds=jump_threshold_seconds, min_fine_peak=min_fine_peak, backward_windows=backward_windows, backward_tol=backward_tol, max_gap_samples=max_gap_samples)
 
     state_ref = init_stream_state()
     seq_ref20 = NamedTuple[]
     for r in seq_results
         w = extract_sync_window(beams, env, state_ref, Vn, UV, r.ic; ntop=ntop)
-        s1 = coarse_and_fine_lag(w.mdv, w.vn2; prior_seconds=r.prior_offset)
-        rf = refine_offset_20hz(w, s1, Vn)
-        push!(seq_ref20, (; r..., lidar_dt=w.stare_dt, final_offset_20hz=rf.final_offset_20hz, final_offset_native=rf.final_offset_native, final_offset_round_s=rf.final_offset_round_s, vn2_1s_aligned=rf.vn2_1s_aligned, pitch_1s_aligned=rf.pitch_1s_aligned, roll_1s_aligned=rf.roll_1s_aligned, mdv_residual_1s=rf.mdv_residual_1s))
+        s1 = coarse_and_fine_lag(w.mdv, w.vn2; prior_seconds=r.prior_offset, max_gap_samples=max_gap_samples)
+        rf = refine_offset_20hz(w, s1, Vn; max_gap_samples=max_gap_samples)
+
+        final_20 = offset_or_sentinel(rf.final_offset_20hz; sentinel=offset_sentinel_seconds)
+        final_native = offset_or_sentinel(rf.final_offset_native; sentinel=offset_sentinel_seconds)
+        final_round = isfinite(final_native) && final_native != offset_sentinel_seconds ? round(Int, final_native) : round(Int, offset_sentinel_seconds)
+
+        if !isfinite(rf.final_offset_20hz) || !isfinite(rf.final_offset_native)
+            reason = !isfinite(rf.final_offset_native) ? "nan_native_offset" : "nan_20hz_offset"
+            append_nan_offset_log(nan_log_path;
+                ic=r.ic,
+                ist=w.ist,
+                ien=w.ien,
+                start_dt=w.stare_dt[1],
+                end_dt=w.stare_dt[end],
+                reason=reason,
+                prior_offset=s1.prior_seconds,
+                coarse_offset=s1.coarse_offset,
+                fine_residual=s1.fine.lag_seconds,
+                final_offset_1hz=s1.final_offset,
+                final_offset_20hz=rf.final_offset_20hz,
+                final_offset_native=rf.final_offset_native,
+                nvalid_mdv=count(isfinite, w.mdv),
+                nvalid_vn2=count(isfinite, w.vn2),
+            )
+        end
+
+        push!(seq_ref20, (; r..., lidar_dt=w.stare_dt, final_offset_20hz=final_20, final_offset_native=final_native, final_offset_round_s=final_round, vn2_1s_aligned=rf.vn2_1s_aligned, pitch_1s_aligned=rf.pitch_1s_aligned, roll_1s_aligned=rf.roll_1s_aligned, mdv_residual_1s=rf.mdv_residual_1s))
     end
 
     seq_ic = [r.ic for r in seq_ref20]
@@ -578,10 +657,16 @@ function process_sync_data(beams, env, Vn, UV, ic_list; ntop=80, jump_threshold_
     seq_final_native = [r.final_offset_native for r in seq_ref20]
     seq_fine = [r.fine_residual for r in seq_ref20]
 
-    seq_final_native_ms = round.(Int64, seq_final_native .* 1000)
+    seq_final_native_ms = [offset_to_ms(x; sentinel_ms=offset_sentinel_ms) for x in seq_final_native]
     seq_jump_20hz_ms = zeros(Int64, length(seq_final_native_ms))
     if length(seq_final_native_ms) > 1
-        seq_jump_20hz_ms[2:end] .= diff(seq_final_native_ms)
+        for i in 2:length(seq_final_native_ms)
+            if seq_final_native_ms[i] == offset_sentinel_ms || seq_final_native_ms[i - 1] == offset_sentinel_ms
+                seq_jump_20hz_ms[i] = offset_sentinel_ms
+            else
+                seq_jump_20hz_ms[i] = seq_final_native_ms[i] - seq_final_native_ms[i - 1]
+            end
+        end
     end
 
     seq_jump_candidate = [r.jump_candidate for r in seq_ref20]
