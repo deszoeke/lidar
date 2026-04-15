@@ -220,11 +220,15 @@ function chunk_lidar_datetimes(dt_chunk, beams, ist, ien)
     return stare_dt_raw, stare_dt, lidar_clock_fast_by
 end
 
-# UV is threaded through because read_stare_chunk is the shared dissipation-era reader
-# and this extracted window will later feed motion correction. The sync offset fit below
-# depends only on mdv and vn2, not on Ur/Vr.
+"""
+extract_sync_window
+Subsets Vn, and lidar beams.
+Calls ensure_chunk_loaded to update `beams` in-place.
+UV, not used here, is passed to read_stare_chunk. 
+The sync offset will depend only on mdv and vn2, not on Ur,Vr.
+"""
 function extract_sync_window(beams, env, state, Vn, UV, ic; ntop=80)
-    info = ensure_chunk_loaded!(beams, env, state, ic)
+    info = ensure_chunk_loaded!(beams, env, state, ic) # updates beams in-place and returns ist/ien for the chunk
     dt_arg = info.ist <= length(env.dtime) ? env.dtime[info.ist] : env.dtime[end]
     dopplervel, pitch, roll, vn0, vn1, vn2, Ur, Vr, mdv_builtin = read_stare_chunk(dt_arg, beams, Vn, UV, info.ist, info.ien, ntop)
     stare_dt_raw, stare_dt, lidar_clock_fast_by = chunk_lidar_datetimes(env.dtime[info.ist], beams, info.ist, info.ien)
