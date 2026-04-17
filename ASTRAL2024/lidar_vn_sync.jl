@@ -235,7 +235,8 @@ function extract_sync_window(beams, env, state, Vn, UV, ic; ntop=80)
     intensity = beams[:intensity][info.ist:info.ien, 1:ntop]
     beta = beams[:beta][info.ist:info.ien, 1:ntop]
     mdv, goodlevels = valid_chunk_mdv(intensity, dopplervel)
-    return (; info..., stare_dt_raw, stare_dt, lidar_clock_fast_by, dopplervel, intensity, beta, pitch, roll, vn0, vn1, vn2, Ur, Vr, mdv, mdv_builtin, goodlevels)
+    vn_coverage = vn_coverage_fraction(stare_dt, Vn)
+    return (; info..., stare_dt_raw, stare_dt, lidar_clock_fast_by, dopplervel, intensity, beta, pitch, roll, vn0, vn1, vn2, Ur, Vr, mdv, mdv_builtin, goodlevels, vn_coverage)
 end
 
 function finite_overlap(x, y)
@@ -271,6 +272,23 @@ function fill_short_nan_gaps(x; max_gap=3)
         end
     end
     y
+end
+
+"""
+    vn_coverage_fraction(stare_dt, Vn)
+
+Return the fraction of the lidar chunk's time span that is covered by VectorNav 20 Hz data.
+A value < 0.5 means fewer than half the expected samples are present; the chunk is treated as
+having insufficient VN coverage and no timing offset is computed.
+"""
+function vn_coverage_fraction(stare_dt, Vn)
+    t0 = stare_dt[1]
+    t1 = stare_dt[end]
+    span_s = Dates.value(Millisecond(t1 - t0)) / 1000.0
+    span_s <= 0.0 && return 0.0
+    n_vn = count(t0 .<= Vn[:vndt] .<= t1)
+    expected = span_s * 20.0   # nominal 20 Hz
+    return n_vn / max(expected, 1.0)
 end
 
 offset_or_sentinel(x; sentinel=-9999.0) = isfinite(x) ? x : sentinel
@@ -492,6 +510,10 @@ function run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=80, jump_thres
         start_dt = env.dtime[env.ists[ic]]
         prior = prior_from_history(history, start_dt)
         win = extract_sync_window(beams, env, state, Vn, UV, ic; ntop=ntop)
+        if win.vn_coverage < 0.5
+            push!(history, (; ic, start_dt=win.stare_dt[1], end_dt=win.stare_dt[end], parent_start=floor(win.stare_dt[1], Hour), prior_offset=prior.prior_seconds, previous_offset=prior.previous_offset, recent_offset=prior.recent_offset, parent_offset=prior.parent_offset, coarse_offset=NaN, fine_residual=NaN, final_offset=NaN, coarse_peak=NaN, fine_peak=NaN, goodlevels=length(win.goodlevels), jump_candidate=false, jump_robust=false, jump_accepted=false, jump_backward_metric=NaN))
+            continue
+        end
         sync = coarse_and_fine_lag(win.mdv, win.vn2; prior_seconds=prior.prior_seconds, max_gap_samples=max_gap_samples)
 
         jump_candidate = is_jump_candidate(prior.prior_seconds, sync.final_offset, sync.fine.peak_norm; jump_threshold_seconds=jump_threshold_seconds, min_fine_peak=min_fine_peak)
@@ -640,36 +662,58 @@ function process_sync_data(beams, env, Vn, UV, ic_list; ntop=80, jump_threshold_
 
             try
                 w = extract_sync_window(beams, env, state_ref, Vn, UV, r.ic; ntop=ntop)
-                s1 = coarse_and_fine_lag(w.mdv, w.vn2; prior_seconds=r.prior_offset, max_gap_samples=max_gap_samples)
-                rf = refine_offset_20hz(w, s1, Vn; max_gap_samples=max_gap_samples)
-
-                final_20 = offset_or_sentinel(rf.final_offset_20hz; sentinel=offset_sentinel_seconds)
-                final_native = offset_or_sentinel(rf.final_offset_native; sentinel=offset_sentinel_seconds)
-                final_round = isfinite(final_native) && final_native != offset_sentinel_seconds ? round(Int, final_native) : round(Int, offset_sentinel_seconds)
-
-                if !isfinite(rf.final_offset_20hz) || !isfinite(rf.final_offset_native)
-                    reason = !isfinite(rf.final_offset_native) ? "nan_native_offset" : "nan_20hz_offset"
+                if w.vn_coverage < 0.5
+                    status = "sentinel"
+                    message = "insufficient_vn_coverage"
                     append_nan_offset_log(nan_log_path;
                         ic=r.ic,
                         ist=w.ist,
                         ien=w.ien,
                         start_dt=w.stare_dt[1],
                         end_dt=w.stare_dt[end],
-                        reason=reason,
-                        prior_offset=s1.prior_seconds,
-                        coarse_offset=s1.coarse_offset,
-                        fine_residual=s1.fine.lag_seconds,
-                        final_offset_1hz=s1.final_offset,
-                        final_offset_20hz=rf.final_offset_20hz,
-                        final_offset_native=rf.final_offset_native,
+                        reason=message,
+                        prior_offset=r.prior_offset,
+                        coarse_offset=NaN,
+                        fine_residual=NaN,
+                        final_offset_1hz=NaN,
+                        final_offset_20hz=NaN,
+                        final_offset_native=NaN,
                         nvalid_mdv=count(isfinite, w.mdv),
                         nvalid_vn2=count(isfinite, w.vn2),
                     )
-                    status = "sentinel"
-                    message = reason
-                end
+                    push!(seq_ref20, (; r..., lidar_dt=w.stare_dt, final_offset_20hz=offset_sentinel_seconds, final_offset_native=offset_sentinel_seconds, final_offset_round_s=round(Int, offset_sentinel_seconds), vn2_1s_aligned=fill(NaN, length(w.stare_dt)), pitch_1s_aligned=fill(NaN, length(w.stare_dt)), roll_1s_aligned=fill(NaN, length(w.stare_dt)), mdv_residual_1s=fill(NaN, length(w.stare_dt))))
+                else
+                    s1 = coarse_and_fine_lag(w.mdv, w.vn2; prior_seconds=r.prior_offset, max_gap_samples=max_gap_samples)
+                    rf = refine_offset_20hz(w, s1, Vn; max_gap_samples=max_gap_samples)
 
-                push!(seq_ref20, (; r..., lidar_dt=w.stare_dt, final_offset_20hz=final_20, final_offset_native=final_native, final_offset_round_s=final_round, vn2_1s_aligned=rf.vn2_1s_aligned, pitch_1s_aligned=rf.pitch_1s_aligned, roll_1s_aligned=rf.roll_1s_aligned, mdv_residual_1s=rf.mdv_residual_1s))
+                    final_20 = offset_or_sentinel(rf.final_offset_20hz; sentinel=offset_sentinel_seconds)
+                    final_native = offset_or_sentinel(rf.final_offset_native; sentinel=offset_sentinel_seconds)
+                    final_round = isfinite(final_native) && final_native != offset_sentinel_seconds ? round(Int, final_native) : round(Int, offset_sentinel_seconds)
+
+                    if !isfinite(rf.final_offset_20hz) || !isfinite(rf.final_offset_native)
+                        reason = !isfinite(rf.final_offset_native) ? "nan_native_offset" : "nan_20hz_offset"
+                        append_nan_offset_log(nan_log_path;
+                            ic=r.ic,
+                            ist=w.ist,
+                            ien=w.ien,
+                            start_dt=w.stare_dt[1],
+                            end_dt=w.stare_dt[end],
+                            reason=reason,
+                            prior_offset=s1.prior_seconds,
+                            coarse_offset=s1.coarse_offset,
+                            fine_residual=s1.fine.lag_seconds,
+                            final_offset_1hz=s1.final_offset,
+                            final_offset_20hz=rf.final_offset_20hz,
+                            final_offset_native=rf.final_offset_native,
+                            nvalid_mdv=count(isfinite, w.mdv),
+                            nvalid_vn2=count(isfinite, w.vn2),
+                        )
+                        status = "sentinel"
+                        message = reason
+                    end
+
+                    push!(seq_ref20, (; r..., lidar_dt=w.stare_dt, final_offset_20hz=final_20, final_offset_native=final_native, final_offset_round_s=final_round, vn2_1s_aligned=rf.vn2_1s_aligned, pitch_1s_aligned=rf.pitch_1s_aligned, roll_1s_aligned=rf.roll_1s_aligned, mdv_residual_1s=rf.mdv_residual_1s))
+                end
             catch err
                 status = "error"
                 message = replace(sprint(showerror, err), '\n' => " | ")
