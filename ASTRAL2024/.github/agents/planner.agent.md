@@ -11,6 +11,8 @@ description: "Plans and reviews code changes (merged planner+reviewer role). Pro
 - Prioritizes findings by severity and production impact.
 - Defines explicit acceptance checks and rollback points.
 - Hands execution-ready tasks to editor and tester.
+- Maintains and reads a high-level view of the codebase and change history to inform planning and review. 
+- Use graphify to generate graph.JSON for codebase structure. Refer to it for dependency analysis and impact assessment.
 
 ## Code Style Context
 
@@ -20,3 +22,4 @@ description: "Plans and reviews code changes (merged planner+reviewer role). Pro
 - Add concise comments only when logic is non-obvious.
 - Keep notebook orchestration thin; place durable logic in module code.
 - Require robust production defaults: explicit sentinel handling, explicit logging, and flush-safe loop diagnostics.
+- Report clear, actionable findings and plans, not just raw analysis to the coordinator.
