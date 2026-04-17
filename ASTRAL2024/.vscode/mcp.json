@@ -1,0 +1,14 @@
+{
+  "servers": {
+    "graphify": {
+      "type": "stdio",
+      "command": "/Users/deszoeks/micromamba/envs/graphify-env/bin/python",
+      "args": [
+        "-m",
+        "graphify.serve",
+        "/Users/deszoeks/Projects/lidar/ASTRAL2024/graphify-out/graph.json"
+      ]
+    }
+  },
+  "inputs": []
+}
