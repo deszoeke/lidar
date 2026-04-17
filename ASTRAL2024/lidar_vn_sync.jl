@@ -235,8 +235,10 @@ function extract_sync_window(beams, env, state, Vn, UV, ic; ntop=80)
     intensity = beams[:intensity][info.ist:info.ien, 1:ntop]
     beta = beams[:beta][info.ist:info.ien, 1:ntop]
     mdv, goodlevels = valid_chunk_mdv(intensity, dopplervel)
+    _, vndt20_chunk, vn2_20_chunk = vn_subset_20hz(stare_dt, Vn; pad=Second(2))
+    vn2_xcorr = one_hz_average_at_lidar_times(vndt20_chunk, vn2_20_chunk, stare_dt)
     vn_coverage = vn_coverage_fraction(stare_dt, Vn)
-    return (; info..., stare_dt_raw, stare_dt, lidar_clock_fast_by, dopplervel, intensity, beta, pitch, roll, vn0, vn1, vn2, Ur, Vr, mdv, mdv_builtin, goodlevels, vn_coverage)
+    return (; info..., stare_dt_raw, stare_dt, lidar_clock_fast_by, dopplervel, intensity, beta, pitch, roll, vn0, vn1, vn2, vn2_xcorr, Ur, Vr, mdv, mdv_builtin, goodlevels, vn_coverage)
 end
 
 function finite_overlap(x, y)
@@ -495,7 +497,7 @@ function backward_jump_robustness(beams, env, state, Vn, UV, history, post_offse
     for k in 1:ntest
         h = history[end - k + 1]
         win_prev = extract_sync_window(beams, env, state, Vn, UV, h.ic; ntop=ntop)
-        back_sync = coarse_and_fine_lag(win_prev.mdv, win_prev.vn2; prior_seconds=post_offset, max_gap_samples=max_gap_samples)
+        back_sync = coarse_and_fine_lag(win_prev.mdv, win_prev.vn2_xcorr; prior_seconds=post_offset, max_gap_samples=max_gap_samples)
         if isfinite(back_sync.final_offset) && isfinite(h.final_offset)
             push!(deltas, abs(back_sync.final_offset - h.final_offset))
         end
@@ -514,7 +516,7 @@ function run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=80, jump_thres
             push!(history, (; ic, start_dt=win.stare_dt[1], end_dt=win.stare_dt[end], parent_start=floor(win.stare_dt[1], Hour), prior_offset=prior.prior_seconds, previous_offset=prior.previous_offset, recent_offset=prior.recent_offset, parent_offset=prior.parent_offset, coarse_offset=NaN, fine_residual=NaN, final_offset=NaN, coarse_peak=NaN, fine_peak=NaN, goodlevels=length(win.goodlevels), jump_candidate=false, jump_robust=false, jump_accepted=false, jump_backward_metric=NaN))
             continue
         end
-        sync = coarse_and_fine_lag(win.mdv, win.vn2; prior_seconds=prior.prior_seconds, max_gap_samples=max_gap_samples)
+        sync = coarse_and_fine_lag(win.mdv, win.vn2_xcorr; prior_seconds=prior.prior_seconds, max_gap_samples=max_gap_samples)
 
         jump_candidate = is_jump_candidate(prior.prior_seconds, sync.final_offset, sync.fine.peak_norm; jump_threshold_seconds=jump_threshold_seconds, min_fine_peak=min_fine_peak)
 
@@ -523,7 +525,7 @@ function run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=80, jump_thres
         jump_accepted = false
 
         if jump_candidate && !isempty(history)
-            post_sync = coarse_and_fine_lag(win.mdv, win.vn2; prior_seconds=sync.final_offset, max_gap_samples=max_gap_samples)
+            post_sync = coarse_and_fine_lag(win.mdv, win.vn2_xcorr; prior_seconds=sync.final_offset, max_gap_samples=max_gap_samples)
             post_offset = post_sync.final_offset
             jump_backward_metric = backward_jump_robustness(beams, env, state, Vn, UV, history, post_offset; ntop=ntop, n_back=backward_windows, max_gap_samples=max_gap_samples)
             jump_robust = isfinite(jump_backward_metric) && jump_backward_metric <= backward_tol
@@ -531,7 +533,7 @@ function run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=80, jump_thres
                 sync = post_sync
                 jump_accepted = true
             else
-                sync = coarse_and_fine_lag(win.mdv, win.vn2; prior_seconds=prior.prior_seconds, fine_search_seconds=2.0, max_gap_samples=max_gap_samples)
+                sync = coarse_and_fine_lag(win.mdv, win.vn2_xcorr; prior_seconds=prior.prior_seconds, fine_search_seconds=2.0, max_gap_samples=max_gap_samples)
             end
         end
 
@@ -540,8 +542,11 @@ function run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=80, jump_thres
     history
 end
 
-function vn_subset_20hz(stare_dt, Vn; pad=Second(2))
-    ind = findall(stare_dt[1] - pad .<= Vn[:vndt] .<= stare_dt[end] + pad)
+function vn_subset_20hz(stare_dt, Vn; pad=Second(2), offset_seconds=0.0)
+    dt_off = Millisecond(round(Int64, 1_000 * offset_seconds))
+    t0 = stare_dt[1] + dt_off
+    t1 = stare_dt[end] + dt_off
+    ind = findall(t0 - pad .<= Vn[:vndt] .<= t1 + pad)
     vndt = Vn[:vndt][ind]
     vn2 = Float64.(Vn[:VelNED2][ind])
     return ind, vndt, vn2
@@ -585,11 +590,12 @@ function upsample_lidar_step(lidar_dt, mdv, vndt)
     out
 end
 
-function one_hz_average_at_lidar_times(vndt20, x20, lidar_dt; half_window=0.5)
+function one_hz_average_at_lidar_times(vndt20, x20, lidar_dt; half_window=0.5, query_offset_seconds=0.0)
     out = fill(NaN, length(lidar_dt))
     t20 = Float64.(Dates.datetime2epochms.(vndt20))
+    qoff_ms = 1_000 * query_offset_seconds
     for i in eachindex(lidar_dt)
-        tq = Float64(Dates.datetime2epochms(lidar_dt[i]))
+        tq = Float64(Dates.datetime2epochms(lidar_dt[i])) + qoff_ms
         ii = findall(abs.(t20 .- tq) .<= 1000 * half_window)
         vals = filter(isfinite, x20[ii])
         isempty(vals) || (out[i] = mean(vals))
@@ -598,8 +604,9 @@ function one_hz_average_at_lidar_times(vndt20, x20, lidar_dt; half_window=0.5)
 end
 
 function refine_offset_20hz(win, sync_1s, Vn; ma_points=20, search_seconds=1.0, max_gap_samples=3)
+    prior_offset = isfinite(sync_1s.prior_seconds) ? sync_1s.prior_seconds : 0.0
     pad_s = ceil(Int, search_seconds) + 2
-    ind20, vndt20, vn2_20 = vn_subset_20hz(win.stare_dt, Vn; pad=Second(pad_s))
+    ind20, vndt20, vn2_20 = vn_subset_20hz(win.stare_dt, Vn; pad=Second(pad_s), offset_seconds=prior_offset)
     pitch_20 = Float64.(Vn[:Pitch][ind20])
     roll_20 = Float64.(Vn[:Roll][ind20])
     base_offset = isfinite(sync_1s.final_offset) ? sync_1s.final_offset : (isfinite(sync_1s.prior_seconds) ? sync_1s.prior_seconds : -9999.0)
@@ -612,22 +619,24 @@ function refine_offset_20hz(win, sync_1s, Vn; ma_points=20, search_seconds=1.0, 
     length(vndt20) < 40 && return fallback
 
     vn2_ma = nan_safe_moving_average(vn2_20, ma_points)
-    mdv20 = upsample_lidar_step(win.stare_dt, win.mdv, vndt20)
+    lidar_dt_shifted = win.stare_dt .+ Millisecond(round.(Int64, 1_000 .* prior_offset))
+    mdv20 = upsample_lidar_step(lidar_dt_shifted, win.mdv, vndt20)
     mdv20 = fill_short_nan_gaps(mdv20; max_gap=max_gap_samples)
     vn2_ma = fill_short_nan_gaps(vn2_ma; max_gap=max_gap_samples)
 
-    xcorr20 = fft_xcorr_lag(mdv20, vn2_ma; dt=dt20, center_seconds=base_offset, maxlag_seconds=search_seconds)
+    xcorr20 = fft_xcorr_lag(mdv20, vn2_ma; dt=dt20, center_seconds=0.0, maxlag_seconds=search_seconds)
     !isfinite(xcorr20.lag_seconds) && return fallback
 
     final_native = round(xcorr20.lag_seconds / dt20) * dt20
     final_round_s = round(Int, final_native)
+    final_total = prior_offset + final_native
 
     vn2_shifted = shift_signal_linear(vn2_20, final_native; dt=dt20)
     pitch_shifted = shift_signal_linear(pitch_20, final_native; dt=dt20)
     roll_shifted = shift_signal_linear(roll_20, final_native; dt=dt20)
-    vn2_1s_aligned = one_hz_average_at_lidar_times(vndt20, vn2_shifted, win.stare_dt)
-    pitch_1s_aligned = one_hz_average_at_lidar_times(vndt20, pitch_shifted, win.stare_dt)
-    roll_1s_aligned = one_hz_average_at_lidar_times(vndt20, roll_shifted, win.stare_dt)
+    vn2_1s_aligned = one_hz_average_at_lidar_times(vndt20, vn2_shifted, win.stare_dt; query_offset_seconds=prior_offset)
+    pitch_1s_aligned = one_hz_average_at_lidar_times(vndt20, pitch_shifted, win.stare_dt; query_offset_seconds=prior_offset)
+    roll_1s_aligned = one_hz_average_at_lidar_times(vndt20, roll_shifted, win.stare_dt; query_offset_seconds=prior_offset)
     mdv_residual_1s = win.mdv .- vn2_1s_aligned
 
     return (; final_offset_20hz=xcorr20.lag_seconds, native_step=dt20, final_offset_native=final_native, final_offset_round_s=final_round_s, vn2_1s_aligned, pitch_1s_aligned, roll_1s_aligned, mdv_residual_1s, xcorr20, vndt20, vn2_20)
@@ -683,12 +692,13 @@ function process_sync_data(beams, env, Vn, UV, ic_list; ntop=80, jump_threshold_
                     )
                     push!(seq_ref20, (; r..., lidar_dt=w.stare_dt, final_offset_20hz=offset_sentinel_seconds, final_offset_native=offset_sentinel_seconds, final_offset_round_s=round(Int, offset_sentinel_seconds), vn2_1s_aligned=fill(NaN, length(w.stare_dt)), pitch_1s_aligned=fill(NaN, length(w.stare_dt)), roll_1s_aligned=fill(NaN, length(w.stare_dt)), mdv_residual_1s=fill(NaN, length(w.stare_dt))))
                 else
-                    s1 = coarse_and_fine_lag(w.mdv, w.vn2; prior_seconds=r.prior_offset, max_gap_samples=max_gap_samples)
+                    s1 = coarse_and_fine_lag(w.mdv, w.vn2_xcorr; prior_seconds=r.prior_offset, max_gap_samples=max_gap_samples)
                     rf = refine_offset_20hz(w, s1, Vn; max_gap_samples=max_gap_samples)
 
-                    final_20 = offset_or_sentinel(rf.final_offset_20hz; sentinel=offset_sentinel_seconds)
-                    final_native = offset_or_sentinel(rf.final_offset_native; sentinel=offset_sentinel_seconds)
-                    final_round = isfinite(final_native) && final_native != offset_sentinel_seconds ? round(Int, final_native) : round(Int, offset_sentinel_seconds)
+                        final_20 = offset_or_sentinel(rf.final_offset_20hz; sentinel=offset_sentinel_seconds)
+                        final_native_resid = offset_or_sentinel(rf.final_offset_native; sentinel=offset_sentinel_seconds)
+                        final_native = isfinite(final_native_resid) && isfinite(r.prior_offset) ? r.prior_offset + final_native_resid : offset_sentinel_seconds
+                        final_round = isfinite(final_native) && final_native != offset_sentinel_seconds ? round(Int, final_native) : round(Int, offset_sentinel_seconds)
 
                     if !isfinite(rf.final_offset_20hz) || !isfinite(rf.final_offset_native)
                         reason = !isfinite(rf.final_offset_native) ? "nan_native_offset" : "nan_20hz_offset"
@@ -903,7 +913,7 @@ function diagnostic_single_window(beams, Env, Vn, UV, ic; ntop=80)
     diag_array("Ur", win.Ur)
     diag_array("Vr", win.Vr)
 
-    sync = coarse_and_fine_lag(win.mdv, win.vn2; prior_seconds=0.0)
+    sync = coarse_and_fine_lag(win.mdv, win.vn2_xcorr; prior_seconds=0.0)
     ref20 = refine_offset_20hz(win, sync, Vn)
 
     println("clock prior applied: ", win.lidar_clock_fast_by)
@@ -924,7 +934,7 @@ function diagnostic_single_window(beams, Env, Vn, UV, ic; ntop=80)
 
     subplot(5, 1, 2)
     plot(win.stare_dt, win.mdv, label="mdv")
-    plot(win.stare_dt, win.vn2, label="VelNED2")
+    plot(win.stare_dt, win.vn2_xcorr, label="VelNED2 (1 Hz avg for sync)")
     ylabel("m s^-1")
     title("Raw sync signals")
     legend()

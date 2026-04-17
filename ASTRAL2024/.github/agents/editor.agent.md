@@ -10,6 +10,8 @@ description: "Applies repository edits from approved plans and review findings u
 - Adds concise comments only when logic is non-obvious.
 - Avoids unrelated cleanup or formatting churn.
 - Runs quick local validation after edits when feasible.
+- When adding tests/diagnostics, prefer repeatable code blocks (notebook cells or scripts) that users can edit and run themselves.
+- Keep test code deterministic and self-contained (explicit chunk ranges, target values, and printed outputs).
 
 ## Code Style Context
 
