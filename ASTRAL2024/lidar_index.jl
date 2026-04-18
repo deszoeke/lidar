@@ -27,11 +27,12 @@ function build_lidar_index(dtime, ist, ien, files, file_ibeam_start, file_ibeam_
     nchunks = length(ist)
     nfiles  = length(files)
 
-    ifile_first = [ findfirst(file_ibeam_start .<= ist[ic] .<= file_ibeam_end) for ic in 1:nchunks ]
-    ifile_last  = [ findfirst(file_ibeam_start .<= ien[ic] .<= file_ibeam_end) for ic in 1:nchunks ]
+    ifile_first = [ findfirst(j -> file_ibeam_start[j] <= ist[ic] <= file_ibeam_end[j], 1:nfiles) for ic in 1:nchunks ]
+    ifile_last  = [ findfirst(j -> file_ibeam_start[j] <= ien[ic] <= file_ibeam_end[j], 1:nfiles) for ic in 1:nchunks ]
 
-    file_ichunk_first = [ findfirst(ifile_first .<= ifile) for ifile in 1:nfiles ]  # or 0 if none
-    file_ichunk_last  = [ findlast( ifile_last  .>= ifile) for ifile in 1:nfiles ]
+    touches_file = (ic, ifile) -> (ifile_first[ic] <= ifile <= ifile_last[ic])
+    file_ichunk_first = [ findfirst(ic -> touches_file(ic, ifile), 1:nchunks) for ifile in 1:nfiles ]
+    file_ichunk_last  = [ findlast(ic -> touches_file(ic, ifile), 1:nchunks) for ifile in 1:nfiles ]
 
     LidarIndex(
         ist, ien,

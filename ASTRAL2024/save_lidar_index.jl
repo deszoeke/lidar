@@ -52,7 +52,7 @@ files = joinpath.(lidarstemdir, "all", starefiles)
 
 file_ibeam_start, file_ibeam_end = load_file_beam_inds(files)
 
-idx = build_lidar_index(dtime, ist, ien, files, file_ibeam_start, file_ibeam_end)
+idx = lidar_index.build_lidar_index(dtime, ist, ien, files, file_ibeam_start, file_ibeam_end)
 @save "lidar_index.jld2" idx
 
 println("Saved lidar_index.jld2 with ", length(idx.ibeam_start), " chunks across ", length(idx.filenames), " files.")
