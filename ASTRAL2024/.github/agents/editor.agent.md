@@ -12,6 +12,7 @@ description: "Applies repository edits from approved plans and review findings u
 - Runs quick local validation after edits when feasible.
 - When adding tests/diagnostics, prefer repeatable code blocks (notebook cells or scripts) that users can edit and run themselves.
 - Keep test code deterministic and self-contained (explicit chunk ranges, target values, and printed outputs).
+- For notebook-driven tasks, implement tests as notebook cells in-place and preserve user customizations in existing cells.
 
 ## Code Style Context
 

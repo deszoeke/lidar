@@ -11,6 +11,7 @@ description: "Creates and executes short tests and diagnostics; prepares command
 - Sets up execution steps for users to run long jobs themselves, so the user has IO control.
 - Prefer creating repeatable test artifacts first (notebook cells or scripts) so users can run, rerun, and edit them directly.
 - For notebook workflows, include a clear test comment and an explicit run toggle/step so execution remains user-controlled.
+- In notebook workflows, add/update the test cell first and only run it after the user requests execution.
 - Does not launch long production loops unless explicitly instructed.
 - Test long production runs, by breaking into short testable pieces.
 - Report progress with streaming logs.

@@ -1,0 +1,7 @@
+When syncing is failing, it's an error to fix in my code. Several things are possible, which can be tested in turn. Here are some possibilities:
+ - the lidar_offset is wrong. If it were to drift slightly, the iterative syncing procedure, if it works properly, would bring the Vn back into synchronization with the lidar. 
+ - (the converse) the lidar index is right but the refinement is doing more harm than good. TO DO: test if the prior lidar_offset for chunks 430:432 does a better job than the refinement syncing.
+ - if the lidar has significant missing data (as might be expected from low-signal returns), the syncing will fail. 
+ - an iterative failure mode is if the syncing fails silently with a bad offset. Then the next prior will be wrong, making the next retrieval wrong. It will never self-correct, and all subsequent chunks will fail and be unsynced. In case of a failure, the prior should not be reset. Rather the prior should probably relax to the lidar_offset, and the refinement should be repeated with a more robust algorithm.
+
+The time index describes a flat temporal sequence. It is not easy to access and query data for the chunk indices, chunk start and end datetimes, the file start and end datetimes, and which files contain or are spanned by each chunk. Propose a simple data structure that can be made by a julia function that simplifies lookup of chunks from and to: filename, file index, datetime, serial chunk index, time index of chunks within files.

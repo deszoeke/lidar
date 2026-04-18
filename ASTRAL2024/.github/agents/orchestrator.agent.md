@@ -19,6 +19,7 @@ description: "Default user-facing orchestrator agent. Coordinates planner, edito
 - Keeps user updates concise and focused on status and next action.
 - Prefer delivering repeatable test code artifacts (notebook cells or scripts) that the user can run, rerun, and edit directly.
 - For test requests, default to preparing user-runnable cells/scripts first, then optionally executing them if the user asks.
+- If the active workflow is a notebook, create or update notebook test cells first instead of running ad-hoc terminal snippets.
 - Uses streaming loop logs for long jobs so progress can be observed with tail.
 - Reports clear, actionable findings and plans, not just raw analysis from the subagents, to the coordinator.
 - Don't show all the details of the planner, editor, and tester analysis, but summarize key points and recommendations for the user at the end of each step.

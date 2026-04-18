@@ -24,8 +24,8 @@
     {
       "label": "Pkg",
       "file_type": "code",
-      "source_file": "save_lidar_dt.jl",
-      "source_location": "L5",
+      "source_file": "save_lidar_index.jl",
+      "source_location": "L2",
       "id": "pkg",
       "community": 2,
       "norm_label": "pkg"
@@ -117,7 +117,7 @@
       "source_file": "compute_hmix_epsilon.jl",
       "source_location": "L1",
       "id": "compute_hmix_epsilon_jl",
-      "community": 2,
+      "community": 10,
       "norm_label": "compute_hmix_epsilon.jl"
     },
     {
@@ -135,7 +135,7 @@
       "source_file": "compute_hmix_epsilon.jl",
       "source_location": "L12",
       "id": "compute_hmix_epsilon_rng_height",
-      "community": 2,
+      "community": 10,
       "norm_label": "rng_height()"
     },
     {
@@ -144,7 +144,7 @@
       "source_file": "compute_hmix_epsilon.jl",
       "source_location": "L15",
       "id": "compute_hmix_epsilon_is_valid_eps",
-      "community": 2,
+      "community": 10,
       "norm_label": "is_valid_eps()"
     },
     {
@@ -153,7 +153,7 @@
       "source_file": "compute_hmix_epsilon.jl",
       "source_location": "L18",
       "id": "compute_hmix_epsilon_hmix_first_crossing",
-      "community": 2,
+      "community": 10,
       "norm_label": "hmix_first_crossing()"
     },
     {
@@ -162,7 +162,7 @@
       "source_file": "compute_hmix_epsilon.jl",
       "source_location": "L48",
       "id": "compute_hmix_epsilon_extract_epsilon_and_meta",
-      "community": 2,
+      "community": 10,
       "norm_label": "extract_epsilon_and_meta()"
     },
     {
@@ -171,7 +171,7 @@
       "source_file": "compute_hmix_epsilon.jl",
       "source_location": "L91",
       "id": "compute_hmix_epsilon_compute_hmix_for_matrix",
-      "community": 2,
+      "community": 10,
       "norm_label": "compute_hmix_for_matrix()"
     },
     {
@@ -180,7 +180,7 @@
       "source_file": "compute_hmix_epsilon.jl",
       "source_location": "L110",
       "id": "compute_hmix_epsilon_process_file",
-      "community": 2,
+      "community": 10,
       "norm_label": "process_file()"
     },
     {
@@ -189,7 +189,7 @@
       "source_file": "compute_hmix_epsilon.jl",
       "source_location": "L156",
       "id": "compute_hmix_epsilon_list_epsilon_files",
-      "community": 2,
+      "community": 10,
       "norm_label": "list_epsilon_files()"
     },
     {
@@ -198,7 +198,7 @@
       "source_file": "compute_hmix_epsilon.jl",
       "source_location": "L166",
       "id": "compute_hmix_epsilon_main",
-      "community": 2,
+      "community": 10,
       "norm_label": "main()"
     },
     {
@@ -1363,6 +1363,87 @@
       "norm_label": "diagnostic_offsets()"
     },
     {
+      "label": "lidar_index.jl",
+      "file_type": "code",
+      "source_file": "lidar_index.jl",
+      "source_location": "L1",
+      "id": "lidar_index_jl",
+      "community": 2,
+      "norm_label": "lidar_index.jl"
+    },
+    {
+      "label": "lidar_index",
+      "file_type": "code",
+      "source_file": "lidar_index.jl",
+      "source_location": "L1",
+      "id": "lidar_index_lidar_index",
+      "community": 2,
+      "norm_label": "lidar_index"
+    },
+    {
+      "label": "LidarIndex",
+      "file_type": "code",
+      "source_file": "lidar_index.jl",
+      "source_location": "L8",
+      "id": "lidar_index_lidarindex",
+      "community": 2,
+      "norm_label": "lidarindex"
+    },
+    {
+      "label": "build_lidar_index()",
+      "file_type": "code",
+      "source_file": "lidar_index.jl",
+      "source_location": "L26",
+      "id": "lidar_index_build_lidar_index",
+      "community": 2,
+      "norm_label": "build_lidar_index()"
+    },
+    {
+      "label": "chunk_files()",
+      "file_type": "code",
+      "source_file": "lidar_index.jl",
+      "source_location": "L49",
+      "id": "lidar_index_chunk_files",
+      "community": 2,
+      "norm_label": "chunk_files()"
+    },
+    {
+      "label": "chunk_local_beams()",
+      "file_type": "code",
+      "source_file": "lidar_index.jl",
+      "source_location": "L52",
+      "id": "lidar_index_chunk_local_beams",
+      "community": 2,
+      "norm_label": "chunk_local_beams()"
+    },
+    {
+      "label": "dt_to_chunk()",
+      "file_type": "code",
+      "source_file": "lidar_index.jl",
+      "source_location": "L58",
+      "id": "lidar_index_dt_to_chunk",
+      "community": 2,
+      "norm_label": "dt_to_chunk()"
+    },
+    {
+      "label": "file_to_chunks()",
+      "file_type": "code",
+      "source_file": "lidar_index.jl",
+      "source_location": "L61",
+      "id": "lidar_index_file_to_chunks",
+      "community": 2,
+      "norm_label": "file_to_chunks()"
+    },
+    {
+      "label": "file_idx_to_chunks()",
+      "file_type": "code",
+      "source_file": "lidar_index.jl",
+      "source_location": "L66",
+      "id": "lidar_index_file_idx_to_chunks",
+      "community": 2,
+      "norm_label": "file_idx_to_chunks()"
+    },
+    {
       "label": "extend_pycall_missing.jl",
       "file_type": "code",
       "source_file": "extend_pycall_missing.jl",
@@ -1984,6 +2065,24 @@
       "norm_label": "save_lidar_dt.jl"
     },
     {
+      "label": "save_lidar_index.jl",
+      "file_type": "code",
+      "source_file": "save_lidar_index.jl",
+      "source_location": "L1",
+      "id": "save_lidar_index_jl",
+      "community": 2,
+      "norm_label": "save_lidar_index.jl"
+    },
+    {
+      "label": "load_file_beam_inds()",
+      "file_type": "code",
+      "source_file": "save_lidar_index.jl",
+      "source_location": "L12",
+      "id": "save_lidar_index_load_file_beam_inds",
+      "community": 2,
+      "norm_label": "load_file_beam_inds()"
+    },
+    {
       "label": "readers.jl",
       "file_type": "code",
       "source_file": "readers.jl",
@@ -2214,7 +2313,7 @@
       "source_file": "readers.jl",
       "source_location": "L629",
       "id": "readers_shipposmv",
-      "community": 10,
+      "community": 11,
       "norm_label": "shipposmv"
     },
     {
@@ -2223,7 +2322,7 @@
       "source_file": "readers.jl",
       "source_location": "L632",
       "id": "flatten",
-      "community": 10,
+      "community": 11,
       "norm_label": "flatten"
     },
     {
@@ -2232,7 +2331,7 @@
       "source_file": "readers.jl",
       "source_location": "L644",
       "id": "readers_get_posmv_file",
-      "community": 10,
+      "community": 11,
       "norm_label": "get_posmv_file()"
     },
     {
@@ -2241,7 +2340,7 @@
       "source_file": "readers.jl",
       "source_location": "L664",
       "id": "readers_get_nav_file",
-      "community": 10,
+      "community": 11,
       "norm_label": "get_nav_file()"
     },
     {
@@ -2250,7 +2349,7 @@
       "source_file": "readers.jl",
       "source_location": "L682",
       "id": "readers_itr_expand",
-      "community": 10,
+      "community": 11,
       "norm_label": "itr_expand()"
     },
     {
@@ -2259,7 +2358,7 @@
       "source_file": "readers.jl",
       "source_location": "L687",
       "id": "readers_read_pashr_data",
-      "community": 10,
+      "community": 11,
       "norm_label": "read_pashr_data()"
     },
     {
@@ -2268,7 +2367,7 @@
       "source_file": "readers.jl",
       "source_location": "L729",
       "id": "readers_read_pashr_dict",
-      "community": 10,
+      "community": 11,
       "norm_label": "read_pashr_dict()"
     },
     {
@@ -2277,7 +2376,7 @@
       "source_file": "readers.jl",
       "source_location": "L752",
       "id": "readers_read_gyro_data",
-      "community": 10,
+      "community": 11,
       "norm_label": "read_gyro_data()"
     },
     {
@@ -2286,7 +2385,7 @@
       "source_file": "readers.jl",
       "source_location": "L791",
       "id": "readers_read_gyro_dict",
-      "community": 10,
+      "community": 11,
       "norm_label": "read_gyro_dict()"
     },
     {
@@ -2430,7 +2529,7 @@
       "source_file": "codeIdeas/foo.jl",
       "source_location": "L1",
       "id": "codeideas_foo_jl",
-      "community": 11,
+      "community": 12,
       "norm_label": "foo.jl"
     },
     {
@@ -2439,7 +2538,7 @@
       "source_file": "codeIdeas/foo.jl",
       "source_location": "L7",
       "id": "foo_robust_mean",
-      "community": 11,
+      "community": 12,
       "norm_label": "robust_mean()"
     },
     {
@@ -2448,7 +2547,7 @@
       "source_file": "codeIdeas/foo.jl",
       "source_location": "L8",
       "id": "foo_robust_median",
-      "community": 11,
+      "community": 12,
       "norm_label": "robust_median()"
     },
     {
@@ -2457,7 +2556,7 @@
       "source_file": "codeIdeas/foo.jl",
       "source_location": "L11",
       "id": "foo_nanmedian",
-      "community": 11,
+      "community": 12,
       "norm_label": "nanmedian()"
     },
     {
@@ -2466,7 +2565,7 @@
       "source_file": "codeIdeas/foo.jl",
       "source_location": "L18",
       "id": "foo_running_median",
-      "community": 11,
+      "community": 12,
       "norm_label": "running_median()"
     },
     {
@@ -2475,7 +2574,7 @@
       "source_file": "codeIdeas/foo.jl",
       "source_location": "L40",
       "id": "foo_estimate_heave_ts",
-      "community": 11,
+      "community": 12,
       "norm_label": "estimate_heave_ts()"
     },
     {
@@ -2484,7 +2583,7 @@
       "source_file": "codeIdeas/foo.jl",
       "source_location": "L122",
       "id": "foo_rain_mask_vertical",
-      "community": 11,
+      "community": 12,
       "norm_label": "rain_mask_vertical()"
     },
     {
@@ -2493,7 +2592,7 @@
       "source_file": "codeIdeas/foo.jl",
       "source_location": "L257",
       "id": "foo_subtract_rain_layers",
-      "community": 11,
+      "community": 12,
       "norm_label": "subtract_rain_layers!()"
     },
     {
@@ -2502,7 +2601,7 @@
       "source_file": "codeIdeas/foo.jl",
       "source_location": "L289",
       "id": "foo_iterative_despike_rain",
-      "community": 11,
+      "community": 12,
       "norm_label": "iterative_despike_rain()"
     },
     {
@@ -2906,6 +3005,18 @@
     {
       "relation": "imports",
       "confidence": "EXTRACTED",
+      "source_file": "save_lidar_index.jl",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_src": "save_lidar_index_jl",
+      "_tgt": "revise",
+      "source": "revise",
+      "target": "save_lidar_index_jl",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
       "source_file": "time_tests.jl",
       "source_location": "L4",
       "weight": 1.0,
@@ -2973,6 +3084,18 @@
       "_tgt": "pkg",
       "source": "pkg",
       "target": "save_lidar_dt_jl",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "save_lidar_index.jl",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_src": "save_lidar_index_jl",
+      "_tgt": "pkg",
+      "source": "pkg",
+      "target": "save_lidar_index_jl",
       "confidence_score": 1.0
     },
     {
@@ -3057,6 +3180,18 @@
       "_tgt": "dates",
       "source": "dates",
       "target": "lidar_vn_sync_lidarvnsync",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "lidar_index.jl",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_src": "lidar_index_lidar_index",
+      "_tgt": "dates",
+      "source": "dates",
+      "target": "lidar_index_lidar_index",
       "confidence_score": 1.0
     },
     {
@@ -3326,6 +3461,18 @@
     {
       "relation": "imports",
       "confidence": "EXTRACTED",
+      "source_file": "lidar_index.jl",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_src": "lidar_index_lidar_index",
+      "_tgt": "jld2",
+      "source": "jld2",
+      "target": "lidar_index_lidar_index",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
       "source_file": "lidar_turbulence_cleanup.jl",
       "source_location": "L12",
       "weight": 1.0,
@@ -3345,6 +3492,18 @@
       "_tgt": "jld2",
       "source": "jld2",
       "target": "save_lidar_dt_jl",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "save_lidar_index.jl",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_src": "save_lidar_index_jl",
+      "_tgt": "jld2",
+      "source": "jld2",
+      "target": "save_lidar_index_jl",
       "confidence_score": 1.0
     },
     {
@@ -6468,6 +6627,114 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "lidar_index.jl",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_src": "lidar_index_jl",
+      "_tgt": "lidar_index_lidar_index",
+      "source": "lidar_index_jl",
+      "target": "lidar_index_lidar_index",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "lidar_index.jl",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_src": "lidar_index_lidar_index",
+      "_tgt": "lidar_index_lidarindex",
+      "source": "lidar_index_lidar_index",
+      "target": "lidar_index_lidarindex",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "lidar_index.jl",
+      "source_location": "L26",
+      "weight": 1.0,
+      "_src": "lidar_index_lidar_index",
+      "_tgt": "lidar_index_build_lidar_index",
+      "source": "lidar_index_lidar_index",
+      "target": "lidar_index_build_lidar_index",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "lidar_index.jl",
+      "source_location": "L49",
+      "weight": 1.0,
+      "_src": "lidar_index_lidar_index",
+      "_tgt": "lidar_index_chunk_files",
+      "source": "lidar_index_lidar_index",
+      "target": "lidar_index_chunk_files",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "lidar_index.jl",
+      "source_location": "L52",
+      "weight": 1.0,
+      "_src": "lidar_index_lidar_index",
+      "_tgt": "lidar_index_chunk_local_beams",
+      "source": "lidar_index_lidar_index",
+      "target": "lidar_index_chunk_local_beams",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "lidar_index.jl",
+      "source_location": "L58",
+      "weight": 1.0,
+      "_src": "lidar_index_lidar_index",
+      "_tgt": "lidar_index_dt_to_chunk",
+      "source": "lidar_index_lidar_index",
+      "target": "lidar_index_dt_to_chunk",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "lidar_index.jl",
+      "source_location": "L61",
+      "weight": 1.0,
+      "_src": "lidar_index_lidar_index",
+      "_tgt": "lidar_index_file_to_chunks",
+      "source": "lidar_index_lidar_index",
+      "target": "lidar_index_file_to_chunks",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "lidar_index.jl",
+      "source_location": "L66",
+      "weight": 1.0,
+      "_src": "lidar_index_lidar_index",
+      "_tgt": "lidar_index_file_idx_to_chunks",
+      "source": "lidar_index_lidar_index",
+      "target": "lidar_index_file_idx_to_chunks",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "lidar_index.jl",
+      "source_location": "L36",
+      "weight": 1.0,
+      "_src": "lidar_index_build_lidar_index",
+      "_tgt": "lidar_index_lidarindex",
+      "source": "lidar_index_lidarindex",
+      "target": "lidar_index_build_lidar_index",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "imports",
       "confidence": "EXTRACTED",
       "source_file": "extend_pycall_missing.jl",
@@ -7725,6 +7992,18 @@
       "_tgt": "timing_lidar_grid_search",
       "source": "timing_lidar_grid_search",
       "target": "timing_lidar_find_lags_iterative",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "save_lidar_index.jl",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_src": "save_lidar_index_jl",
+      "_tgt": "save_lidar_index_load_file_beam_inds",
+      "source": "save_lidar_index_jl",
+      "target": "save_lidar_index_load_file_beam_inds",
       "confidence_score": 1.0
     },
     {
