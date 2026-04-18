@@ -66,4 +66,8 @@ end
 # file index → chunk indices
 file_idx_to_chunks(idx, ifile) = idx.file_ichunk_first[ifile]:idx.file_ichunk_last[ifile]
 
+# example
+# idx.ifile_last[idx.file_ichunk_last[1]] == 2
+# means the last chunk in file 1 ends in file 2
+
 end # module lidar_index

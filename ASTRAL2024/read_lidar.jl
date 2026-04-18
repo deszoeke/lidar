@@ -23,6 +23,8 @@ export read_streamlinexr_beam_timeangles
 export read_lidar_chunks # used
 export get_all_file_start_end_idxs # exported to test
 
+export compute_mdv_snr_mean, write_stare_hourly_netcdf, read_stare_hourly_netcdf
+
 ### utilites
 pd = permutedims
 m2n(x) = ismissing(x) ? NaN : x
@@ -726,6 +728,190 @@ function all_chunks(ist1, lastien, ii)
 end
 
 end # module stare
+
+# ── SNR-filtered beam-mean Doppler velocity ────────────────────────────────
+
+"""
+    mdv, n_real = compute_mdv_snr_mean(dopplervel, intensity; snr_threshold=1.03)
+
+For each beam (row), compute the mean Doppler velocity over gates where
+`intensity > snr_threshold` (i.e. SNR > threshold - 1) and the value is
+finite. Returns:
+  - `mdv`    Vector{Float32}(nbeams)  — NaN where no valid gates exist
+  - `n_real` Vector{Int16}(nbeams)    — count of valid gates per beam
+"""
+function compute_mdv_snr_mean(dopplervel::AbstractMatrix,
+                               intensity::AbstractMatrix;
+                               snr_threshold::Float64 = 1.03)
+    nbeams, ngates = size(dopplervel)
+    mdv    = fill(Float32(NaN), nbeams)
+    n_real = zeros(Int16, nbeams)
+    for ib in 1:nbeams
+        s  = 0.0
+        n  = 0
+        for ig in 1:ngates
+            d = dopplervel[ib, ig]
+            s_int = intensity[ib, ig]
+            d_ok   = !ismissing(d)    && isfinite(coalesce(d, NaN))
+            int_ok = !ismissing(s_int) && coalesce(s_int, -Inf) > snr_threshold
+            if d_ok && int_ok
+                s += Float64(d)
+                n += 1
+            end
+        end
+        if n > 0
+            mdv[ib]    = Float32(s / n)
+            n_real[ib] = Int16(min(n, typemax(Int16)))
+        end
+    end
+    return mdv, n_real
+end
+
+# ── NetCDF writer ─────────────────────────────────────────────────────────
+
+"""
+    write_stare_hourly_netcdf(outpath, beams, header; snr_threshold=1.03)
+
+Write one hourly stare file to NetCDF-4 (CF-conventions).
+`time` is the unlimited record dimension; `gate` is fixed.
+Includes all raw beam fields plus `mdv_snr_mean` and `n_mdv_realizations`.
+"""
+function write_stare_hourly_netcdf(outpath::AbstractString,
+                                    beams::Dict,
+                                    header::Dict;
+                                    snr_threshold::Float64 = 1.03)
+    dv = beams[:dopplervel]      # (nbeams, ngates)
+    iv = beams[:intensity]       # (nbeams, ngates)
+    nbeams, ngates = size(dv)
+
+    mdv, n_real = compute_mdv_snr_mean(
+        coalesce.(dv, Float32(NaN)),
+        coalesce.(iv, Float32(NaN));
+        snr_threshold = snr_threshold)
+
+    # helpers: convert Union{T,Missing} → T, replacing missing with sentinel
+    to_f32(v) = Float32.(coalesce.(v, Float32(NaN)))
+    to_mat_f32(M) = Float32.(coalesce.(M, Float32(NaN)))
+
+    NCDataset(outpath, "c") do ds
+        # ── global attributes ──────────────────────────────────────────
+        ds.attrib["source_hpl"]       = get(header, :source_hpl, "")
+        ds.attrib["hpl_start_time"]   = string(header[:start_time])
+        ds.attrib["snr_threshold"]    = snr_threshold
+        ds.attrib["gate_length_m"]    = Float64(header[:gatelength])
+        ds.attrib["ngates"]           = Int(header[:ngates])
+        ds.attrib["processing_time"]  = string(Dates.now(Dates.UTC))
+        ds.attrib["Conventions"]      = "CF-1.8"
+
+        # ── dimensions ───────────────────────────────────────────────
+        defDim(ds, "time", Inf)     # unlimited record dimension
+        defDim(ds, "gate", ngates)
+
+        # ── coordinate variables ───────────────────────────────────
+        time_v = defVar(ds, "time", Float64, ("time",);
+            attrib = ["long_name"=>"decimal hour of day",
+                      "units"=>"hours since $(Dates.format(Date(header[:start_time]), dateformat"yyyy-mm-dd")) 00:00:00 UTC",
+                      "axis"=>"T"])
+        gate_v = defVar(ds, "gate", Int32, ("gate",);
+            attrib = ["long_name"=>"range gate index", "units"=>"1"])
+        height_v = defVar(ds, "height", Float32, ("gate",);
+            attrib = ["long_name"=>"range from telescope",
+                      "units"=>"m"])
+
+        # ── beam-angle variables (time) ────────────────────────────
+        az_v  = defVar(ds, "azimuth",   Float32, ("time",);
+            attrib=["long_name"=>"azimuth angle","units"=>"degrees"])
+        el_v  = defVar(ds, "elevangle", Float32, ("time",);
+            attrib=["long_name"=>"elevation angle","units"=>"degrees"])
+        pi_v  = defVar(ds, "pitch",     Float32, ("time",);
+            attrib=["long_name"=>"platform pitch","units"=>"degrees"])
+        ro_v  = defVar(ds, "roll",      Float32, ("time",);
+            attrib=["long_name"=>"platform roll","units"=>"degrees"])
+
+        # ── beam-data variables (time, gate) ───────────────────────
+        dv_v  = defVar(ds, "dopplervel", Float32, ("time","gate");
+            attrib=["long_name"=>"radial Doppler velocity",
+                    "units"=>"m s-1",
+                    "_FillValue"=>Float32(NaN)])
+        int_v = defVar(ds, "intensity",  Float32, ("time","gate");
+            attrib=["long_name"=>"signal intensity (SNR+1)",
+                    "units"=>"1",
+                    "_FillValue"=>Float32(NaN)])
+        beta_v= defVar(ds, "beta",       Float32, ("time","gate");
+            attrib=["long_name"=>"attenuated backscatter coefficient",
+                    "units"=>"m-1 sr-1",
+                    "_FillValue"=>Float32(NaN)])
+
+        # ── derived variables (time) ───────────────────────────────
+        mdv_v = defVar(ds, "mdv_snr_mean", Float32, ("time",);
+            attrib=["long_name"=>"SNR-filtered beam-mean Doppler velocity",
+                    "units"=>"m s-1",
+                    "snr_threshold"=>snr_threshold,
+                    "_FillValue"=>Float32(NaN)])
+        nrl_v = defVar(ds, "n_mdv_realizations", Int16, ("time",);
+            attrib=["long_name"=>"number of valid gates in mdv_snr_mean",
+                    "units"=>"1"])
+
+        # ── fill in data ──────────────────────────────────────────
+        time_v[1:nbeams] = Float64.(coalesce.(beams[:time], NaN))
+        gate_v[1:ngates] = Int32.(1:ngates)
+        height_v[1:ngates]  = to_f32(beams[:height])
+
+        az_v[1:nbeams]      = to_f32(beams[:azimuth])
+        el_v[1:nbeams]      = to_f32(beams[:elevangle])
+        pi_v[1:nbeams]      = to_f32(beams[:pitch])
+        ro_v[1:nbeams]      = to_f32(beams[:roll])
+
+        dv_v[1:nbeams,  1:ngates] = to_mat_f32(dv)
+        int_v[1:nbeams, 1:ngates] = to_mat_f32(iv)
+        beta_v[1:nbeams,1:ngates] = to_mat_f32(beams[:beta])
+
+        mdv_v[1:nbeams]     = mdv
+        nrl_v[1:nbeams]     = n_real
+    end
+    return outpath
+end
+
+# ── NetCDF fast-path reader ───────────────────────────────────────────────
+
+"""
+    beams = read_stare_hourly_netcdf(path; vars=nothing)
+
+Read a stare hourly NetCDF file written by `write_stare_hourly_netcdf`.
+Returns a Dict with the same keys as the HPL reader (`:time`, `:dopplervel`,
+etc.) plus `:mdv_snr_mean` and `:n_mdv_realizations`.
+
+Pass `vars` as a vector of Symbol keys to load only a subset of variables,
+e.g. `vars=[:time, :dopplervel, :intensity]`.
+"""
+function read_stare_hourly_netcdf(path::AbstractString; vars::Union{Nothing,Vector{Symbol}}=nothing)
+    NCDataset(path, "r") do ds
+        all_vars = [
+            :time        => "time",
+            :azimuth     => "azimuth",
+            :elevangle   => "elevangle",
+            :pitch       => "pitch",
+            :roll        => "roll",
+            :height      => "height",
+            :dopplervel  => "dopplervel",
+            :intensity   => "intensity",
+            :beta        => "beta",
+            :mdv_snr_mean        => "mdv_snr_mean",
+            :n_mdv_realizations  => "n_mdv_realizations",
+        ]
+        out = Dict{Symbol, Any}()
+        for (sym, ncname) in all_vars
+            if vars === nothing || sym in vars
+                out[sym] = ds[ncname][:]
+            end
+        end
+        # copy scalar attributes useful to callers
+        out[:snr_threshold] = ds.attrib["snr_threshold"]
+        out[:start_time]    = DateTime(ds.attrib["hpl_start_time"])
+        out[:gatelength]    = Float64(ds.attrib["gate_length_m"])
+        out
+    end
+end
 
 end # module read_lidar
 
