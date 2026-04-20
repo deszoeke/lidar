@@ -9,7 +9,7 @@
       "source_file": "vectornav2jld.jl",
       "source_location": "L1",
       "id": "vectornav2jld_jl",
-      "community": 6,
+      "community": 3,
       "norm_label": "vectornav2jld.jl"
     },
     {
@@ -18,7 +18,7 @@
       "source_file": "time_tests.jl",
       "source_location": "L4",
       "id": "revise",
-      "community": 6,
+      "community": 3,
       "norm_label": "revise"
     },
     {
@@ -27,7 +27,7 @@
       "source_file": "save_lidar_index.jl",
       "source_location": "L2",
       "id": "pkg",
-      "community": 6,
+      "community": 3,
       "norm_label": "pkg"
     },
     {
@@ -54,7 +54,7 @@
       "source_file": "old/deprecated/read_lidar_20240807.jl",
       "source_location": "L11",
       "id": "jld2",
-      "community": 6,
+      "community": 3,
       "norm_label": "jld2"
     },
     {
@@ -63,7 +63,7 @@
       "source_file": "lidar_turbulence_cleanup.jl",
       "source_location": "L18",
       "id": "read_vecnav_dict",
-      "community": 6,
+      "community": 3,
       "norm_label": "read_vecnav_dict"
     },
     {
@@ -72,7 +72,7 @@
       "source_file": "vectornav2jld.jl",
       "source_location": "L23",
       "id": "vectornav2jld_m2n",
-      "community": 6,
+      "community": 3,
       "norm_label": "m2n()"
     },
     {
@@ -81,7 +81,7 @@
       "source_file": "vectornav2jld.jl",
       "source_location": "L25",
       "id": "vectornav2jld_anom",
-      "community": 6,
+      "community": 3,
       "norm_label": "anom()"
     },
     {
@@ -90,7 +90,7 @@
       "source_file": "vectornav2jld.jl",
       "source_location": "L28",
       "id": "vectornav2jld_plotf",
-      "community": 6,
+      "community": 3,
       "norm_label": "plotf()"
     },
     {
@@ -99,7 +99,7 @@
       "source_file": "vectornav2jld.jl",
       "source_location": "L35",
       "id": "vectornav2jld_cat_dicts",
-      "community": 6,
+      "community": 3,
       "norm_label": "cat_dicts()"
     },
     {
@@ -108,7 +108,7 @@
       "source_file": "vectornav2jld.jl",
       "source_location": "L60",
       "id": "vectornav2jld_f",
-      "community": 6,
+      "community": 3,
       "norm_label": "f()"
     },
     {
@@ -117,7 +117,7 @@
       "source_file": "compute_hmix_epsilon.jl",
       "source_location": "L1",
       "id": "compute_hmix_epsilon_jl",
-      "community": 12,
+      "community": 7,
       "norm_label": "compute_hmix_epsilon.jl"
     },
     {
@@ -135,7 +135,7 @@
       "source_file": "compute_hmix_epsilon.jl",
       "source_location": "L12",
       "id": "compute_hmix_epsilon_rng_height",
-      "community": 12,
+      "community": 7,
       "norm_label": "rng_height()"
     },
     {
@@ -144,7 +144,7 @@
       "source_file": "compute_hmix_epsilon.jl",
       "source_location": "L15",
       "id": "compute_hmix_epsilon_is_valid_eps",
-      "community": 12,
+      "community": 7,
       "norm_label": "is_valid_eps()"
     },
     {
@@ -153,7 +153,7 @@
       "source_file": "compute_hmix_epsilon.jl",
       "source_location": "L18",
       "id": "compute_hmix_epsilon_hmix_first_crossing",
-      "community": 12,
+      "community": 7,
       "norm_label": "hmix_first_crossing()"
     },
     {
@@ -162,7 +162,7 @@
       "source_file": "compute_hmix_epsilon.jl",
       "source_location": "L48",
       "id": "compute_hmix_epsilon_extract_epsilon_and_meta",
-      "community": 12,
+      "community": 7,
       "norm_label": "extract_epsilon_and_meta()"
     },
     {
@@ -171,7 +171,7 @@
       "source_file": "compute_hmix_epsilon.jl",
       "source_location": "L91",
       "id": "compute_hmix_epsilon_compute_hmix_for_matrix",
-      "community": 12,
+      "community": 7,
       "norm_label": "compute_hmix_for_matrix()"
     },
     {
@@ -180,7 +180,7 @@
       "source_file": "compute_hmix_epsilon.jl",
       "source_location": "L110",
       "id": "compute_hmix_epsilon_process_file",
-      "community": 12,
+      "community": 7,
       "norm_label": "process_file()"
     },
     {
@@ -189,7 +189,7 @@
       "source_file": "compute_hmix_epsilon.jl",
       "source_location": "L156",
       "id": "compute_hmix_epsilon_list_epsilon_files",
-      "community": 12,
+      "community": 7,
       "norm_label": "list_epsilon_files()"
     },
     {
@@ -198,7 +198,7 @@
       "source_file": "compute_hmix_epsilon.jl",
       "source_location": "L166",
       "id": "compute_hmix_epsilon_main",
-      "community": 12,
+      "community": 7,
       "norm_label": "main()"
     },
     {
@@ -207,7 +207,7 @@
       "source_file": "fft_derivative_test.jl",
       "source_location": "L1",
       "id": "fft_derivative_test_jl",
-      "community": 6,
+      "community": 3,
       "norm_label": "fft_derivative_test.jl"
     },
     {
@@ -225,7 +225,7 @@
       "source_file": "fft_derivative_test.jl",
       "source_location": "L5",
       "id": "plots",
-      "community": 6,
+      "community": 3,
       "norm_label": "plots"
     },
     {
@@ -234,7 +234,7 @@
       "source_file": "fft_derivative_test.jl",
       "source_location": "L24",
       "id": "fft_derivative_test_taper",
-      "community": 6,
+      "community": 3,
       "norm_label": "taper()"
     },
     {
@@ -243,7 +243,7 @@
       "source_file": "fft_derivative_test.jl",
       "source_location": "L25",
       "id": "fft_derivative_test_f_taper",
-      "community": 6,
+      "community": 3,
       "norm_label": "f_taper()"
     },
     {
@@ -252,7 +252,7 @@
       "source_file": "DopplerTurbulence.jl",
       "source_location": "L1",
       "id": "dopplerturbulence_jl",
-      "community": 5,
+      "community": 6,
       "norm_label": "dopplerturbulence.jl"
     },
     {
@@ -261,7 +261,7 @@
       "source_file": "DopplerTurbulence.jl",
       "source_location": "L1",
       "id": "dopplerturbulence_dopplerturbulence",
-      "community": 5,
+      "community": 6,
       "norm_label": "dopplerturbulence"
     },
     {
@@ -270,7 +270,7 @@
       "source_file": "lidar_turbulence_cleanup.jl",
       "source_location": "L9",
       "id": "dsp",
-      "community": 5,
+      "community": 6,
       "norm_label": "dsp"
     },
     {
@@ -279,7 +279,7 @@
       "source_file": "DopplerTurbulence.jl",
       "source_location": "L14",
       "id": "dopplerturbulence_m2n",
-      "community": 5,
+      "community": 6,
       "norm_label": "m2n()"
     },
     {
@@ -288,7 +288,7 @@
       "source_file": "DopplerTurbulence.jl",
       "source_location": "L17",
       "id": "dopplerturbulence_binavg",
-      "community": 5,
+      "community": 6,
       "norm_label": "binavg()"
     },
     {
@@ -297,7 +297,7 @@
       "source_file": "DopplerTurbulence.jl",
       "source_location": "L31",
       "id": "dopplerturbulence_n2m",
-      "community": 5,
+      "community": 6,
       "norm_label": "n2m()"
     },
     {
@@ -306,7 +306,7 @@
       "source_file": "DopplerTurbulence.jl",
       "source_location": "L34",
       "id": "dopplerturbulence_masklowi",
-      "community": 5,
+      "community": 6,
       "norm_label": "masklowi()"
     },
     {
@@ -315,7 +315,7 @@
       "source_file": "DopplerTurbulence.jl",
       "source_location": "L37",
       "id": "dopplerturbulence_missmean",
-      "community": 5,
+      "community": 6,
       "norm_label": "missmean()"
     },
     {
@@ -324,7 +324,7 @@
       "source_file": "DopplerTurbulence.jl",
       "source_location": "L40",
       "id": "dopplerturbulence_anom",
-      "community": 5,
+      "community": 6,
       "norm_label": "anom()"
     },
     {
@@ -333,7 +333,7 @@
       "source_file": "DopplerTurbulence.jl",
       "source_location": "L47",
       "id": "dopplerturbulence_hp",
-      "community": 5,
+      "community": 6,
       "norm_label": "hp()"
     },
     {
@@ -342,7 +342,7 @@
       "source_file": "DopplerTurbulence.jl",
       "source_location": "L63",
       "id": "dopplerturbulence_findindices",
-      "community": 5,
+      "community": 6,
       "norm_label": "findindices()"
     },
     {
@@ -351,7 +351,7 @@
       "source_file": "DopplerTurbulence.jl",
       "source_location": "L78",
       "id": "dopplerturbulence_indavg",
-      "community": 5,
+      "community": 6,
       "norm_label": "indavg()"
     },
     {
@@ -360,7 +360,7 @@
       "source_file": "DopplerTurbulence.jl",
       "source_location": "L95",
       "id": "dopplerturbulence_trigs",
-      "community": 5,
+      "community": 6,
       "norm_label": "trigs()"
     },
     {
@@ -369,7 +369,7 @@
       "source_file": "DopplerTurbulence.jl",
       "source_location": "L98",
       "id": "dopplerturbulence_wtrue",
-      "community": 5,
+      "community": 6,
       "norm_label": "wtrue()"
     },
     {
@@ -378,7 +378,7 @@
       "source_file": "DopplerTurbulence.jl",
       "source_location": "L173",
       "id": "dopplerturbulence_uniquepairs",
-      "community": 5,
+      "community": 6,
       "norm_label": "uniquepairs()"
     },
     {
@@ -387,7 +387,7 @@
       "source_file": "DopplerTurbulence.jl",
       "source_location": "L177",
       "id": "dopplerturbulence_allcross",
-      "community": 5,
+      "community": 6,
       "norm_label": "allcross()"
     },
     {
@@ -396,7 +396,7 @@
       "source_file": "DopplerTurbulence.jl",
       "source_location": "L181",
       "id": "dopplerturbulence_rng",
-      "community": 5,
+      "community": 6,
       "norm_label": "rng()"
     },
     {
@@ -405,7 +405,7 @@
       "source_file": "DopplerTurbulence.jl",
       "source_location": "L187",
       "id": "dopplerturbulence_lidarindices",
-      "community": 5,
+      "community": 6,
       "norm_label": "lidarindices()"
     },
     {
@@ -414,7 +414,7 @@
       "source_file": "DopplerTurbulence.jl",
       "source_location": "L249",
       "id": "dopplerturbulence_displacements",
-      "community": 5,
+      "community": 6,
       "norm_label": "displacements()"
     },
     {
@@ -423,7 +423,7 @@
       "source_file": "DopplerTurbulence.jl",
       "source_location": "L280",
       "id": "dopplerturbulence_rhopair",
-      "community": 5,
+      "community": 6,
       "norm_label": "rhopair()"
     },
     {
@@ -432,7 +432,7 @@
       "source_file": "read_lidar.jl",
       "source_location": "L1",
       "id": "read_lidar_jl",
-      "community": 2,
+      "community": 3,
       "norm_label": "read_lidar.jl"
     },
     {
@@ -738,7 +738,7 @@
       "source_file": "read_lidar.jl",
       "source_location": "L919",
       "id": "read_lidar_read_vecnav",
-      "community": 2,
+      "community": 3,
       "norm_label": "read_vecnav"
     },
     {
@@ -747,7 +747,7 @@
       "source_file": "read_lidar.jl",
       "source_location": "L931",
       "id": "read_lidar_dt2gpsns",
-      "community": 2,
+      "community": 3,
       "norm_label": "dt2gpsns()"
     },
     {
@@ -756,7 +756,7 @@
       "source_file": "read_lidar.jl",
       "source_location": "L939",
       "id": "read_lidar_read_vecnav_data",
-      "community": 2,
+      "community": 3,
       "norm_label": "read_vecnav_data()"
     },
     {
@@ -765,7 +765,7 @@
       "source_file": "read_lidar.jl",
       "source_location": "L1009",
       "id": "read_lidar_read_vecnav_dict",
-      "community": 2,
+      "community": 3,
       "norm_label": "read_vecnav_dict()"
     },
     {
@@ -936,7 +936,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L8",
       "id": "statsbase",
-      "community": 4,
+      "community": 5,
       "norm_label": "statsbase"
     },
     {
@@ -963,7 +963,7 @@
       "source_file": "save_lidar_dt.jl",
       "source_location": "L18",
       "id": "pyplot",
-      "community": 6,
+      "community": 3,
       "norm_label": "pyplot"
     },
     {
@@ -979,7 +979,7 @@
       "label": "isgoodnum()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L42",
+      "source_location": "L43",
       "id": "lidar_vn_sync_isgoodnum",
       "community": 0,
       "norm_label": "isgoodnum()"
@@ -988,7 +988,7 @@
       "label": "diag_array()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L44",
+      "source_location": "L45",
       "id": "lidar_vn_sync_diag_array",
       "community": 0,
       "norm_label": "diag_array()"
@@ -997,7 +997,7 @@
       "label": "valid_chunk_mdv()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L55",
+      "source_location": "L56",
       "id": "lidar_vn_sync_valid_chunk_mdv",
       "community": 0,
       "norm_label": "valid_chunk_mdv()"
@@ -1006,7 +1006,7 @@
       "label": "_wrap()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L67",
+      "source_location": "L68",
       "id": "lidar_vn_sync_wrap",
       "community": 0,
       "norm_label": "_wrap()"
@@ -1015,7 +1015,7 @@
       "label": "init_periodic_beams()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L91",
+      "source_location": "L92",
       "id": "lidar_vn_sync_init_periodic_beams",
       "community": 0,
       "norm_label": "init_periodic_beams()"
@@ -1024,7 +1024,7 @@
       "label": "load_lidar_indices_and_files()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L108",
+      "source_location": "L109",
       "id": "lidar_vn_sync_load_lidar_indices_and_files",
       "community": 0,
       "norm_label": "load_lidar_indices_and_files()"
@@ -1033,7 +1033,7 @@
       "label": "read_streamlinexr_stare!()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L133",
+      "source_location": "L134",
       "id": "lidar_vn_sync_read_streamlinexr_stare",
       "community": 0,
       "norm_label": "read_streamlinexr_stare!()"
@@ -1042,7 +1042,7 @@
       "label": "setup_sync_context()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L171",
+      "source_location": "L172",
       "id": "lidar_vn_sync_setup_sync_context",
       "community": 0,
       "norm_label": "setup_sync_context()"
@@ -1051,7 +1051,7 @@
       "label": "init_stream_state()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L184",
+      "source_location": "L185",
       "id": "lidar_vn_sync_init_stream_state",
       "community": 0,
       "norm_label": "init_stream_state()"
@@ -1060,7 +1060,7 @@
       "label": "ensure_chunk_loaded!()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L191",
+      "source_location": "L192",
       "id": "lidar_vn_sync_ensure_chunk_loaded",
       "community": 0,
       "norm_label": "ensure_chunk_loaded!()"
@@ -1069,7 +1069,7 @@
       "label": "ensure_chunk_loaded_nc!()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L223",
+      "source_location": "L224",
       "id": "lidar_vn_sync_ensure_chunk_loaded_nc",
       "community": 0,
       "norm_label": "ensure_chunk_loaded_nc!()"
@@ -1078,7 +1078,7 @@
       "label": "setup_sync_context_nc()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L281",
+      "source_location": "L303",
       "id": "lidar_vn_sync_setup_sync_context_nc",
       "community": 0,
       "norm_label": "setup_sync_context_nc()"
@@ -1087,7 +1087,7 @@
       "label": "chunk_lidar_datetimes()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L300",
+      "source_location": "L322",
       "id": "lidar_vn_sync_chunk_lidar_datetimes",
       "community": 0,
       "norm_label": "chunk_lidar_datetimes()"
@@ -1096,7 +1096,7 @@
       "label": "extract_sync_window()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L314",
+      "source_location": "L336",
       "id": "lidar_vn_sync_extract_sync_window",
       "community": 0,
       "norm_label": "extract_sync_window()"
@@ -1105,7 +1105,7 @@
       "label": "finite_overlap()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L332",
+      "source_location": "L354",
       "id": "lidar_vn_sync_finite_overlap",
       "community": 0,
       "norm_label": "finite_overlap()"
@@ -1114,7 +1114,7 @@
       "label": "fill_short_nan_gaps()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L340",
+      "source_location": "L362",
       "id": "lidar_vn_sync_fill_short_nan_gaps",
       "community": 0,
       "norm_label": "fill_short_nan_gaps()"
@@ -1123,7 +1123,7 @@
       "label": "vn_coverage_fraction()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L374",
+      "source_location": "L396",
       "id": "lidar_vn_sync_vn_coverage_fraction",
       "community": 0,
       "norm_label": "vn_coverage_fraction()"
@@ -1132,7 +1132,7 @@
       "label": "offset_or_sentinel()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L384",
+      "source_location": "L406",
       "id": "lidar_vn_sync_offset_or_sentinel",
       "community": 0,
       "norm_label": "offset_or_sentinel()"
@@ -1141,7 +1141,7 @@
       "label": "offset_to_ms()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L385",
+      "source_location": "L407",
       "id": "lidar_vn_sync_offset_to_ms",
       "community": 0,
       "norm_label": "offset_to_ms()"
@@ -1150,7 +1150,7 @@
       "label": "append_nan_offset_log()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L387",
+      "source_location": "L409",
       "id": "lidar_vn_sync_append_nan_offset_log",
       "community": 0,
       "norm_label": "append_nan_offset_log()"
@@ -1159,7 +1159,7 @@
       "label": "detrend_center()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L399",
+      "source_location": "L421",
       "id": "lidar_vn_sync_detrend_center",
       "community": 0,
       "norm_label": "detrend_center()"
@@ -1168,7 +1168,7 @@
       "label": "shift_signal_linear()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L405",
+      "source_location": "L427",
       "id": "lidar_vn_sync_shift_signal_linear",
       "community": 0,
       "norm_label": "shift_signal_linear()"
@@ -1177,7 +1177,7 @@
       "label": "real_fft_frequencies()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L426",
+      "source_location": "L448",
       "id": "lidar_vn_sync_real_fft_frequencies",
       "community": 0,
       "norm_label": "real_fft_frequencies()"
@@ -1186,7 +1186,7 @@
       "label": "cosine_edge_mask()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L428",
+      "source_location": "L450",
       "id": "lidar_vn_sync_cosine_edge_mask",
       "community": 0,
       "norm_label": "cosine_edge_mask()"
@@ -1195,7 +1195,7 @@
       "label": "fft_bandpass()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L446",
+      "source_location": "L468",
       "id": "lidar_vn_sync_fft_bandpass",
       "community": 0,
       "norm_label": "fft_bandpass()"
@@ -1204,7 +1204,7 @@
       "label": "analytic_envelope_fft()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L457",
+      "source_location": "L479",
       "id": "lidar_vn_sync_analytic_envelope_fft",
       "community": 0,
       "norm_label": "analytic_envelope_fft()"
@@ -1213,7 +1213,7 @@
       "label": "fft_xcorr_lag()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L472",
+      "source_location": "L494",
       "id": "lidar_vn_sync_fft_xcorr_lag",
       "community": 0,
       "norm_label": "fft_xcorr_lag()"
@@ -1222,7 +1222,7 @@
       "label": "iterative_coarse_lag()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L497",
+      "source_location": "L519",
       "id": "lidar_vn_sync_iterative_coarse_lag",
       "community": 0,
       "norm_label": "iterative_coarse_lag()"
@@ -1231,7 +1231,7 @@
       "label": "robust_center()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L530",
+      "source_location": "L552",
       "id": "lidar_vn_sync_robust_center",
       "community": 0,
       "norm_label": "robust_center()"
@@ -1240,7 +1240,7 @@
       "label": "prior_from_history()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L532",
+      "source_location": "L554",
       "id": "lidar_vn_sync_prior_from_history",
       "community": 0,
       "norm_label": "prior_from_history()"
@@ -1249,7 +1249,7 @@
       "label": "coarse_and_fine_lag()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L561",
+      "source_location": "L583",
       "id": "lidar_vn_sync_coarse_and_fine_lag",
       "community": 0,
       "norm_label": "coarse_and_fine_lag()"
@@ -1258,7 +1258,7 @@
       "label": "is_jump_candidate()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L576",
+      "source_location": "L598",
       "id": "lidar_vn_sync_is_jump_candidate",
       "community": 0,
       "norm_label": "is_jump_candidate()"
@@ -1267,7 +1267,7 @@
       "label": "backward_jump_robustness()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L581",
+      "source_location": "L603",
       "id": "lidar_vn_sync_backward_jump_robustness",
       "community": 0,
       "norm_label": "backward_jump_robustness()"
@@ -1276,7 +1276,7 @@
       "label": "run_sequential_offsets()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L596",
+      "source_location": "L618",
       "id": "lidar_vn_sync_run_sequential_offsets",
       "community": 0,
       "norm_label": "run_sequential_offsets()"
@@ -1285,7 +1285,7 @@
       "label": "vn_subset_20hz()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L633",
+      "source_location": "L655",
       "id": "lidar_vn_sync_vn_subset_20hz",
       "community": 0,
       "norm_label": "vn_subset_20hz()"
@@ -1294,7 +1294,7 @@
       "label": "dt_seconds()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L643",
+      "source_location": "L665",
       "id": "lidar_vn_sync_dt_seconds",
       "community": 0,
       "norm_label": "dt_seconds()"
@@ -1303,7 +1303,7 @@
       "label": "nan_safe_moving_average()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L650",
+      "source_location": "L672",
       "id": "lidar_vn_sync_nan_safe_moving_average",
       "community": 0,
       "norm_label": "nan_safe_moving_average()"
@@ -1312,7 +1312,7 @@
       "label": "upsample_lidar_step()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L669",
+      "source_location": "L691",
       "id": "lidar_vn_sync_upsample_lidar_step",
       "community": 0,
       "norm_label": "upsample_lidar_step()"
@@ -1321,7 +1321,7 @@
       "label": "one_hz_average_at_lidar_times()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L681",
+      "source_location": "L703",
       "id": "lidar_vn_sync_one_hz_average_at_lidar_times",
       "community": 0,
       "norm_label": "one_hz_average_at_lidar_times()"
@@ -1330,7 +1330,7 @@
       "label": "refine_offset_20hz()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L694",
+      "source_location": "L716",
       "id": "lidar_vn_sync_refine_offset_20hz",
       "community": 0,
       "norm_label": "refine_offset_20hz()"
@@ -1339,16 +1339,25 @@
       "label": "process_sync_data()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L735",
+      "source_location": "L757",
       "id": "lidar_vn_sync_process_sync_data",
       "community": 0,
       "norm_label": "process_sync_data()"
     },
     {
+      "label": "write_mdv_sync_pass2!()",
+      "file_type": "code",
+      "source_file": "lidar_vn_sync.jl",
+      "source_location": "L890",
+      "id": "lidar_vn_sync_write_mdv_sync_pass2",
+      "community": 0,
+      "norm_label": "write_mdv_sync_pass2!()"
+    },
+    {
       "label": "save_sync_netcdf()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L859",
+      "source_location": "L981",
       "id": "lidar_vn_sync_save_sync_netcdf",
       "community": 0,
       "norm_label": "save_sync_netcdf()"
@@ -1357,7 +1366,7 @@
       "label": "read_synced_motion()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L959",
+      "source_location": "L1081",
       "id": "lidar_vn_sync_read_synced_motion",
       "community": 0,
       "norm_label": "read_synced_motion()"
@@ -1366,7 +1375,7 @@
       "label": "tilt_factor()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L975",
+      "source_location": "L1097",
       "id": "lidar_vn_sync_tilt_factor",
       "community": 0,
       "norm_label": "tilt_factor()"
@@ -1375,7 +1384,7 @@
       "label": "motion_correct_stare_velocity()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L977",
+      "source_location": "L1099",
       "id": "lidar_vn_sync_motion_correct_stare_velocity",
       "community": 0,
       "norm_label": "motion_correct_stare_velocity()"
@@ -1384,7 +1393,7 @@
       "label": "read_and_motion_correct_stare()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L988",
+      "source_location": "L1110",
       "id": "lidar_vn_sync_read_and_motion_correct_stare",
       "community": 0,
       "norm_label": "read_and_motion_correct_stare()"
@@ -1393,7 +1402,7 @@
       "label": "diagnostic_single_window()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L995",
+      "source_location": "L1117",
       "id": "lidar_vn_sync_diagnostic_single_window",
       "community": 0,
       "norm_label": "diagnostic_single_window()"
@@ -1402,10 +1411,19 @@
       "label": "diagnostic_offsets()",
       "file_type": "code",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L1061",
+      "source_location": "L1183",
       "id": "lidar_vn_sync_diagnostic_offsets",
       "community": 0,
       "norm_label": "diagnostic_offsets()"
+    },
+    {
+      "label": "save_stare_mdv_sync_pass2.jl",
+      "file_type": "code",
+      "source_file": "save_stare_mdv_sync_pass2.jl",
+      "source_location": "L1",
+      "id": "save_stare_mdv_sync_pass2_jl",
+      "community": 3,
+      "norm_label": "save_stare_mdv_sync_pass2.jl"
     },
     {
       "label": "lidar_index.jl",
@@ -1521,7 +1539,7 @@
       "source_file": "extend_pycall_missing.jl",
       "source_location": "L1",
       "id": "extend_pycall_missing_jl",
-      "community": 6,
+      "community": 3,
       "norm_label": "extend_pycall_missing.jl"
     },
     {
@@ -1530,7 +1548,7 @@
       "source_file": "save_lidar_dt.jl",
       "source_location": "L19",
       "id": "pycall",
-      "community": 6,
+      "community": 3,
       "norm_label": "pycall"
     },
     {
@@ -1899,7 +1917,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L1",
       "id": "timing_lidar_jl",
-      "community": 4,
+      "community": 5,
       "norm_label": "timing_lidar.jl"
     },
     {
@@ -1908,7 +1926,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L3",
       "id": "timing_lidar_timing_lidar",
-      "community": 4,
+      "community": 5,
       "norm_label": "timing_lidar"
     },
     {
@@ -1917,7 +1935,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L23",
       "id": "timing_lidar_m2n",
-      "community": 4,
+      "community": 5,
       "norm_label": "m2n()"
     },
     {
@@ -1926,7 +1944,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L24",
       "id": "timing_lidar_anom",
-      "community": 4,
+      "community": 5,
       "norm_label": "anom()"
     },
     {
@@ -1935,7 +1953,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L34",
       "id": "timing_lidar_leap_seconds",
-      "community": 4,
+      "community": 5,
       "norm_label": "leap_seconds()"
     },
     {
@@ -1944,7 +1962,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L54",
       "id": "timing_lidar_gps2dt",
-      "community": 4,
+      "community": 5,
       "norm_label": "gps2dt()"
     },
     {
@@ -1953,7 +1971,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L61",
       "id": "timing_lidar_gps2ms",
-      "community": 4,
+      "community": 5,
       "norm_label": "gps2ms()"
     },
     {
@@ -1962,7 +1980,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L65",
       "id": "timing_lidar_dt2gpsns",
-      "community": 4,
+      "community": 5,
       "norm_label": "dt2gpsns()"
     },
     {
@@ -1971,7 +1989,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L80",
       "id": "timing_lidar_interpolatedt",
-      "community": 4,
+      "community": 5,
       "norm_label": "interpolatedt()"
     },
     {
@@ -1980,7 +1998,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L83",
       "id": "timing_lidar_dvm",
-      "community": 4,
+      "community": 5,
       "norm_label": "dvm()"
     },
     {
@@ -1989,7 +2007,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L95",
       "id": "timing_lidar_mri",
-      "community": 4,
+      "community": 5,
       "norm_label": "mri()"
     },
     {
@@ -1998,7 +2016,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L101",
       "id": "timing_lidar_intbetweentime",
-      "community": 4,
+      "community": 5,
       "norm_label": "intbetweentime()"
     },
     {
@@ -2007,7 +2025,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L124",
       "id": "timing_lidar_meandt",
-      "community": 4,
+      "community": 5,
       "norm_label": "meandt()"
     },
     {
@@ -2016,7 +2034,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L137",
       "id": "timing_lidar_iregress",
-      "community": 4,
+      "community": 5,
       "norm_label": "iregress()"
     },
     {
@@ -2025,7 +2043,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L139",
       "id": "timing_lidar_ba",
-      "community": 4,
+      "community": 5,
       "norm_label": "ba()"
     },
     {
@@ -2034,7 +2052,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L140",
       "id": "timing_lidar_dtregress",
-      "community": 4,
+      "community": 5,
       "norm_label": "dtregress()"
     },
     {
@@ -2043,7 +2061,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L143",
       "id": "timing_lidar_precise_dt",
-      "community": 4,
+      "community": 5,
       "norm_label": "precise_dt()"
     },
     {
@@ -2052,7 +2070,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L162",
       "id": "timing_lidar_stretch_vn_to_gps",
-      "community": 4,
+      "community": 5,
       "norm_label": "stretch_vn_to_gps()"
     },
     {
@@ -2061,7 +2079,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L173",
       "id": "timing_lidar_gpstime2gpsvndt",
-      "community": 4,
+      "community": 5,
       "norm_label": "gpstime2gpsvndt()"
     },
     {
@@ -2070,7 +2088,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L175",
       "id": "timing_lidar_gps2utc",
-      "community": 4,
+      "community": 5,
       "norm_label": "gps2utc()"
     },
     {
@@ -2079,7 +2097,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L176",
       "id": "timing_lidar_gpstime2utcvndt",
-      "community": 4,
+      "community": 5,
       "norm_label": "gpstime2utcvndt()"
     },
     {
@@ -2088,7 +2106,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L182",
       "id": "timing_lidar_pashr_gps_datetime",
-      "community": 4,
+      "community": 5,
       "norm_label": "pashr_gps_datetime()"
     },
     {
@@ -2097,7 +2115,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L201",
       "id": "timing_lidar_lag_xcor",
-      "community": 4,
+      "community": 5,
       "norm_label": "lag_xcor()"
     },
     {
@@ -2106,7 +2124,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L210",
       "id": "timing_lidar_cross_correlation",
-      "community": 4,
+      "community": 5,
       "norm_label": "cross_correlation()"
     },
     {
@@ -2115,7 +2133,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L247",
       "id": "timing_lidar_grid_search",
-      "community": 4,
+      "community": 5,
       "norm_label": "grid_search()"
     },
     {
@@ -2124,7 +2142,7 @@
       "source_file": "timing_lidar.jl",
       "source_location": "L297",
       "id": "timing_lidar_find_lags_iterative",
-      "community": 4,
+      "community": 5,
       "norm_label": "find_lags_iterative()"
     },
     {
@@ -2133,7 +2151,7 @@
       "source_file": "save_lidar_dt.jl",
       "source_location": "L1",
       "id": "save_lidar_dt_jl",
-      "community": 6,
+      "community": 3,
       "norm_label": "save_lidar_dt.jl"
     },
     {
@@ -2142,7 +2160,7 @@
       "source_file": "save_lidar_index.jl",
       "source_location": "L1",
       "id": "save_lidar_index_jl",
-      "community": 6,
+      "community": 3,
       "norm_label": "save_lidar_index.jl"
     },
     {
@@ -2151,7 +2169,7 @@
       "source_file": "save_lidar_index.jl",
       "source_location": "L12",
       "id": "save_lidar_index_load_file_beam_inds",
-      "community": 6,
+      "community": 3,
       "norm_label": "load_file_beam_inds()"
     },
     {
@@ -2160,7 +2178,7 @@
       "source_file": "readers.jl",
       "source_location": "L1",
       "id": "readers_jl",
-      "community": 3,
+      "community": 4,
       "norm_label": "readers.jl"
     },
     {
@@ -2169,7 +2187,7 @@
       "source_file": "readers.jl",
       "source_location": "L2",
       "id": "readers_noaadas",
-      "community": 3,
+      "community": 4,
       "norm_label": "noaadas"
     },
     {
@@ -2178,7 +2196,7 @@
       "source_file": "readers.jl",
       "source_location": "L25",
       "id": "readers_yday",
-      "community": 3,
+      "community": 4,
       "norm_label": "yday()"
     },
     {
@@ -2187,7 +2205,7 @@
       "source_file": "readers.jl",
       "source_location": "L29",
       "id": "readers_get_das_filenames",
-      "community": 3,
+      "community": 4,
       "norm_label": "get_das_filenames()"
     },
     {
@@ -2196,7 +2214,7 @@
       "source_file": "readers.jl",
       "source_location": "L44",
       "id": "readers_get_das_pathfiles",
-      "community": 3,
+      "community": 4,
       "norm_label": "get_das_pathfiles()"
     },
     {
@@ -2205,7 +2223,7 @@
       "source_file": "readers.jl",
       "source_location": "L51",
       "id": "readers_psldatetime",
-      "community": 3,
+      "community": 4,
       "norm_label": "psldatetime()"
     },
     {
@@ -2214,7 +2232,7 @@
       "source_file": "readers.jl",
       "source_location": "L76",
       "id": "readers_read_das_dict",
-      "community": 3,
+      "community": 4,
       "norm_label": "read_das_dict()"
     },
     {
@@ -2223,7 +2241,7 @@
       "source_file": "readers.jl",
       "source_location": "L90",
       "id": "readers_parseblank2missing",
-      "community": 3,
+      "community": 4,
       "norm_label": "parseblank2missing()"
     },
     {
@@ -2232,7 +2250,7 @@
       "source_file": "readers.jl",
       "source_location": "L93",
       "id": "readers_read_das_data",
-      "community": 3,
+      "community": 4,
       "norm_label": "read_das_data()"
     },
     {
@@ -2241,7 +2259,7 @@
       "source_file": "readers.jl",
       "source_location": "L211",
       "id": "readers_das_dict",
-      "community": 3,
+      "community": 4,
       "norm_label": "das_dict()"
     },
     {
@@ -2250,7 +2268,7 @@
       "source_file": "readers.jl",
       "source_location": "L237",
       "id": "readers_read_lsr_dict",
-      "community": 3,
+      "community": 4,
       "norm_label": "read_lsr_dict()"
     },
     {
@@ -2259,7 +2277,7 @@
       "source_file": "readers.jl",
       "source_location": "L281",
       "id": "readers_cat_dicts",
-      "community": 3,
+      "community": 4,
       "norm_label": "cat_dicts()"
     },
     {
@@ -2268,7 +2286,7 @@
       "source_file": "readers.jl",
       "source_location": "L290",
       "id": "readers_cat_dict",
-      "community": 3,
+      "community": 4,
       "norm_label": "cat_dict()"
     },
     {
@@ -2277,7 +2295,7 @@
       "source_file": "readers.jl",
       "source_location": "L301",
       "id": "readers_dasgps",
-      "community": 3,
+      "community": 4,
       "norm_label": "dasgps"
     },
     {
@@ -2286,7 +2304,7 @@
       "source_file": "readers.jl",
       "source_location": "L317",
       "id": "readers_read_gps_dict",
-      "community": 3,
+      "community": 4,
       "norm_label": "read_gps_dict()"
     },
     {
@@ -2295,7 +2313,7 @@
       "source_file": "readers.jl",
       "source_location": "L384",
       "id": "readers_parse_gprmc",
-      "community": 3,
+      "community": 4,
       "norm_label": "parse_gprmc()"
     },
     {
@@ -2304,7 +2322,7 @@
       "source_file": "readers.jl",
       "source_location": "L459",
       "id": "readers_read_hed_dict",
-      "community": 3,
+      "community": 4,
       "norm_label": "read_hed_dict()"
     },
     {
@@ -2313,7 +2331,7 @@
       "source_file": "readers.jl",
       "source_location": "L511",
       "id": "readers_parse_hpr",
-      "community": 3,
+      "community": 4,
       "norm_label": "parse_hpr()"
     },
     {
@@ -2322,7 +2340,7 @@
       "source_file": "readers.jl",
       "source_location": "L533",
       "id": "readers_dasscs",
-      "community": 3,
+      "community": 4,
       "norm_label": "dasscs"
     },
     {
@@ -2331,7 +2349,7 @@
       "source_file": "readers.jl",
       "source_location": "L537",
       "id": "das_dict",
-      "community": 3,
+      "community": 4,
       "norm_label": "das_dict"
     },
     {
@@ -2340,7 +2358,7 @@
       "source_file": "readers.jl",
       "source_location": "L546",
       "id": "readers_read_scs_dict",
-      "community": 3,
+      "community": 4,
       "norm_label": "read_scs_dict()"
     },
     {
@@ -2349,7 +2367,7 @@
       "source_file": "readers.jl",
       "source_location": "L558",
       "id": "readers_nsewsgn",
-      "community": 3,
+      "community": 4,
       "norm_label": "nsewsgn()"
     },
     {
@@ -2358,7 +2376,7 @@
       "source_file": "readers.jl",
       "source_location": "L559",
       "id": "readers_declat",
-      "community": 3,
+      "community": 4,
       "norm_label": "declat()"
     },
     {
@@ -2367,7 +2385,7 @@
       "source_file": "readers.jl",
       "source_location": "L560",
       "id": "readers_declon",
-      "community": 3,
+      "community": 4,
       "norm_label": "declon()"
     },
     {
@@ -2376,7 +2394,7 @@
       "source_file": "readers.jl",
       "source_location": "L565",
       "id": "readers_read_scs_data",
-      "community": 3,
+      "community": 4,
       "norm_label": "read_scs_data()"
     },
     {
@@ -2385,7 +2403,7 @@
       "source_file": "readers.jl",
       "source_location": "L629",
       "id": "readers_shipposmv",
-      "community": 13,
+      "community": 12,
       "norm_label": "shipposmv"
     },
     {
@@ -2394,7 +2412,7 @@
       "source_file": "readers.jl",
       "source_location": "L632",
       "id": "flatten",
-      "community": 13,
+      "community": 12,
       "norm_label": "flatten"
     },
     {
@@ -2403,7 +2421,7 @@
       "source_file": "readers.jl",
       "source_location": "L644",
       "id": "readers_get_posmv_file",
-      "community": 13,
+      "community": 12,
       "norm_label": "get_posmv_file()"
     },
     {
@@ -2412,7 +2430,7 @@
       "source_file": "readers.jl",
       "source_location": "L664",
       "id": "readers_get_nav_file",
-      "community": 13,
+      "community": 12,
       "norm_label": "get_nav_file()"
     },
     {
@@ -2421,7 +2439,7 @@
       "source_file": "readers.jl",
       "source_location": "L682",
       "id": "readers_itr_expand",
-      "community": 13,
+      "community": 12,
       "norm_label": "itr_expand()"
     },
     {
@@ -2430,7 +2448,7 @@
       "source_file": "readers.jl",
       "source_location": "L687",
       "id": "readers_read_pashr_data",
-      "community": 13,
+      "community": 12,
       "norm_label": "read_pashr_data()"
     },
     {
@@ -2439,7 +2457,7 @@
       "source_file": "readers.jl",
       "source_location": "L729",
       "id": "readers_read_pashr_dict",
-      "community": 13,
+      "community": 12,
       "norm_label": "read_pashr_dict()"
     },
     {
@@ -2448,7 +2466,7 @@
       "source_file": "readers.jl",
       "source_location": "L752",
       "id": "readers_read_gyro_data",
-      "community": 13,
+      "community": 12,
       "norm_label": "read_gyro_data()"
     },
     {
@@ -2457,7 +2475,7 @@
       "source_file": "readers.jl",
       "source_location": "L791",
       "id": "readers_read_gyro_dict",
-      "community": 13,
+      "community": 12,
       "norm_label": "read_gyro_dict()"
     },
     {
@@ -2466,7 +2484,7 @@
       "source_file": "readers.jl",
       "source_location": "L812",
       "id": "readers_dasfps",
-      "community": 3,
+      "community": 4,
       "norm_label": "dasfps"
     },
     {
@@ -2475,7 +2493,7 @@
       "source_file": "readers.jl",
       "source_location": "L821",
       "id": "readers_read_fps_dict",
-      "community": 3,
+      "community": 4,
       "norm_label": "read_fps_dict()"
     },
     {
@@ -2484,7 +2502,7 @@
       "source_file": "readers.jl",
       "source_location": "L833",
       "id": "readers_read_fps_data",
-      "community": 3,
+      "community": 4,
       "norm_label": "read_fps_data()"
     },
     {
@@ -2601,7 +2619,7 @@
       "source_file": "codeIdeas/foo.jl",
       "source_location": "L1",
       "id": "codeideas_foo_jl",
-      "community": 7,
+      "community": 13,
       "norm_label": "foo.jl"
     },
     {
@@ -2610,7 +2628,7 @@
       "source_file": "codeIdeas/foo.jl",
       "source_location": "L7",
       "id": "foo_robust_mean",
-      "community": 7,
+      "community": 13,
       "norm_label": "robust_mean()"
     },
     {
@@ -2619,7 +2637,7 @@
       "source_file": "codeIdeas/foo.jl",
       "source_location": "L8",
       "id": "foo_robust_median",
-      "community": 7,
+      "community": 13,
       "norm_label": "robust_median()"
     },
     {
@@ -2628,7 +2646,7 @@
       "source_file": "codeIdeas/foo.jl",
       "source_location": "L11",
       "id": "foo_nanmedian",
-      "community": 7,
+      "community": 13,
       "norm_label": "nanmedian()"
     },
     {
@@ -2637,7 +2655,7 @@
       "source_file": "codeIdeas/foo.jl",
       "source_location": "L18",
       "id": "foo_running_median",
-      "community": 7,
+      "community": 13,
       "norm_label": "running_median()"
     },
     {
@@ -2646,7 +2664,7 @@
       "source_file": "codeIdeas/foo.jl",
       "source_location": "L40",
       "id": "foo_estimate_heave_ts",
-      "community": 7,
+      "community": 13,
       "norm_label": "estimate_heave_ts()"
     },
     {
@@ -2655,7 +2673,7 @@
       "source_file": "codeIdeas/foo.jl",
       "source_location": "L122",
       "id": "foo_rain_mask_vertical",
-      "community": 7,
+      "community": 13,
       "norm_label": "rain_mask_vertical()"
     },
     {
@@ -2664,7 +2682,7 @@
       "source_file": "codeIdeas/foo.jl",
       "source_location": "L257",
       "id": "foo_subtract_rain_layers",
-      "community": 7,
+      "community": 13,
       "norm_label": "subtract_rain_layers!()"
     },
     {
@@ -2673,7 +2691,7 @@
       "source_file": "codeIdeas/foo.jl",
       "source_location": "L289",
       "id": "foo_iterative_despike_rain",
-      "community": 7,
+      "community": 13,
       "norm_label": "iterative_despike_rain()"
     },
     {
@@ -3132,6 +3150,18 @@
       "_tgt": "pkg",
       "source": "pkg",
       "target": "dopplerturbulence_dopplerturbulence",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "confidence": "EXTRACTED",
+      "source_file": "save_stare_mdv_sync_pass2.jl",
+      "source_location": "L15",
+      "weight": 1.0,
+      "_src": "save_stare_mdv_sync_pass2_jl",
+      "_tgt": "pkg",
+      "source": "pkg",
+      "target": "save_stare_mdv_sync_pass2_jl",
       "confidence_score": 1.0
     },
     {
@@ -5478,7 +5508,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L42",
+      "source_location": "L43",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_isgoodnum",
@@ -5490,7 +5520,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L44",
+      "source_location": "L45",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_diag_array",
@@ -5502,7 +5532,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L55",
+      "source_location": "L56",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_valid_chunk_mdv",
@@ -5514,7 +5544,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L70",
+      "source_location": "L71",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_wrap",
@@ -5526,7 +5556,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L91",
+      "source_location": "L92",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_init_periodic_beams",
@@ -5538,7 +5568,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L108",
+      "source_location": "L109",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_load_lidar_indices_and_files",
@@ -5550,7 +5580,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L133",
+      "source_location": "L134",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_read_streamlinexr_stare",
@@ -5562,7 +5592,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L171",
+      "source_location": "L172",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_setup_sync_context",
@@ -5574,7 +5604,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L184",
+      "source_location": "L185",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_init_stream_state",
@@ -5586,7 +5616,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L191",
+      "source_location": "L192",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_ensure_chunk_loaded",
@@ -5598,7 +5628,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L223",
+      "source_location": "L224",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_ensure_chunk_loaded_nc",
@@ -5610,7 +5640,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L281",
+      "source_location": "L303",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_setup_sync_context_nc",
@@ -5622,7 +5652,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L300",
+      "source_location": "L322",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_chunk_lidar_datetimes",
@@ -5634,7 +5664,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L314",
+      "source_location": "L336",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_extract_sync_window",
@@ -5646,7 +5676,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L332",
+      "source_location": "L354",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_finite_overlap",
@@ -5658,7 +5688,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L340",
+      "source_location": "L362",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_fill_short_nan_gaps",
@@ -5670,7 +5700,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L374",
+      "source_location": "L396",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_vn_coverage_fraction",
@@ -5682,7 +5712,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L384",
+      "source_location": "L406",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_offset_or_sentinel",
@@ -5694,7 +5724,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L385",
+      "source_location": "L407",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_offset_to_ms",
@@ -5706,7 +5736,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L387",
+      "source_location": "L409",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_append_nan_offset_log",
@@ -5718,7 +5748,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L399",
+      "source_location": "L421",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_detrend_center",
@@ -5730,7 +5760,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L405",
+      "source_location": "L427",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_shift_signal_linear",
@@ -5742,7 +5772,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L426",
+      "source_location": "L448",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_real_fft_frequencies",
@@ -5754,7 +5784,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L428",
+      "source_location": "L450",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_cosine_edge_mask",
@@ -5766,7 +5796,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L446",
+      "source_location": "L468",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_fft_bandpass",
@@ -5778,7 +5808,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L457",
+      "source_location": "L479",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_analytic_envelope_fft",
@@ -5790,7 +5820,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L472",
+      "source_location": "L494",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_fft_xcorr_lag",
@@ -5802,7 +5832,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L497",
+      "source_location": "L519",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_iterative_coarse_lag",
@@ -5814,7 +5844,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L530",
+      "source_location": "L552",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_robust_center",
@@ -5826,7 +5856,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L532",
+      "source_location": "L554",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_prior_from_history",
@@ -5838,7 +5868,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L561",
+      "source_location": "L583",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_coarse_and_fine_lag",
@@ -5850,7 +5880,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L576",
+      "source_location": "L598",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_is_jump_candidate",
@@ -5862,7 +5892,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L581",
+      "source_location": "L603",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_backward_jump_robustness",
@@ -5874,7 +5904,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L596",
+      "source_location": "L618",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_run_sequential_offsets",
@@ -5886,7 +5916,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L633",
+      "source_location": "L655",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_vn_subset_20hz",
@@ -5898,7 +5928,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L643",
+      "source_location": "L665",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_dt_seconds",
@@ -5910,7 +5940,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L650",
+      "source_location": "L672",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_nan_safe_moving_average",
@@ -5922,7 +5952,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L669",
+      "source_location": "L691",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_upsample_lidar_step",
@@ -5934,7 +5964,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L681",
+      "source_location": "L703",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_one_hz_average_at_lidar_times",
@@ -5946,7 +5976,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L694",
+      "source_location": "L716",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_refine_offset_20hz",
@@ -5958,7 +5988,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L735",
+      "source_location": "L757",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_process_sync_data",
@@ -5970,7 +6000,19 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L859",
+      "source_location": "L890",
+      "weight": 1.0,
+      "_src": "lidar_vn_sync_lidarvnsync",
+      "_tgt": "lidar_vn_sync_write_mdv_sync_pass2",
+      "source": "lidar_vn_sync_lidarvnsync",
+      "target": "lidar_vn_sync_write_mdv_sync_pass2",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "defines",
+      "confidence": "EXTRACTED",
+      "source_file": "lidar_vn_sync.jl",
+      "source_location": "L981",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_save_sync_netcdf",
@@ -5982,7 +6024,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L959",
+      "source_location": "L1081",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_read_synced_motion",
@@ -5994,7 +6036,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L975",
+      "source_location": "L1097",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_tilt_factor",
@@ -6006,7 +6048,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L982",
+      "source_location": "L1104",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_motion_correct_stare_velocity",
@@ -6018,7 +6060,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L988",
+      "source_location": "L1110",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_read_and_motion_correct_stare",
@@ -6030,7 +6072,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L995",
+      "source_location": "L1117",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_diagnostic_single_window",
@@ -6042,7 +6084,7 @@
       "relation": "defines",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L1061",
+      "source_location": "L1183",
       "weight": 1.0,
       "_src": "lidar_vn_sync_lidarvnsync",
       "_tgt": "lidar_vn_sync_diagnostic_offsets",
@@ -6138,7 +6180,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L1002",
+      "source_location": "L1124",
       "weight": 1.0,
       "_src": "lidar_vn_sync_diagnostic_single_window",
       "_tgt": "lidar_vn_sync_diag_array",
@@ -6150,7 +6192,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L325",
+      "source_location": "L347",
       "weight": 1.0,
       "_src": "lidar_vn_sync_extract_sync_window",
       "_tgt": "lidar_vn_sync_valid_chunk_mdv",
@@ -6162,7 +6204,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L179",
+      "source_location": "L180",
       "weight": 1.0,
       "_src": "lidar_vn_sync_setup_sync_context",
       "_tgt": "lidar_vn_sync_init_periodic_beams",
@@ -6174,7 +6216,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L295",
+      "source_location": "L317",
       "weight": 1.0,
       "_src": "lidar_vn_sync_setup_sync_context_nc",
       "_tgt": "lidar_vn_sync_init_periodic_beams",
@@ -6186,7 +6228,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L172",
+      "source_location": "L173",
       "weight": 1.0,
       "_src": "lidar_vn_sync_setup_sync_context",
       "_tgt": "lidar_vn_sync_load_lidar_indices_and_files",
@@ -6198,7 +6240,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L288",
+      "source_location": "L310",
       "weight": 1.0,
       "_src": "lidar_vn_sync_setup_sync_context_nc",
       "_tgt": "lidar_vn_sync_load_lidar_indices_and_files",
@@ -6210,7 +6252,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L209",
+      "source_location": "L210",
       "weight": 1.0,
       "_src": "lidar_vn_sync_ensure_chunk_loaded",
       "_tgt": "lidar_vn_sync_read_streamlinexr_stare",
@@ -6222,7 +6264,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L597",
+      "source_location": "L619",
       "weight": 1.0,
       "_src": "lidar_vn_sync_run_sequential_offsets",
       "_tgt": "lidar_vn_sync_init_stream_state",
@@ -6234,7 +6276,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L746",
+      "source_location": "L768",
       "weight": 1.0,
       "_src": "lidar_vn_sync_process_sync_data",
       "_tgt": "lidar_vn_sync_init_stream_state",
@@ -6246,7 +6288,19 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L996",
+      "source_location": "L906",
+      "weight": 1.0,
+      "_src": "lidar_vn_sync_write_mdv_sync_pass2",
+      "_tgt": "lidar_vn_sync_init_stream_state",
+      "source": "lidar_vn_sync_init_stream_state",
+      "target": "lidar_vn_sync_write_mdv_sync_pass2",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "lidar_vn_sync.jl",
+      "source_location": "L1118",
       "weight": 1.0,
       "_src": "lidar_vn_sync_diagnostic_single_window",
       "_tgt": "lidar_vn_sync_init_stream_state",
@@ -6258,7 +6312,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L316",
+      "source_location": "L338",
       "weight": 1.0,
       "_src": "lidar_vn_sync_extract_sync_window",
       "_tgt": "lidar_vn_sync_ensure_chunk_loaded",
@@ -6270,7 +6324,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L318",
+      "source_location": "L340",
       "weight": 1.0,
       "_src": "lidar_vn_sync_extract_sync_window",
       "_tgt": "lidar_vn_sync_ensure_chunk_loaded_nc",
@@ -6282,7 +6336,19 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L322",
+      "source_location": "L901",
+      "weight": 1.0,
+      "_src": "lidar_vn_sync_write_mdv_sync_pass2",
+      "_tgt": "lidar_vn_sync_setup_sync_context_nc",
+      "source": "lidar_vn_sync_setup_sync_context_nc",
+      "target": "lidar_vn_sync_write_mdv_sync_pass2",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "lidar_vn_sync.jl",
+      "source_location": "L344",
       "weight": 1.0,
       "_src": "lidar_vn_sync_extract_sync_window",
       "_tgt": "lidar_vn_sync_chunk_lidar_datetimes",
@@ -6294,7 +6360,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L326",
+      "source_location": "L348",
       "weight": 1.0,
       "_src": "lidar_vn_sync_extract_sync_window",
       "_tgt": "lidar_vn_sync_vn_subset_20hz",
@@ -6306,7 +6372,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L327",
+      "source_location": "L349",
       "weight": 1.0,
       "_src": "lidar_vn_sync_extract_sync_window",
       "_tgt": "lidar_vn_sync_one_hz_average_at_lidar_times",
@@ -6318,7 +6384,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L328",
+      "source_location": "L350",
       "weight": 1.0,
       "_src": "lidar_vn_sync_extract_sync_window",
       "_tgt": "lidar_vn_sync_vn_coverage_fraction",
@@ -6330,7 +6396,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L587",
+      "source_location": "L609",
       "weight": 1.0,
       "_src": "lidar_vn_sync_backward_jump_robustness",
       "_tgt": "lidar_vn_sync_extract_sync_window",
@@ -6342,7 +6408,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L602",
+      "source_location": "L624",
       "weight": 1.0,
       "_src": "lidar_vn_sync_run_sequential_offsets",
       "_tgt": "lidar_vn_sync_extract_sync_window",
@@ -6354,7 +6420,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L761",
+      "source_location": "L783",
       "weight": 1.0,
       "_src": "lidar_vn_sync_process_sync_data",
       "_tgt": "lidar_vn_sync_extract_sync_window",
@@ -6366,7 +6432,19 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L997",
+      "source_location": "L943",
+      "weight": 1.0,
+      "_src": "lidar_vn_sync_write_mdv_sync_pass2",
+      "_tgt": "lidar_vn_sync_extract_sync_window",
+      "source": "lidar_vn_sync_extract_sync_window",
+      "target": "lidar_vn_sync_write_mdv_sync_pass2",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "confidence": "EXTRACTED",
+      "source_file": "lidar_vn_sync.jl",
+      "source_location": "L1119",
       "weight": 1.0,
       "_src": "lidar_vn_sync_diagnostic_single_window",
       "_tgt": "lidar_vn_sync_extract_sync_window",
@@ -6378,7 +6456,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L473",
+      "source_location": "L495",
       "weight": 1.0,
       "_src": "lidar_vn_sync_fft_xcorr_lag",
       "_tgt": "lidar_vn_sync_finite_overlap",
@@ -6390,7 +6468,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L563",
+      "source_location": "L585",
       "weight": 1.0,
       "_src": "lidar_vn_sync_coarse_and_fine_lag",
       "_tgt": "lidar_vn_sync_fill_short_nan_gaps",
@@ -6402,7 +6480,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L713",
+      "source_location": "L735",
       "weight": 1.0,
       "_src": "lidar_vn_sync_refine_offset_20hz",
       "_tgt": "lidar_vn_sync_fill_short_nan_gaps",
@@ -6414,7 +6492,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L787",
+      "source_location": "L809",
       "weight": 1.0,
       "_src": "lidar_vn_sync_process_sync_data",
       "_tgt": "lidar_vn_sync_offset_or_sentinel",
@@ -6426,7 +6504,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L835",
+      "source_location": "L857",
       "weight": 1.0,
       "_src": "lidar_vn_sync_process_sync_data",
       "_tgt": "lidar_vn_sync_offset_to_ms",
@@ -6438,7 +6516,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L793",
+      "source_location": "L815",
       "weight": 1.0,
       "_src": "lidar_vn_sync_process_sync_data",
       "_tgt": "lidar_vn_sync_append_nan_offset_log",
@@ -6450,7 +6528,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L449",
+      "source_location": "L471",
       "weight": 1.0,
       "_src": "lidar_vn_sync_fft_bandpass",
       "_tgt": "lidar_vn_sync_detrend_center",
@@ -6462,7 +6540,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L478",
+      "source_location": "L500",
       "weight": 1.0,
       "_src": "lidar_vn_sync_fft_xcorr_lag",
       "_tgt": "lidar_vn_sync_detrend_center",
@@ -6474,7 +6552,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L525",
+      "source_location": "L547",
       "weight": 1.0,
       "_src": "lidar_vn_sync_iterative_coarse_lag",
       "_tgt": "lidar_vn_sync_shift_signal_linear",
@@ -6486,7 +6564,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L570",
+      "source_location": "L592",
       "weight": 1.0,
       "_src": "lidar_vn_sync_coarse_and_fine_lag",
       "_tgt": "lidar_vn_sync_shift_signal_linear",
@@ -6498,7 +6576,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L724",
+      "source_location": "L746",
       "weight": 1.0,
       "_src": "lidar_vn_sync_refine_offset_20hz",
       "_tgt": "lidar_vn_sync_shift_signal_linear",
@@ -6510,7 +6588,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L452",
+      "source_location": "L474",
       "weight": 1.0,
       "_src": "lidar_vn_sync_fft_bandpass",
       "_tgt": "lidar_vn_sync_real_fft_frequencies",
@@ -6522,7 +6600,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L453",
+      "source_location": "L475",
       "weight": 1.0,
       "_src": "lidar_vn_sync_fft_bandpass",
       "_tgt": "lidar_vn_sync_cosine_edge_mask",
@@ -6534,7 +6612,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L565",
+      "source_location": "L587",
       "weight": 1.0,
       "_src": "lidar_vn_sync_coarse_and_fine_lag",
       "_tgt": "lidar_vn_sync_fft_bandpass",
@@ -6546,7 +6624,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L526",
+      "source_location": "L548",
       "weight": 1.0,
       "_src": "lidar_vn_sync_iterative_coarse_lag",
       "_tgt": "lidar_vn_sync_analytic_envelope_fft",
@@ -6558,7 +6636,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L571",
+      "source_location": "L593",
       "weight": 1.0,
       "_src": "lidar_vn_sync_coarse_and_fine_lag",
       "_tgt": "lidar_vn_sync_analytic_envelope_fft",
@@ -6570,7 +6648,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L506",
+      "source_location": "L528",
       "weight": 1.0,
       "_src": "lidar_vn_sync_iterative_coarse_lag",
       "_tgt": "lidar_vn_sync_fft_xcorr_lag",
@@ -6582,7 +6660,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L568",
+      "source_location": "L590",
       "weight": 1.0,
       "_src": "lidar_vn_sync_coarse_and_fine_lag",
       "_tgt": "lidar_vn_sync_fft_xcorr_lag",
@@ -6594,7 +6672,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L715",
+      "source_location": "L737",
       "weight": 1.0,
       "_src": "lidar_vn_sync_refine_offset_20hz",
       "_tgt": "lidar_vn_sync_fft_xcorr_lag",
@@ -6606,7 +6684,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L567",
+      "source_location": "L589",
       "weight": 1.0,
       "_src": "lidar_vn_sync_coarse_and_fine_lag",
       "_tgt": "lidar_vn_sync_iterative_coarse_lag",
@@ -6618,7 +6696,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L543",
+      "source_location": "L565",
       "weight": 1.0,
       "_src": "lidar_vn_sync_prior_from_history",
       "_tgt": "lidar_vn_sync_robust_center",
@@ -6630,7 +6708,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L601",
+      "source_location": "L623",
       "weight": 1.0,
       "_src": "lidar_vn_sync_run_sequential_offsets",
       "_tgt": "lidar_vn_sync_prior_from_history",
@@ -6642,7 +6720,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L588",
+      "source_location": "L610",
       "weight": 1.0,
       "_src": "lidar_vn_sync_backward_jump_robustness",
       "_tgt": "lidar_vn_sync_coarse_and_fine_lag",
@@ -6654,7 +6732,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L624",
+      "source_location": "L646",
       "weight": 1.0,
       "_src": "lidar_vn_sync_run_sequential_offsets",
       "_tgt": "lidar_vn_sync_coarse_and_fine_lag",
@@ -6666,7 +6744,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L783",
+      "source_location": "L805",
       "weight": 1.0,
       "_src": "lidar_vn_sync_process_sync_data",
       "_tgt": "lidar_vn_sync_coarse_and_fine_lag",
@@ -6678,7 +6756,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L1004",
+      "source_location": "L1126",
       "weight": 1.0,
       "_src": "lidar_vn_sync_diagnostic_single_window",
       "_tgt": "lidar_vn_sync_coarse_and_fine_lag",
@@ -6690,7 +6768,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L609",
+      "source_location": "L631",
       "weight": 1.0,
       "_src": "lidar_vn_sync_run_sequential_offsets",
       "_tgt": "lidar_vn_sync_is_jump_candidate",
@@ -6702,7 +6780,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L618",
+      "source_location": "L640",
       "weight": 1.0,
       "_src": "lidar_vn_sync_run_sequential_offsets",
       "_tgt": "lidar_vn_sync_backward_jump_robustness",
@@ -6714,7 +6792,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L744",
+      "source_location": "L766",
       "weight": 1.0,
       "_src": "lidar_vn_sync_process_sync_data",
       "_tgt": "lidar_vn_sync_run_sequential_offsets",
@@ -6726,7 +6804,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L697",
+      "source_location": "L719",
       "weight": 1.0,
       "_src": "lidar_vn_sync_refine_offset_20hz",
       "_tgt": "lidar_vn_sync_vn_subset_20hz",
@@ -6738,7 +6816,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L701",
+      "source_location": "L723",
       "weight": 1.0,
       "_src": "lidar_vn_sync_refine_offset_20hz",
       "_tgt": "lidar_vn_sync_dt_seconds",
@@ -6750,7 +6828,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L709",
+      "source_location": "L731",
       "weight": 1.0,
       "_src": "lidar_vn_sync_refine_offset_20hz",
       "_tgt": "lidar_vn_sync_nan_safe_moving_average",
@@ -6762,7 +6840,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L711",
+      "source_location": "L733",
       "weight": 1.0,
       "_src": "lidar_vn_sync_refine_offset_20hz",
       "_tgt": "lidar_vn_sync_upsample_lidar_step",
@@ -6774,7 +6852,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L727",
+      "source_location": "L749",
       "weight": 1.0,
       "_src": "lidar_vn_sync_refine_offset_20hz",
       "_tgt": "lidar_vn_sync_one_hz_average_at_lidar_times",
@@ -6786,7 +6864,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L784",
+      "source_location": "L806",
       "weight": 1.0,
       "_src": "lidar_vn_sync_process_sync_data",
       "_tgt": "lidar_vn_sync_refine_offset_20hz",
@@ -6798,7 +6876,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L1005",
+      "source_location": "L1127",
       "weight": 1.0,
       "_src": "lidar_vn_sync_diagnostic_single_window",
       "_tgt": "lidar_vn_sync_refine_offset_20hz",
@@ -6810,7 +6888,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L989",
+      "source_location": "L1111",
       "weight": 1.0,
       "_src": "lidar_vn_sync_read_and_motion_correct_stare",
       "_tgt": "lidar_vn_sync_read_synced_motion",
@@ -6822,7 +6900,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L983",
+      "source_location": "L1105",
       "weight": 1.0,
       "_src": "lidar_vn_sync_motion_correct_stare_velocity",
       "_tgt": "lidar_vn_sync_tilt_factor",
@@ -6834,7 +6912,7 @@
       "relation": "calls",
       "confidence": "EXTRACTED",
       "source_file": "lidar_vn_sync.jl",
-      "source_location": "L991",
+      "source_location": "L1113",
       "weight": 1.0,
       "_src": "lidar_vn_sync_read_and_motion_correct_stare",
       "_tgt": "lidar_vn_sync_motion_correct_stare_velocity",

@@ -25,6 +25,7 @@ export NOISE_THR, BANDPASS_PERIOD, BANDPASS_HZ, TIMESTEP, RANGEGATE
 export init_periodic_beams, load_lidar_indices_and_files, read_streamlinexr_stare!
 export init_stream_state, extract_sync_window, coarse_and_fine_lag, run_sequential_offsets, refine_offset_20hz
 export setup_sync_context, setup_sync_context_nc, process_sync_data, save_sync_netcdf
+export write_mdv_sync_pass2!
 export diagnostic_single_window, diagnostic_offsets
 export read_synced_motion, motion_correct_stare_velocity, read_and_motion_correct_stare
 
@@ -875,6 +876,106 @@ function process_sync_data(beams, env, Vn, UV, ic_list; ntop=80, jump_threshold_
 
     # Schema is uniform across test/all-data runs; only ic_list size changes the output cardinality.
     return (; seq_results, seq_ref20, seq_ic, seq_prior, seq_coarse, seq_final, seq_final_native, seq_final_native_ms, seq_jump_20hz_ms, seq_fine, seq_jump_candidate, seq_jump_accepted, chunk_lens, chunk_record_starts, chunk_record_ends, nrec)
+end
+
+"""
+write_mdv_sync_pass2!(; nc_dir, lidarstemdir, nx, nz, ntop, ic_list, overwrite, log_every)
+
+Second pass that appends `mdv_sync(time)` to each hourly stare NetCDF file.
+`mdv_sync` is computed chunk-by-chunk using the same `extract_sync_window`
+path as the sync loop, so it is exactly the same signal used by timing sync.
+
+This function leaves existing `mdv_snr_mean` unchanged.
+"""
+function write_mdv_sync_pass2!(;
+        nc_dir=joinpath("data", "netcdf_stare"),
+        lidarstemdir="./data",
+        uv_path=joinpath("data/netcdf", "ekamsat_lidar_uv_20240428-20240613.nc"),
+        nx=4000,
+        nz=80,
+        ntop=80,
+        ic_list=nothing,
+        overwrite=false,
+        log_every=200)
+
+    ctx = setup_sync_context_nc(; lidarstemdir=lidarstemdir, uv_path=uv_path, nc_dir=nc_dir, nx=nx, nz=nz)
+    Env = ctx.Env
+    Vn = ctx.Vn
+    UV = ctx.UV
+    beams = ctx.beams
+    state = init_stream_state()
+
+    ics = isnothing(ic_list) ? collect(eachindex(Env.ists)) : collect(ic_list)
+    isempty(ics) && error("ic_list is empty")
+
+    # Precreate mdv_sync variables once per file unless overwrite is requested.
+    for ifile in eachindex(Env.ff)
+        stem = splitext(basename(Env.ff[ifile]))[1]
+        nc_path = joinpath(nc_dir, stem * ".nc")
+        NCDataset(nc_path, "a") do ds
+            if haskey(ds, "mdv_sync")
+                if overwrite
+                    ds["mdv_sync"][:] .= NaN
+                end
+            else
+                v = defVar(ds, "mdv_sync", Float64, ("time",);
+                    attrib=[
+                        "long_name" => "sync-loop mdv from valid_chunk_mdv",
+                        "units" => "m s-1",
+                        "algorithm" => "LidarVNSync.extract_sync_window -> valid_chunk_mdv",
+                        "noise_threshold" => NOISE_THR,
+                        "ntop" => Int(ntop),
+                        "_FillValue" => NaN,
+                    ])
+                v[:] .= NaN
+            end
+        end
+    end
+
+    n_total = length(ics)
+    n_done = 0
+    n_err = 0
+
+    println("Pass-2 mdv_sync write: chunks=", n_total, ", nc_dir=", nc_dir)
+
+    for (ii, ic) in enumerate(ics)
+        try
+            w = extract_sync_window(beams, Env, state, Vn, UV, ic; ntop=ntop, nc_dir=nc_dir)
+            mdv_chunk = Float64.(w.mdv)
+
+            # Write mdv across one or more files using global beam indices.
+            g0 = w.ist
+            while g0 <= w.ien
+                ifile = findlast(Env.bigind_file_starts .<= g0)
+                file_st = Env.bigind_file_starts[ifile]
+                file_en = Env.bigind_file_ends[ifile]
+                g1 = min(w.ien, file_en)
+
+                local_st = g0 - file_st + 1
+                local_en = g1 - file_st + 1
+                chunk_st = g0 - w.ist + 1
+                chunk_en = g1 - w.ist + 1
+
+                stem = splitext(basename(Env.ff[ifile]))[1]
+                nc_path = joinpath(nc_dir, stem * ".nc")
+                NCDataset(nc_path, "a") do ds
+                    ds["mdv_sync"][local_st:local_en] = mdv_chunk[chunk_st:chunk_en]
+                end
+
+                g0 = g1 + 1
+            end
+
+            n_done += 1
+            if (ii % log_every == 0) || (ii == n_total)
+                @printf("[%5d/%5d] done=%d err=%d\n", ii, n_total, n_done, n_err)
+            end
+        catch err
+            n_err += 1
+            @printf("ERROR chunk ic=%d: %s\n", ic, replace(sprint(showerror, err), '\n' => " | "))
+        end
+    end
+
+    return (; nchunks=n_total, done=n_done, errors=n_err, ntop=ntop, nc_dir)
 end
 
 function save_sync_netcdf(result; nc_out=joinpath("epsilon_data", "vn_sync_offsets.nc"), time_ref_dt=DateTime(2024, 4, 29, 0, 0, 0))
