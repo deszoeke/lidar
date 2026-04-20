@@ -1,11 +1,11 @@
-# Graph Report - .  (2026-04-18)
+# Graph Report - .  (2026-04-19)
 
 ## Corpus Check
-- 20 files · ~9,164,427 words
+- 20 files · ~9,164,748 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 319 nodes · 574 edges · 14 communities detected
+- 321 nodes · 579 edges · 14 communities detected
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
@@ -26,7 +26,7 @@
 - [[_COMMUNITY_Community 13|Community 13]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `LidarVNSync` - 60 edges
+1. `LidarVNSync` - 62 edges
 2. `timing_lidar` - 29 edges
 3. `DopplerTurbulence` - 25 edges
 4. `read_lidar` - 23 edges
@@ -34,8 +34,8 @@
 6. `chunks` - 18 edges
 7. `stare` - 14 edges
 8. `NoaaDas` - 14 edges
-9. `JLD2` - 11 edges
-10. `extract_sync_window()` - 11 edges
+9. `extract_sync_window()` - 12 edges
+10. `JLD2` - 11 edges
 
 ## Surprising Connections (you probably didn't know these)
 - None detected - all connections are within the same source files.
@@ -44,43 +44,43 @@
 
 ### Community 0 - "Community 0"
 Cohesion: 0.09
-Nodes (44): analytic_envelope_fft(), append_nan_offset_log(), backward_jump_robustness(), chunk_lidar_datetimes(), coarse_and_fine_lag(), cosine_edge_mask(), detrend_center(), diag_array() (+36 more)
+Nodes (46): analytic_envelope_fft(), append_nan_offset_log(), backward_jump_robustness(), chunk_lidar_datetimes(), coarse_and_fine_lag(), cosine_edge_mask(), detrend_center(), diag_array() (+38 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.08
 Nodes (25): cat_dicts, allcross(), anom(), binavg(), D2_rho_stare(), displacements(), equal_bin(), f() (+17 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.13
-Nodes (28): das_dict, Dates, Printf, read_streamlinexr_stare, das_dict(), DasFps, DasGps, DasScs (+20 more)
+Cohesion: 0.09
+Nodes (28): all_chunks(), all_gaps(), all_start_end_indices(), chunken(), chunkst(), compute_mdv_snr_mean(), get_all_file_start_end_idxs(), get_daily_meanuv() (+20 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.11
-Nodes (25): all_chunks(), all_gaps(), all_start_end_indices(), chunken(), chunkst(), compute_mdv_snr_mean(), get_all_file_start_end_idxs(), get_daily_meanuv() (+17 more)
+Cohesion: 0.13
+Nodes (28): das_dict, Dates, Printf, read_streamlinexr_stare, das_dict(), DasFps, DasGps, DasScs (+20 more)
 
 ### Community 4 - "Community 4"
 Cohesion: 0.12
 Nodes (18): StatsBase, ba(), cross_correlation(), dtregress(), DVM(), find_lags_iterative(), gps2dt(), gps2utc() (+10 more)
 
 ### Community 5 - "Community 5"
-Cohesion: 0.13
-Nodes (13): chunks, dt_to_chunkind(), findindices(), finelagcov(), fit_offset(), goodcov(), indavg(), read_stare_chunk() (+5 more)
-
-### Community 6 - "Community 6"
 Cohesion: 0.12
 Nodes (9): allcross(), displacements(), DopplerTurbulence, lidarindices(), rng(), trigs(), uniquepairs(), wtrue() (+1 more)
 
-### Community 7 - "Community 7"
+### Community 6 - "Community 6"
 Cohesion: 0.13
 Nodes (9): f_taper(), taper(), JLD2, Pkg, Plots, PyCall, PyPlot, read_vecnav_dict (+1 more)
 
+### Community 7 - "Community 7"
+Cohesion: 0.15
+Nodes (13): FFTW, estimate_heave_ts(), iterative_despike_rain(), nanmedian(), rain_mask_vertical(), running_median(), subtract_rain_layers!(), ImageFiltering (+5 more)
+
 ### Community 8 - "Community 8"
 Cohesion: 0.16
-Nodes (15): compute_hmix_for_matrix(), extract_epsilon_and_meta(), hmix_first_crossing(), is_valid_eps(), list_epsilon_files(), main(), process_file(), rng_height() (+7 more)
+Nodes (10): Interpolations, NCDatasets, get_daily_meanuv(), read_lidar, read_streamlinexr_head(), read_streamlinexr_stare!(), get_daily_meanuv(), read_lidar (+2 more)
 
 ### Community 9 - "Community 9"
-Cohesion: 0.16
-Nodes (10): Interpolations, NCDatasets, get_daily_meanuv(), read_lidar, read_streamlinexr_head(), read_streamlinexr_stare!(), get_daily_meanuv(), read_lidar (+2 more)
+Cohesion: 0.18
+Nodes (10): chunks, dt_to_chunkind(), findindices(), finelagcov(), fit_offset(), goodcov(), indavg(), read_stare_chunk() (+2 more)
 
 ### Community 10 - "Community 10"
 Cohesion: 0.23
@@ -91,12 +91,12 @@ Cohesion: 0.25
 Nodes (3): build_lidar_index(), lidar_index, LidarIndex
 
 ### Community 12 - "Community 12"
-Cohesion: 0.39
-Nodes (9): flatten, get_nav_file(), get_posmv_file(), itr_expand(), read_gyro_data(), read_gyro_dict(), read_pashr_data(), read_pashr_dict() (+1 more)
+Cohesion: 0.42
+Nodes (8): compute_hmix_for_matrix(), extract_epsilon_and_meta(), hmix_first_crossing(), is_valid_eps(), list_epsilon_files(), main(), process_file(), rng_height()
 
 ### Community 13 - "Community 13"
-Cohesion: 0.36
-Nodes (6): estimate_heave_ts(), iterative_despike_rain(), nanmedian(), rain_mask_vertical(), running_median(), subtract_rain_layers!()
+Cohesion: 0.39
+Nodes (9): flatten, get_nav_file(), get_posmv_file(), itr_expand(), read_gyro_data(), read_gyro_dict(), read_pashr_data(), read_pashr_dict() (+1 more)
 
 ## Knowledge Gaps
 - **8 isolated node(s):** `Plots`, `read_stare_chunk`, `read_streamlinexr_stare`, `cat_dicts`, `das_dict` (+3 more)
@@ -105,12 +105,12 @@ Nodes (6): estimate_heave_ts(), iterative_despike_rain(), nanmedian(), rain_mask
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Dates` connect `Community 2` to `Community 0`, `Community 1`, `Community 3`, `Community 4`, `Community 5`, `Community 6`, `Community 7`, `Community 8`, `Community 9`, `Community 10`, `Community 11`, `Community 12`?**
-  _High betweenness centrality (0.487) - this node is a cross-community bridge._
-- **Why does `LidarVNSync` connect `Community 0` to `Community 1`, `Community 2`, `Community 4`, `Community 6`, `Community 7`, `Community 8`, `Community 9`?**
-  _High betweenness centrality (0.302) - this node is a cross-community bridge._
-- **Why does `timing_lidar` connect `Community 4` to `Community 8`, `Community 9`, `Community 2`?**
-  _High betweenness centrality (0.158) - this node is a cross-community bridge._
+- **Why does `Dates` connect `Community 3` to `Community 0`, `Community 1`, `Community 2`, `Community 4`, `Community 5`, `Community 6`, `Community 8`, `Community 9`, `Community 10`, `Community 11`, `Community 12`, `Community 13`?**
+  _High betweenness centrality (0.485) - this node is a cross-community bridge._
+- **Why does `LidarVNSync` connect `Community 0` to `Community 1`, `Community 3`, `Community 4`, `Community 5`, `Community 6`, `Community 7`, `Community 8`?**
+  _High betweenness centrality (0.310) - this node is a cross-community bridge._
+- **Why does `Statistics` connect `Community 7` to `Community 0`, `Community 1`, `Community 4`, `Community 5`, `Community 9`, `Community 12`?**
+  _High betweenness centrality (0.157) - this node is a cross-community bridge._
 - **What connects `Plots`, `read_stare_chunk`, `read_streamlinexr_stare` to the rest of the system?**
   _8 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
@@ -118,4 +118,4 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.08 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.13 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09 - nodes in this community are weakly interconnected._

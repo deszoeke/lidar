@@ -24,7 +24,7 @@ using .timing_lidar
 export NOISE_THR, BANDPASS_PERIOD, BANDPASS_HZ, TIMESTEP, RANGEGATE
 export init_periodic_beams, load_lidar_indices_and_files, read_streamlinexr_stare!
 export init_stream_state, extract_sync_window, coarse_and_fine_lag, run_sequential_offsets, refine_offset_20hz
-export setup_sync_context, process_sync_data, save_sync_netcdf
+export setup_sync_context, setup_sync_context_nc, process_sync_data, save_sync_netcdf
 export diagnostic_single_window, diagnostic_offsets
 export read_synced_motion, motion_correct_stare_velocity, read_and_motion_correct_stare
 
@@ -213,6 +213,90 @@ function ensure_chunk_loaded!(beams, env, state, ic)
     return (; ifile=ifile_needed, ist, ien)
 end
 
+"""
+ensure_chunk_loaded_nc!(beams, env, state, ic; nc_dir)
+
+Drop-in replacement for `ensure_chunk_loaded!` that reads pre-converted
+NetCDF files from `nc_dir` (default `data/netcdf_stare/`) instead of
+parsing raw HPL text files.  All other sync machinery is unchanged.
+"""
+function ensure_chunk_loaded_nc!(beams, env, state, ic;
+                                  nc_dir::AbstractString = joinpath("data", "netcdf_stare"))
+    ist = env.ists[ic]
+    ien = env.iens[ic]
+    ifile_needed = findlast(env.bigind_file_starts .<= ist)
+    isnothing(ifile_needed) && error("No file contains ist=$(ist)")
+
+    if state[:ifile_loaded] == 0
+        state[:ifile_loaded] = ifile_needed - 1
+        state[:bigind_file_end] = 0
+    end
+
+    nz = size(beams[:height][:], 1)
+
+    while (state[:ifile_loaded] < ifile_needed) || (ien > state[:bigind_file_end])
+        state[:ifile_loaded] += 1
+        state[:ifile_loaded] > length(env.ff) &&
+            error("Ran out of lidar files while loading chunk ic=$(ic)")
+
+        ifile = state[:ifile_loaded]
+        bb    = env.bigind_file_starts[ifile]:env.bigind_file_ends[ifile]
+
+        # derive NetCDF path from the HPL filename stored in env.ff
+        stem    = splitext(basename(env.ff[ifile]))[1]   # "Stare_116_YYYYMMDD_HH"
+        nc_path = joinpath(nc_dir, stem * ".nc")
+
+        NCDatasets.NCDataset(nc_path, "r") do ds
+            n = length(ds.dim["time"])
+            ng = min(length(ds.dim["gate"]), nz)
+
+            setindex!(beams[:time],      Float32.(ds["time"][1:n]),      bb)
+            setindex!(beams[:azimuth],   Float32.(ds["azimuth"][1:n]),   bb)
+            setindex!(beams[:elevangle], Float32.(ds["elevangle"][1:n]), bb)
+            setindex!(beams[:pitch],     Float32.(ds["pitch"][1:n]),     bb)
+            setindex!(beams[:roll],      Float32.(ds["roll"][1:n]),      bb)
+            beams[:height][1:ng] .= Float32.(ds["height"][1:ng])
+            setindex!(beams[:dopplervel], Float32.(ds["dopplervel"][1:n, 1:ng]), bb, 1:ng)
+            setindex!(beams[:intensity],  Float32.(ds["intensity"][1:n,  1:ng]), bb, 1:ng)
+            setindex!(beams[:beta],       Float32.(ds["beta"][1:n,       1:ng]), bb, 1:ng)
+        end
+
+        state[:bigind_file_end] = env.bigind_file_ends[ifile]
+    end
+
+    return (; ifile=ifile_needed, ist, ien)
+end
+
+"""
+setup_sync_context_nc(; nc_dir, ...)
+
+Like `setup_sync_context` but patches `extract_sync_window` to load beam
+data from pre-converted NetCDF files rather than raw HPL text.
+
+The returned context has an extra field `nc_dir` and a `load_nc!` closure
+so callers can swap in the NC loader by passing `load_fn=ctx.load_nc!` to
+`ensure_chunk_loaded_nc!`.  In practice the notebook just uses the
+`beams_nc` variant of `extract_sync_window` defined below.
+"""
+function setup_sync_context_nc(;
+        lidarstemdir = "./data",
+        uv_path      = joinpath("data/netcdf", "ekamsat_lidar_uv_20240428-20240613.nc"),
+        nc_dir       = joinpath("data", "netcdf_stare"),
+        nx           = 4000,
+        nz           = 80)
+
+    Env = load_lidar_indices_and_files(; lidarstemdir=lidarstemdir)
+    Vn  = read_vecnav_dict()
+    UV  = NCDatasets.NCDataset(uv_path)
+
+    dtime_st = Env.dtime[Env.ists]
+    dtime_en = Env.dtime[Env.iens]
+    icvn     = findfirst(dtime_st .>= Vn[:vndt][1]):findlast(dtime_en .<= Vn[:vndt][end])
+    beams    = init_periodic_beams(nx, nz)
+
+    return (; Env, Vn, UV, beams, icvn, nz, nx, nc_dir)
+end
+
 function chunk_lidar_datetimes(dt_chunk, beams, ist, ien)
     stare_dt_raw = @. DateTime(Date(dt_chunk)) + Millisecond(round(Int64, beams[:time][ist:ien] * 3_600_000))
     lidar_clock_fast_by = Millisecond(round(Int64, 1_000 * fit_offset(stare_dt_raw[1])))
@@ -227,8 +311,12 @@ Calls ensure_chunk_loaded to update `beams` in-place.
 UV, not used here, is passed to read_stare_chunk. 
 The sync offset will depend only on mdv and vn2, not on Ur,Vr.
 """
-function extract_sync_window(beams, env, state, Vn, UV, ic; ntop=80)
-    info = ensure_chunk_loaded!(beams, env, state, ic) # updates beams in-place and returns ist/ien for the chunk
+function extract_sync_window(beams, env, state, Vn, UV, ic; ntop=80, nc_dir=nothing)
+    if isnothing(nc_dir)
+        info = ensure_chunk_loaded!(beams, env, state, ic)
+    else
+        info = ensure_chunk_loaded_nc!(beams, env, state, ic; nc_dir=nc_dir)
+    end
     dt_arg = info.ist <= length(env.dtime) ? env.dtime[info.ist] : env.dtime[end]
     dopplervel, pitch, roll, vn0, vn1, vn2, Ur, Vr, mdv_builtin = read_stare_chunk(dt_arg, beams, Vn, UV, info.ist, info.ien, ntop)
     stare_dt_raw, stare_dt, lidar_clock_fast_by = chunk_lidar_datetimes(env.dtime[info.ist], beams, info.ist, info.ien)
