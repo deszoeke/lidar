@@ -5,3 +5,10 @@ When syncing is failing, it's an error to fix in my code. Several things are pos
  - an iterative failure mode is if the syncing fails silently with a bad offset. Then the next prior will be wrong, making the next retrieval wrong. It will never self-correct, and all subsequent chunks will fail and be unsynced. In case of a failure, the prior should not be reset. Rather the prior should probably relax to the lidar_offset, and the refinement should be repeated with a more robust algorithm.
 
 The time index describes a flat temporal sequence. It is not easy to access and query data for the chunk indices, chunk start and end datetimes, the file start and end datetimes, and which files contain or are spanned by each chunk. Propose a simple data structure that can be made by a julia function that simplifies lookup of chunks from and to: filename, file index, datetime, serial chunk index, time index of chunks within files.
+
+
+Plan a light version of sync data passing through extract_sync_window that uses the saved mdv, avoiding recomputing mdv within the sync loop.
+
+tests:
+1. smoke test extract_sync_window with nc_dir for some files.
+2. repeate 1 and test that mdv equals what is computed in the sync loop.

@@ -247,10 +247,31 @@ function ensure_chunk_loaded_nc!(beams, env, state, ic;
         nc_path = joinpath(nc_dir, stem * ".nc")
 
         NCDatasets.NCDataset(nc_path, "r") do ds
-            n = length(ds.dim["time"])
-            ng = min(length(ds.dim["gate"]), nz)
+            t_nc = ds["time"][:]
+            n = length(t_nc)
+            n != length(bb) && error("NetCDF/HPL beam count mismatch for $(basename(nc_path)): nc=$(n), expected=$(length(bb))")
 
-            setindex!(beams[:time],      Float32.(ds["time"][1:n]),      bb)
+            # CF-decoded time may come back as DateTime; convert to HPL-style decimal hours.
+            t_hpl_hours = Vector{Float32}(undef, n)
+            for i in eachindex(t_nc)
+                ti = t_nc[i]
+                if ti isa Dates.TimeType
+                    t_hpl_hours[i] = Float32(
+                        Dates.hour(ti) +
+                        Dates.minute(ti) / 60 +
+                        Dates.second(ti) / 3600 +
+                        Dates.millisecond(ti) / 3_600_000
+                    )
+                elseif ismissing(ti)
+                    t_hpl_hours[i] = Float32(NaN)
+                else
+                    t_hpl_hours[i] = Float32(ti)
+                end
+            end
+
+            ng = min(size(ds["dopplervel"], 2), nz)
+
+            setindex!(beams[:time],      t_hpl_hours,                    bb)
             setindex!(beams[:azimuth],   Float32.(ds["azimuth"][1:n]),   bb)
             setindex!(beams[:elevangle], Float32.(ds["elevangle"][1:n]), bb)
             setindex!(beams[:pitch],     Float32.(ds["pitch"][1:n]),     bb)
