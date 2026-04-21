@@ -26,7 +26,7 @@ export init_periodic_beams, load_lidar_indices_and_files, read_streamlinexr_star
 export init_stream_state, extract_sync_window, coarse_and_fine_lag, run_sequential_offsets, refine_offset_20hz
 export setup_sync_context, setup_sync_context_nc, process_sync_data, save_sync_netcdf
 export write_mdv_sync_pass2!
-export diagnostic_single_window, diagnostic_offsets
+export diagnostic_single_window, diagnostic_offsets, diagnostic_example_chunks
 export read_synced_motion, motion_correct_stare_velocity, read_and_motion_correct_stare
 
 const NOISE_THR = 1.03
@@ -745,10 +745,11 @@ function one_hz_average_at_lidar_times(vndt20, x20, lidar_dt; half_window=0.5, q
     out
 end
 
-function refine_offset_20hz(win, sync_1s, Vn; ma_points=20, search_seconds=1.0, max_gap_samples=3)
+function refine_offset_20hz(win, sync_1s, Vn; ma_points=5, search_seconds=0.6, max_gap_samples=3)
     prior_offset = isfinite(sync_1s.prior_seconds) ? sync_1s.prior_seconds : 0.0
+    offset_base_1hz = isfinite(sync_1s.final_offset) ? sync_1s.final_offset : prior_offset
     pad_s = ceil(Int, search_seconds) + 2
-    ind20, vndt20, vn2_20 = vn_subset_20hz(win.stare_dt, Vn; pad=Second(pad_s), offset_seconds=prior_offset)
+    ind20, vndt20, vn2_20 = vn_subset_20hz(win.stare_dt, Vn; pad=Second(pad_s), offset_seconds=-offset_base_1hz)
     pitch_20 = Float64.(Vn[:Pitch][ind20])
     roll_20 = Float64.(Vn[:Roll][ind20])
     base_offset = isfinite(sync_1s.final_offset) ? sync_1s.final_offset : (isfinite(sync_1s.prior_seconds) ? sync_1s.prior_seconds : -9999.0)
@@ -757,23 +758,26 @@ function refine_offset_20hz(win, sync_1s, Vn; ma_points=20, search_seconds=1.0, 
         dt20 = 0.05
     end
 
-    fallback = (; final_offset_20hz=NaN, native_step=dt20, final_offset_native=base_offset, final_offset_round_s=round(Int, base_offset), vn2_1s_aligned=fill(NaN, length(win.stare_dt)), pitch_1s_aligned=fill(NaN, length(win.stare_dt)), roll_1s_aligned=fill(NaN, length(win.stare_dt)), mdv_residual_1s=fill(NaN, length(win.stare_dt)), xcorr20=nothing, vndt20, vn2_20)
+    # Fallback means "no additional 20 Hz correction"; keep residual at 0 s.
+    fallback = (; final_offset_20hz=0.0, native_step=dt20, final_offset_native=0.0, final_offset_round_s=0, vn2_1s_aligned=fill(NaN, length(win.stare_dt)), pitch_1s_aligned=fill(NaN, length(win.stare_dt)), roll_1s_aligned=fill(NaN, length(win.stare_dt)), mdv_residual_1s=fill(NaN, length(win.stare_dt)), xcorr20=nothing, vndt20, vn2_20)
     length(vndt20) < 40 && return fallback
 
     dt1 = dt_seconds(win.stare_dt)
     (!isfinite(dt1) || dt1 <= 0) && (dt1 = TIMESTEP)
     
-    # Grid search: try different 20 Hz offsets and find which maximizes 1 Hz correlation
-    # Search range: ±search_seconds in steps of dt20 (0.05 s)
-    search_steps = collect(-search_seconds:dt20:search_seconds)
+    vn2_20_ma = nan_safe_moving_average(vn2_20, ma_points)
+
+    # Evaluate residual lags at native 20 Hz cadence (0.05 s).
+    search_step = 0.05
+    search_steps = collect(-search_seconds:search_step:search_seconds)
     best_corr = -Inf
     best_offset = 0.0
     
     mdv1s = fill_short_nan_gaps(win.mdv; max_gap=max_gap_samples)
     
     for offset_candidate in search_steps
-        vn2_20_shifted = shift_signal_linear(vn2_20, offset_candidate; dt=dt20)
-        vn2_1s = one_hz_average_at_lidar_times(vndt20, vn2_20_shifted, win.stare_dt; query_offset_seconds=0.0)
+        vn2_20_shifted = shift_signal_linear(vn2_20_ma, offset_candidate; dt=dt20)
+        vn2_1s = one_hz_average_at_lidar_times(vndt20, vn2_20_shifted, win.stare_dt; query_offset_seconds=-offset_base_1hz)
         vn2_1s = fill_short_nan_gaps(vn2_1s; max_gap=max_gap_samples)
         
         # Compute correlation at 1 Hz
@@ -786,12 +790,12 @@ function refine_offset_20hz(win, sync_1s, Vn; ma_points=20, search_seconds=1.0, 
     end
     
     # Apply best offset to all 20 Hz signals for output
-    vn2_shifted = shift_signal_linear(vn2_20, best_offset; dt=dt20)
+    vn2_shifted = shift_signal_linear(vn2_20_ma, best_offset; dt=dt20)
     pitch_shifted = shift_signal_linear(pitch_20, best_offset; dt=dt20)
     roll_shifted = shift_signal_linear(roll_20, best_offset; dt=dt20)
-    vn2_1s_aligned = one_hz_average_at_lidar_times(vndt20, vn2_shifted, win.stare_dt; query_offset_seconds=prior_offset)
-    pitch_1s_aligned = one_hz_average_at_lidar_times(vndt20, pitch_shifted, win.stare_dt; query_offset_seconds=prior_offset)
-    roll_1s_aligned = one_hz_average_at_lidar_times(vndt20, roll_shifted, win.stare_dt; query_offset_seconds=prior_offset)
+    vn2_1s_aligned = one_hz_average_at_lidar_times(vndt20, vn2_shifted, win.stare_dt; query_offset_seconds=-offset_base_1hz)
+    pitch_1s_aligned = one_hz_average_at_lidar_times(vndt20, pitch_shifted, win.stare_dt; query_offset_seconds=-offset_base_1hz)
+    roll_1s_aligned = one_hz_average_at_lidar_times(vndt20, roll_shifted, win.stare_dt; query_offset_seconds=-offset_base_1hz)
     mdv_residual_1s = win.mdv .- vn2_1s_aligned
 
     final_round_s = round(Int, best_offset)
@@ -1236,8 +1240,9 @@ function diagnostic_single_window(beams, Env, Vn, UV, ic; ntop=80)
     @printf("coarse offset after iterative envelope passes = %.3f s\n", sync.coarse_offset)
     @printf("fine residual after coarse shift = %.3f s\n", sync.fine.lag_seconds)
     @printf("final offset (1 Hz stage) = %.3f s\n", sync.final_offset)
-    @printf("final offset (20 Hz raw) = %.3f s\n", ref20.final_offset_20hz)
-    @printf("final offset (20 Hz native step) = %.3f s [step=%.3f]\n", ref20.final_offset_native, ref20.native_step)
+    @printf("20 Hz residual (raw) = %.3f s\n", ref20.final_offset_20hz)
+    @printf("20 Hz residual (native step) = %.3f s [step=%.3f]\n", ref20.final_offset_native, ref20.native_step)
+    @printf("final offset (1 Hz + 20 Hz residual) = %.3f s\n", sync.final_offset + ref20.final_offset_native)
 
     fig = figure(figsize=(10, 11))
     clf()
@@ -1311,6 +1316,41 @@ function diagnostic_offsets(result)
 
     tight_layout()
     return fig
+end
+
+function diagnostic_example_chunks(beams, Env, Vn, UV, ic_list; ntop=80, nc_dir=nothing)
+    state = init_stream_state()
+    ics = collect(ic_list)
+    isempty(ics) && error("ic_list is empty")
+
+    nplot = length(ics)
+    fig = figure(figsize=(11, 2.6 * nplot))
+    clf()
+    rows = max(nplot, 1)
+    results = NamedTuple[]
+
+    for (i, ic) in enumerate(ics)
+        win = extract_sync_window(beams, Env, state, Vn, UV, ic; ntop=ntop, nc_dir=nc_dir)
+        sync = coarse_and_fine_lag(win.mdv, win.vn2_xcorr; prior_seconds=0.0)
+        ref20 = refine_offset_20hz(win, sync, Vn)
+        corr_aligned = finite_overlap_corr(win.mdv, ref20.vn2_1s_aligned)
+
+        subplot(rows, 1, i)
+        plot(win.stare_dt, win.mdv, label="mdv", linewidth=1.6)
+        plot(win.stare_dt, win.vn2_xcorr, label="vn2 raw 1 s", linewidth=1.0, alpha=0.6)
+        plot(win.stare_dt, ref20.vn2_1s_aligned, label="vn2 aligned 1 s", linewidth=1.4)
+        plot(win.stare_dt, ref20.mdv_residual_1s, label="mdv - vn2 aligned", linewidth=1.0, alpha=0.75)
+        ylabel("m s^-1")
+        title(@sprintf("chunk %d | 1 Hz offset = %.3f s | 20 Hz residual = %.3f s | total = %.3f s | corr = %.3f", ic, sync.final_offset, ref20.final_offset_20hz, sync.final_offset + ref20.final_offset_native, corr_aligned))
+        grid(true)
+        i == 1 && legend(loc="best")
+        i == rows && xlabel("time")
+
+        push!(results, (; ic, win, sync, ref20, corr_aligned))
+    end
+
+    tight_layout()
+    return (; fig, results)
 end
 
 end
