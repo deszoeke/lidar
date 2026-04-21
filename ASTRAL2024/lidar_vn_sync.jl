@@ -615,15 +615,27 @@ function backward_jump_robustness(beams, env, state, Vn, UV, history, post_offse
     isempty(deltas) ? NaN : median(deltas)
 end
 
-function run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=80, jump_threshold_seconds=0.8, min_fine_peak=0.08, backward_windows=2, backward_tol=0.35, max_gap_samples=3, min_accept_peak_norm=0.08, fallback_search_seconds=60.0)
+function run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=80, jump_threshold_seconds=0.8, min_fine_peak=0.08, backward_windows=2, backward_tol=0.35, max_gap_samples=3, min_accept_peak_norm=0.08, fallback_search_seconds=60.0, reset_prior_on_file_boundary=false, reset_prior_on_rejected_sync=false)
     state = init_stream_state()
     history = NamedTuple[]
     for ic in ic_list
-        start_dt = env.dtime[env.ists[ic]]
-        prior = prior_from_history(history, start_dt)
         win = extract_sync_window(beams, env, state, Vn, UV, ic; ntop=ntop)
+        start_dt = win.stare_dt[1]
+        prior = prior_from_history(history, start_dt)
+
+        prior_reset = "none"
+        if !isempty(history)
+            if reset_prior_on_file_boundary && hasproperty(history[end], :ifile) && history[end].ifile != win.ifile
+                prior = (; prior..., prior_seconds=0.0)
+                prior_reset = "file_boundary"
+            elseif reset_prior_on_rejected_sync && !get(history[end], :accepted_sync, true)
+                prior = (; prior..., prior_seconds=0.0)
+                prior_reset = "rejected_sync"
+            end
+        end
+
         if win.vn_coverage < 0.5
-            push!(history, (; ic, start_dt=win.stare_dt[1], end_dt=win.stare_dt[end], parent_start=floor(win.stare_dt[1], Hour), prior_offset=prior.prior_seconds, previous_offset=prior.previous_offset, recent_offset=prior.recent_offset, parent_offset=prior.parent_offset, coarse_offset=NaN, fine_residual=NaN, final_offset=NaN, coarse_peak=NaN, fine_peak=NaN, goodlevels=length(win.goodlevels), jump_candidate=false, jump_robust=false, jump_accepted=false, jump_backward_metric=NaN, fallback_used=false))
+            push!(history, (; ic, ifile=win.ifile, start_dt=win.stare_dt[1], end_dt=win.stare_dt[end], parent_start=floor(win.stare_dt[1], Hour), prior_offset=prior.prior_seconds, previous_offset=prior.previous_offset, recent_offset=prior.recent_offset, parent_offset=prior.parent_offset, prior_reset, coarse_offset=NaN, fine_residual=NaN, final_offset=NaN, coarse_peak=NaN, fine_peak=NaN, goodlevels=length(win.goodlevels), jump_candidate=false, jump_robust=false, jump_accepted=false, jump_backward_metric=NaN, fallback_used=false, accepted_sync=false))
             continue
         end
         sync = coarse_and_fine_lag(win.mdv, win.vn2_xcorr; prior_seconds=prior.prior_seconds, max_gap_samples=max_gap_samples)
@@ -667,7 +679,7 @@ function run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=80, jump_thres
         stored_fine_residual = accepted_sync ? sync.fine.lag_seconds : NaN
         stored_final_offset = accepted_sync ? sync.final_offset : NaN
 
-        push!(history, (; ic, start_dt=win.stare_dt[1], end_dt=win.stare_dt[end], parent_start=floor(win.stare_dt[1], Hour), prior_offset=prior.prior_seconds, previous_offset=prior.previous_offset, recent_offset=prior.recent_offset, parent_offset=prior.parent_offset, coarse_offset=stored_coarse_offset, fine_residual=stored_fine_residual, final_offset=stored_final_offset, coarse_peak=isempty(sync.coarse_history) ? NaN : sync.coarse_history[end].peak_norm, fine_peak=sync.fine.peak_norm, goodlevels=length(win.goodlevels), jump_candidate, jump_robust, jump_accepted, jump_backward_metric, fallback_used, accepted_sync))
+        push!(history, (; ic, ifile=win.ifile, start_dt=win.stare_dt[1], end_dt=win.stare_dt[end], parent_start=floor(win.stare_dt[1], Hour), prior_offset=prior.prior_seconds, previous_offset=prior.previous_offset, recent_offset=prior.recent_offset, parent_offset=prior.parent_offset, prior_reset, coarse_offset=stored_coarse_offset, fine_residual=stored_fine_residual, final_offset=stored_final_offset, coarse_peak=isempty(sync.coarse_history) ? NaN : sync.coarse_history[end].peak_norm, fine_peak=sync.fine.peak_norm, goodlevels=length(win.goodlevels), jump_candidate, jump_robust, jump_accepted, jump_backward_metric, fallback_used, accepted_sync))
     end
     history
 end
@@ -748,31 +760,56 @@ function refine_offset_20hz(win, sync_1s, Vn; ma_points=20, search_seconds=1.0, 
     fallback = (; final_offset_20hz=NaN, native_step=dt20, final_offset_native=base_offset, final_offset_round_s=round(Int, base_offset), vn2_1s_aligned=fill(NaN, length(win.stare_dt)), pitch_1s_aligned=fill(NaN, length(win.stare_dt)), roll_1s_aligned=fill(NaN, length(win.stare_dt)), mdv_residual_1s=fill(NaN, length(win.stare_dt)), xcorr20=nothing, vndt20, vn2_20)
     length(vndt20) < 40 && return fallback
 
-    vn2_ma = nan_safe_moving_average(vn2_20, ma_points)
-    lidar_dt_shifted = win.stare_dt .+ Millisecond(round.(Int64, 1_000 .* prior_offset))
-    mdv20 = upsample_lidar_step(lidar_dt_shifted, win.mdv, vndt20)
-    mdv20 = fill_short_nan_gaps(mdv20; max_gap=max_gap_samples)
-    vn2_ma = fill_short_nan_gaps(vn2_ma; max_gap=max_gap_samples)
-
-    xcorr20 = fft_xcorr_lag(mdv20, vn2_ma; dt=dt20, center_seconds=0.0, maxlag_seconds=search_seconds)
-    !isfinite(xcorr20.lag_seconds) && return fallback
-
-    final_native = round(xcorr20.lag_seconds / dt20) * dt20
-    final_round_s = round(Int, final_native)
-    # NOTE: final_native is the 20 Hz residual ONLY (not prior + residual).
-    # The caller (process_sync_data) composes with prior_offset separately,
-    # combining it with the 1 Hz stage result (which already includes prior).
-    # Offset composition: total = prior + residual_1hz + residual_20hz
-
-    vn2_shifted = shift_signal_linear(vn2_20, final_native; dt=dt20)
-    pitch_shifted = shift_signal_linear(pitch_20, final_native; dt=dt20)
-    roll_shifted = shift_signal_linear(roll_20, final_native; dt=dt20)
+    dt1 = dt_seconds(win.stare_dt)
+    (!isfinite(dt1) || dt1 <= 0) && (dt1 = TIMESTEP)
+    
+    # Grid search: try different 20 Hz offsets and find which maximizes 1 Hz correlation
+    # Search range: ±search_seconds in steps of dt20 (0.05 s)
+    search_steps = collect(-search_seconds:dt20:search_seconds)
+    best_corr = -Inf
+    best_offset = 0.0
+    
+    mdv1s = fill_short_nan_gaps(win.mdv; max_gap=max_gap_samples)
+    
+    for offset_candidate in search_steps
+        vn2_20_shifted = shift_signal_linear(vn2_20, offset_candidate; dt=dt20)
+        vn2_1s = one_hz_average_at_lidar_times(vndt20, vn2_20_shifted, win.stare_dt; query_offset_seconds=0.0)
+        vn2_1s = fill_short_nan_gaps(vn2_1s; max_gap=max_gap_samples)
+        
+        # Compute correlation at 1 Hz
+        corr = finite_overlap_corr(mdv1s, vn2_1s)
+        
+        if isfinite(corr) && corr > best_corr
+            best_corr = corr
+            best_offset = offset_candidate
+        end
+    end
+    
+    # Apply best offset to all 20 Hz signals for output
+    vn2_shifted = shift_signal_linear(vn2_20, best_offset; dt=dt20)
+    pitch_shifted = shift_signal_linear(pitch_20, best_offset; dt=dt20)
+    roll_shifted = shift_signal_linear(roll_20, best_offset; dt=dt20)
     vn2_1s_aligned = one_hz_average_at_lidar_times(vndt20, vn2_shifted, win.stare_dt; query_offset_seconds=prior_offset)
     pitch_1s_aligned = one_hz_average_at_lidar_times(vndt20, pitch_shifted, win.stare_dt; query_offset_seconds=prior_offset)
     roll_1s_aligned = one_hz_average_at_lidar_times(vndt20, roll_shifted, win.stare_dt; query_offset_seconds=prior_offset)
     mdv_residual_1s = win.mdv .- vn2_1s_aligned
 
-    return (; final_offset_20hz=xcorr20.lag_seconds, native_step=dt20, final_offset_native=final_native, final_offset_round_s=final_round_s, vn2_1s_aligned, pitch_1s_aligned, roll_1s_aligned, mdv_residual_1s, xcorr20, vndt20, vn2_20)
+    final_round_s = round(Int, best_offset)
+    
+    # Construct minimal xcorr struct for compatibility
+    xcorr20 = (; lag_seconds=best_offset, corr=best_corr)
+
+    return (; final_offset_20hz=best_offset, native_step=dt20, final_offset_native=best_offset, final_offset_round_s=final_round_s, vn2_1s_aligned, pitch_1s_aligned, roll_1s_aligned, mdv_residual_1s, xcorr20, vndt20, vn2_20)
+end
+
+# Helper: Pearson correlation for finite overlaps
+function finite_overlap_corr(x, y)
+    xv, yv, _ = finite_overlap(Float64.(x), Float64.(y))
+    length(xv) < 4 && return NaN
+    sx = std(xv)
+    sy = std(yv)
+    (!isfinite(sx) || !isfinite(sy) || sx == 0 || sy == 0) && return NaN
+    return cor(xv, yv)
 end
 
 # UV is passed through for shared reader compatibility and later motion correction.
@@ -781,6 +818,7 @@ function process_sync_data(beams, env, Vn, UV, ic_list;
     ntop=80, jump_threshold_seconds=0.8, min_fine_peak=0.08, 
     backward_windows=2, backward_tol=0.35, max_gap_samples=3,
     min_accept_peak_norm=0.08, fallback_search_seconds=60.0,
+    reset_prior_on_file_boundary=false, reset_prior_on_rejected_sync=false,
     offset_sentinel_seconds=-9999.0, offset_sentinel_ms=Int64(-9_999_000),
     nan_log_path=joinpath("epsilon_data", "nan_offset_chunks.log"), 
     reset_nan_log=true, 
@@ -795,7 +833,7 @@ function process_sync_data(beams, env, Vn, UV, ic_list;
     end
     mkpath(dirname(iter_log_path))
 
-    seq_results = run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=ntop, jump_threshold_seconds=jump_threshold_seconds, min_fine_peak=min_fine_peak, backward_windows=backward_windows, backward_tol=backward_tol, max_gap_samples=max_gap_samples, min_accept_peak_norm=min_accept_peak_norm, fallback_search_seconds=fallback_search_seconds)
+    seq_results = run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=ntop, jump_threshold_seconds=jump_threshold_seconds, min_fine_peak=min_fine_peak, backward_windows=backward_windows, backward_tol=backward_tol, max_gap_samples=max_gap_samples, min_accept_peak_norm=min_accept_peak_norm, fallback_search_seconds=fallback_search_seconds, reset_prior_on_file_boundary=reset_prior_on_file_boundary, reset_prior_on_rejected_sync=reset_prior_on_rejected_sync)
 
     state_ref = init_stream_state()
     seq_ref20 = NamedTuple[]
