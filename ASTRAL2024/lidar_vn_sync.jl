@@ -615,7 +615,7 @@ function backward_jump_robustness(beams, env, state, Vn, UV, history, post_offse
     isempty(deltas) ? NaN : median(deltas)
 end
 
-function run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=80, jump_threshold_seconds=0.8, min_fine_peak=0.08, backward_windows=2, backward_tol=0.35, max_gap_samples=3, min_accept_peak_norm=0.08, fallback_search_seconds=60.0, reset_prior_on_file_boundary=false, reset_prior_on_rejected_sync=false)
+function run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=80, jump_threshold_seconds=0.8, min_fine_peak=0.08, backward_windows=2, backward_tol=0.35, max_gap_samples=3, min_accept_peak_norm=0.08, fallback_search_seconds=60.0, wide_search_seconds=30.0, reset_prior_on_file_boundary=false, reset_prior_on_rejected_sync=false)
     state = init_stream_state()
     history = NamedTuple[]
     for ic in ic_list
@@ -640,19 +640,17 @@ function run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=80, jump_thres
         end
         sync = coarse_and_fine_lag(win.mdv, win.vn2_xcorr; prior_seconds=prior.prior_seconds, max_gap_samples=max_gap_samples)
 
-        # Fallback: if the correlation quality is poor, retry with a wide search from the
-        # fit_offset baseline (prior=0.0). This recovers from gradual drift of the history
-        # prior and from GPS second-boundary jumps that exceed the normal search window.
+        # Always compare against a prior-independent wide search (±wide_search_seconds from 0).
+        # This prevents a bad prior from trapping the iterative coarse stage at a local-max
+        # envelope peak. The prior-guided result is kept only if it has better fine_peak_norm.
         fallback_used = false
-        if !isfinite(sync.fine.peak_norm) || sync.fine.peak_norm < min_accept_peak_norm
-            sync_fb = coarse_and_fine_lag(win.mdv, win.vn2_xcorr;
-                prior_seconds=0.0, coarse_search_seconds=fallback_search_seconds,
-                max_gap_samples=max_gap_samples)
-            if isfinite(sync_fb.fine.peak_norm) &&
-               (!isfinite(sync.fine.peak_norm) || sync_fb.fine.peak_norm > sync.fine.peak_norm)
-                sync = sync_fb
-                fallback_used = true
-            end
+        sync_wide = coarse_and_fine_lag(win.mdv, win.vn2_xcorr;
+            prior_seconds=0.0, coarse_search_seconds=wide_search_seconds,
+            max_gap_samples=max_gap_samples)
+        if isfinite(sync_wide.fine.peak_norm) &&
+           (!isfinite(sync.fine.peak_norm) || sync_wide.fine.peak_norm > sync.fine.peak_norm)
+            sync = sync_wide
+            fallback_used = true
         end
 
         jump_candidate = is_jump_candidate(prior.prior_seconds, sync.final_offset, sync.fine.peak_norm; jump_threshold_seconds=jump_threshold_seconds, min_fine_peak=min_fine_peak)
@@ -821,7 +819,7 @@ end
 function process_sync_data(beams, env, Vn, UV, ic_list; 
     ntop=80, jump_threshold_seconds=0.8, min_fine_peak=0.08, 
     backward_windows=2, backward_tol=0.35, max_gap_samples=3,
-    min_accept_peak_norm=0.08, fallback_search_seconds=60.0,
+    min_accept_peak_norm=0.08, fallback_search_seconds=60.0, wide_search_seconds=30.0,
     reset_prior_on_file_boundary=false, reset_prior_on_rejected_sync=false,
     offset_sentinel_seconds=-9999.0, offset_sentinel_ms=Int64(-9_999_000),
     nan_log_path=joinpath("epsilon_data", "nan_offset_chunks.log"), 
@@ -837,11 +835,12 @@ function process_sync_data(beams, env, Vn, UV, ic_list;
     end
     mkpath(dirname(iter_log_path))
 
-    seq_results = run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=ntop, jump_threshold_seconds=jump_threshold_seconds, min_fine_peak=min_fine_peak, backward_windows=backward_windows, backward_tol=backward_tol, max_gap_samples=max_gap_samples, min_accept_peak_norm=min_accept_peak_norm, fallback_search_seconds=fallback_search_seconds, reset_prior_on_file_boundary=reset_prior_on_file_boundary, reset_prior_on_rejected_sync=reset_prior_on_rejected_sync)
+    seq_results = run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=ntop, jump_threshold_seconds=jump_threshold_seconds, min_fine_peak=min_fine_peak, backward_windows=backward_windows, backward_tol=backward_tol, max_gap_samples=max_gap_samples, min_accept_peak_norm=min_accept_peak_norm, fallback_search_seconds=fallback_search_seconds, wide_search_seconds=wide_search_seconds, reset_prior_on_file_boundary=reset_prior_on_file_boundary, reset_prior_on_rejected_sync=reset_prior_on_rejected_sync)
 
     state_ref = init_stream_state()
     seq_ref20 = NamedTuple[]
     open(iter_log_path, "a") do iter_io
+
         if filesize(iter_log_path) == 0
             println(iter_io, "iter,ic,timestamp_utc,status,message")
             flush(iter_io)
@@ -899,14 +898,13 @@ function process_sync_data(beams, env, Vn, UV, ic_list;
                     push!(seq_ref20, (; r..., lidar_dt=w.stare_dt, final_offset_20hz=offset_sentinel_seconds, final_offset_native=final_native_fallback, final_offset_round_s=(isfinite(final_native_fallback) ? round(Int, final_native_fallback) : round(Int, offset_sentinel_seconds)), vn2_1s_aligned=fill(NaN, length(w.stare_dt)), pitch_1s_aligned=fill(NaN, length(w.stare_dt)), roll_1s_aligned=fill(NaN, length(w.stare_dt)), mdv_residual_1s=fill(NaN, length(w.stare_dt))))
                 else
                     s1 = coarse_and_fine_lag(w.mdv, w.vn2_xcorr; prior_seconds=r.prior_offset, max_gap_samples=max_gap_samples)
-                    if !isfinite(s1.fine.peak_norm) || s1.fine.peak_norm < min_accept_peak_norm
-                        s1_fb = coarse_and_fine_lag(w.mdv, w.vn2_xcorr;
-                            prior_seconds=0.0, coarse_search_seconds=fallback_search_seconds,
-                            max_gap_samples=max_gap_samples)
-                        if isfinite(s1_fb.fine.peak_norm) &&
-                           (!isfinite(s1.fine.peak_norm) || s1_fb.fine.peak_norm > s1.fine.peak_norm)
-                            s1 = s1_fb
-                        end
+                    # Always compare against a prior-independent wide search.
+                    s1_wide = coarse_and_fine_lag(w.mdv, w.vn2_xcorr;
+                        prior_seconds=0.0, coarse_search_seconds=wide_search_seconds,
+                        max_gap_samples=max_gap_samples)
+                    if isfinite(s1_wide.fine.peak_norm) &&
+                       (!isfinite(s1.fine.peak_norm) || s1_wide.fine.peak_norm > s1.fine.peak_norm)
+                        s1 = s1_wide
                     end
                     rf = refine_offset_20hz(w, s1, Vn; max_gap_samples=max_gap_samples)
 
