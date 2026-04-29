@@ -5,7 +5,7 @@ dependencies:
   - ast-grep
   - nco
   - netcdf4
-  - python
+  - python=3.12
   - ripgrep
   - pip:
     - graphifyy==0.4.23

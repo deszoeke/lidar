@@ -2,7 +2,7 @@
   "servers": {
     "graphify": {
       "type": "stdio",
-      "command": "/Users/deszoeks/micromamba/envs/graphify-env/bin/python",
+      "command": "/Users/deszoeks/micromamba/envs/lidar/bin/python",
       "args": [
         "-m",
         "graphify.serve",
