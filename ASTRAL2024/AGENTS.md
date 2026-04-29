@@ -73,8 +73,29 @@ Rules:
 
 ## Environment
 
-This project runs under the `lidar` mamba environment. Before running any terminal commands, activate it:
+This project runs under the `lidar` conda/mamba environment. Before running any terminal commands, activate it using whichever tool is available on the current machine:
 
 ```bash
+# micromamba (e.g. laptop)
+micromamba activate lidar
+
+# mamba / conda (e.g. workstation)
 source ~/miniforge3/etc/profile.d/mamba.sh && mamba activate lidar
 ```
+
+Use whichever command succeeds — only one is needed.
+
+---
+
+## Agent Init
+
+The four specialized agents are defined in `.github/agents/`. Read the relevant file before invoking an agent.
+
+| Agent | File | Invoke when |
+|-------|------|-------------|
+| Orchestrator | `.github/agents/orchestrator.agent.md` | default — any general user request |
+| Planner | `.github/agents/planner.agent.md` | plan / analyze / review / check for bugs |
+| Editor | `.github/agents/editor.agent.md` | implement an approved plan or code edit |
+| Tester | `.github/agents/tester.agent.md` | validate / test / diagnose |
+
+On session start, load this file plus the agent file for the first role you are about to play.
