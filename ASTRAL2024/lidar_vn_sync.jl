@@ -616,13 +616,13 @@ function is_jump_candidate(prior_seconds, final_seconds, fine_peak_norm; jump_th
     abs(final_seconds - prior_seconds) >= jump_threshold_seconds && fine_peak_norm >= min_fine_peak
 end
 
-function backward_jump_robustness(beams, env, state, Vn, UV, history, post_offset; ntop=80, n_back=2, max_gap_samples=3)
+function backward_jump_robustness(beams, env, state, Vn, UV, history, post_offset; ntop=80, n_back=2, max_gap_samples=3, nc_dir=nothing)
     isempty(history) && return NaN
     ntest = min(n_back, length(history))
     deltas = Float64[]
     for k in 1:ntest
         h = history[end - k + 1]
-        win_prev = extract_sync_window(beams, env, state, Vn, UV, h.ic; ntop=ntop)
+        win_prev = extract_sync_window(beams, env, state, Vn, UV, h.ic; ntop=ntop, nc_dir=nc_dir)
         back_sync = coarse_and_fine_lag(win_prev.mdv, win_prev.vn2_xcorr; prior_seconds=post_offset, max_gap_samples=max_gap_samples)
         if isfinite(back_sync.final_offset) && isfinite(h.final_offset)
             push!(deltas, abs(back_sync.final_offset - h.final_offset))
@@ -631,11 +631,11 @@ function backward_jump_robustness(beams, env, state, Vn, UV, history, post_offse
     isempty(deltas) ? NaN : median(deltas)
 end
 
-function run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=80, jump_threshold_seconds=0.8, min_fine_peak=0.08, backward_windows=2, backward_tol=0.35, max_gap_samples=3, min_accept_peak_norm=0.08, fallback_search_seconds=60.0, wide_search_seconds=30.0, reset_prior_on_file_boundary=false, reset_prior_on_rejected_sync=false)
+function run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=80, jump_threshold_seconds=0.8, min_fine_peak=0.08, backward_windows=2, backward_tol=0.35, max_gap_samples=3, min_accept_peak_norm=0.08, fallback_search_seconds=60.0, wide_search_seconds=30.0, reset_prior_on_file_boundary=false, reset_prior_on_rejected_sync=false, nc_dir=nothing)
     state = init_stream_state()
     history = NamedTuple[]
     for ic in ic_list
-        win = extract_sync_window(beams, env, state, Vn, UV, ic; ntop=ntop)
+        win = extract_sync_window(beams, env, state, Vn, UV, ic; ntop=ntop, nc_dir=nc_dir)
         start_dt = win.stare_dt[1]
         prior = prior_from_history(history, start_dt)
 
@@ -678,7 +678,7 @@ function run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=80, jump_thres
         if jump_candidate && !isempty(history)
             post_sync = coarse_and_fine_lag(win.mdv, win.vn2_xcorr; prior_seconds=sync.final_offset, max_gap_samples=max_gap_samples)
             post_offset = post_sync.final_offset
-            jump_backward_metric = backward_jump_robustness(beams, env, state, Vn, UV, history, post_offset; ntop=ntop, n_back=backward_windows, max_gap_samples=max_gap_samples)
+            jump_backward_metric = backward_jump_robustness(beams, env, state, Vn, UV, history, post_offset; ntop=ntop, n_back=backward_windows, max_gap_samples=max_gap_samples, nc_dir=nc_dir)
             jump_robust = isfinite(jump_backward_metric) && jump_backward_metric <= backward_tol
             if jump_robust
                 sync = post_sync
@@ -836,6 +836,7 @@ function process_sync_data(beams, env, Vn, UV, ic_list;
     backward_windows=2, backward_tol=0.35, max_gap_samples=3,
     min_accept_peak_norm=0.08, fallback_search_seconds=60.0, wide_search_seconds=30.0,
     reset_prior_on_file_boundary=false, reset_prior_on_rejected_sync=false,
+    nc_dir=nothing,
     offset_sentinel_seconds=-9999.0, offset_sentinel_ms=Int64(-9_999_000),
     nan_log_path=joinpath("epsilon_data", "nan_offset_chunks.log"), 
     reset_nan_log=true, 
@@ -850,7 +851,7 @@ function process_sync_data(beams, env, Vn, UV, ic_list;
     end
     mkpath(dirname(iter_log_path))
 
-    seq_results = run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=ntop, jump_threshold_seconds=jump_threshold_seconds, min_fine_peak=min_fine_peak, backward_windows=backward_windows, backward_tol=backward_tol, max_gap_samples=max_gap_samples, min_accept_peak_norm=min_accept_peak_norm, fallback_search_seconds=fallback_search_seconds, wide_search_seconds=wide_search_seconds, reset_prior_on_file_boundary=reset_prior_on_file_boundary, reset_prior_on_rejected_sync=reset_prior_on_rejected_sync)
+    seq_results = run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=ntop, jump_threshold_seconds=jump_threshold_seconds, min_fine_peak=min_fine_peak, backward_windows=backward_windows, backward_tol=backward_tol, max_gap_samples=max_gap_samples, min_accept_peak_norm=min_accept_peak_norm, fallback_search_seconds=fallback_search_seconds, wide_search_seconds=wide_search_seconds, reset_prior_on_file_boundary=reset_prior_on_file_boundary, reset_prior_on_rejected_sync=reset_prior_on_rejected_sync, nc_dir=nc_dir)
 
     state_ref = init_stream_state()
     seq_ref20 = NamedTuple[]
@@ -868,7 +869,7 @@ function process_sync_data(beams, env, Vn, UV, ic_list;
             message = ""
 
             try
-                w = extract_sync_window(beams, env, state_ref, Vn, UV, r.ic; ntop=ntop)
+                w = extract_sync_window(beams, env, state_ref, Vn, UV, r.ic; ntop=ntop, nc_dir=nc_dir)
                 if w.vn_coverage < 0.5 || w.vn2_xcorr_nan_frac > 0.15
                     status = "sentinel"
                     message = w.vn_coverage < 0.5 ? "insufficient_vn_coverage" : "high_vn2_xcorr_nan_frac"
