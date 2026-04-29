@@ -10,7 +10,7 @@ using FFTW
 using NCDatasets
 using JLD2
 using Printf
-using PyPlot
+using PythonPlot
 
 include("./read_lidar.jl")
 using .read_lidar
@@ -320,7 +320,16 @@ function setup_sync_context_nc(;
 end
 
 function chunk_lidar_datetimes(dt_chunk, beams, ist, ien)
-    stare_dt_raw = @. DateTime(Date(dt_chunk)) + Millisecond(round(Int64, beams[:time][ist:ien] * 3_600_000))
+    base_date = Date(dt_chunk)
+    stare_dt_raw = @. DateTime(base_date) + Millisecond(round(Int64, beams[:time][ist:ien] * 3_600_000))
+    # Detect midnight crossing: if any timestamp steps backward, advance
+    # all subsequent timestamps by one day (one crossing per chunk is enough).
+    for i in 2:length(stare_dt_raw)
+        if stare_dt_raw[i] < stare_dt_raw[i-1]
+            stare_dt_raw[i:end] .+= Day(1)
+            break
+        end
+    end
     lidar_clock_fast_by = Millisecond(round(Int64, 1_000 * fit_offset(stare_dt_raw[1])))
     stare_dt = stare_dt_raw .- lidar_clock_fast_by
     return stare_dt_raw, stare_dt, lidar_clock_fast_by
