@@ -348,7 +348,8 @@ function extract_sync_window(beams, env, state, Vn, UV, ic; ntop=80, nc_dir=noth
     _, vndt20_chunk, vn2_20_chunk = vn_subset_20hz(stare_dt, Vn; pad=Second(2))
     vn2_xcorr = one_hz_average_at_lidar_times(vndt20_chunk, vn2_20_chunk, stare_dt)
     vn_coverage = vn_coverage_fraction(stare_dt, Vn)
-    return (; info..., stare_dt_raw, stare_dt, lidar_clock_fast_by, dopplervel, intensity, beta, pitch, roll, vn0, vn1, vn2, vn2_xcorr, Ur, Vr, mdv, mdv_builtin, goodlevels, vn_coverage)
+    vn2_xcorr_nan_frac = count(!isfinite, vn2_xcorr) / max(length(vn2_xcorr), 1)
+    return (; info..., stare_dt_raw, stare_dt, lidar_clock_fast_by, dopplervel, intensity, beta, pitch, roll, vn0, vn1, vn2, vn2_xcorr, Ur, Vr, mdv, mdv_builtin, goodlevels, vn_coverage, vn2_xcorr_nan_frac)
 end
 
 function finite_overlap(x, y)
@@ -580,7 +581,13 @@ function prior_from_history(history, start_dt; recent_window=Minute(10))
     return (; prior_seconds, previous_offset, recent_offset, parent_offset)
 end
 
-function coarse_and_fine_lag(mdv, vn2; dt=TIMESTEP, prior_seconds=0.0, coarse_search_seconds=12.0, max_passes=4, fine_search_seconds=4.0, max_gap_samples=3)
+function coarse_and_fine_lag(mdv, vn2; dt=TIMESTEP, prior_seconds=0.0, coarse_search_seconds=12.0, max_passes=4, fine_search_seconds=4.0, max_gap_samples=3, max_vn_nan_frac=0.15)
+    vn_nan_frac = count(!isfinite, Float64.(vn2)) / max(length(vn2), 1)
+    if vn_nan_frac > max_vn_nan_frac
+        nan_arr = fill(NaN, length(vn2))
+        nan_fine = (lag_seconds=NaN, peak=NaN, peak_norm=NaN, lags=Float64[], corr=Float64[])
+        return (; prior_seconds, mdv_bp=nan_arr, vn2_bp=nan_arr, mdv_env=nan_arr, vn2_env=nan_arr, coarse_history=NamedTuple[], coarse_offset=NaN, fine=nan_fine, final_offset=NaN, vn2_bp_coarse=nan_arr, vn2_bp_final=nan_arr, vn2_env_final=nan_arr)
+    end
     mdv_clean = fill_short_nan_gaps(mdv; max_gap=max_gap_samples)
     vn2_clean = fill_short_nan_gaps(vn2; max_gap=max_gap_samples)
     mdv_bp = fft_bandpass(mdv_clean; dt=dt)
@@ -634,7 +641,7 @@ function run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=80, jump_thres
             end
         end
 
-        if win.vn_coverage < 0.5
+        if win.vn_coverage < 0.5 || win.vn2_xcorr_nan_frac > 0.15
             push!(history, (; ic, ifile=win.ifile, start_dt=win.stare_dt[1], end_dt=win.stare_dt[end], parent_start=floor(win.stare_dt[1], Hour), prior_offset=prior.prior_seconds, previous_offset=prior.previous_offset, recent_offset=prior.recent_offset, parent_offset=prior.parent_offset, prior_reset, coarse_offset=NaN, fine_residual=NaN, final_offset=NaN, coarse_peak=NaN, fine_peak=NaN, goodlevels=length(win.goodlevels), jump_candidate=false, jump_robust=false, jump_accepted=false, jump_backward_metric=NaN, fallback_used=false, accepted_sync=false))
             continue
         end
@@ -776,9 +783,8 @@ function refine_offset_20hz(win, sync_1s, Vn; ma_points=5, search_seconds=0.6, m
     for offset_candidate in search_steps
         vn2_20_shifted = shift_signal_linear(vn2_20_ma, offset_candidate; dt=dt20)
         vn2_1s = one_hz_average_at_lidar_times(vndt20, vn2_20_shifted, win.stare_dt; query_offset_seconds=-offset_base_1hz)
-        vn2_1s = fill_short_nan_gaps(vn2_1s; max_gap=max_gap_samples)
         
-        # Compute correlation at 1 Hz
+        # Compute correlation at 1 Hz (finite_overlap_corr handles NaN safely; do not fill VN gaps)
         corr = finite_overlap_corr(mdv1s, vn2_1s)
         
         if isfinite(corr) && corr > best_corr
@@ -854,9 +860,9 @@ function process_sync_data(beams, env, Vn, UV, ic_list;
 
             try
                 w = extract_sync_window(beams, env, state_ref, Vn, UV, r.ic; ntop=ntop)
-                if w.vn_coverage < 0.5
+                if w.vn_coverage < 0.5 || w.vn2_xcorr_nan_frac > 0.15
                     status = "sentinel"
-                    message = "insufficient_vn_coverage"
+                    message = w.vn_coverage < 0.5 ? "insufficient_vn_coverage" : "high_vn2_xcorr_nan_frac"
                     append_nan_offset_log(nan_log_path;
                         ic=r.ic,
                         ist=w.ist,
@@ -871,7 +877,7 @@ function process_sync_data(beams, env, Vn, UV, ic_list;
                         final_offset_20hz=NaN,
                         final_offset_native=NaN,
                         nvalid_mdv=count(isfinite, w.mdv),
-                        nvalid_vn2=count(isfinite, w.vn2),
+                        nvalid_vn2=count(isfinite, w.vn2_xcorr),
                     )
                     push!(seq_ref20, (; r..., lidar_dt=w.stare_dt, final_offset_20hz=offset_sentinel_seconds, final_offset_native=offset_sentinel_seconds, final_offset_round_s=round(Int, offset_sentinel_seconds), vn2_1s_aligned=fill(NaN, length(w.stare_dt)), pitch_1s_aligned=fill(NaN, length(w.stare_dt)), roll_1s_aligned=fill(NaN, length(w.stare_dt)), mdv_residual_1s=fill(NaN, length(w.stare_dt))))
                 elseif !get(r, :accepted_sync, true)
@@ -891,7 +897,7 @@ function process_sync_data(beams, env, Vn, UV, ic_list;
                         final_offset_20hz=NaN,
                         final_offset_native=NaN,
                         nvalid_mdv=count(isfinite, w.mdv),
-                        nvalid_vn2=count(isfinite, w.vn2),
+                        nvalid_vn2=count(isfinite, w.vn2_xcorr),
                     )
                     # Fallback when refine_offset_20hz fails: use 1 Hz result directly
                     final_native_fallback = isfinite(r.final_offset) ? r.final_offset : offset_sentinel_seconds
@@ -932,7 +938,7 @@ function process_sync_data(beams, env, Vn, UV, ic_list;
                             final_offset_20hz=rf.final_offset_20hz,
                             final_offset_native=rf.final_offset_native,
                             nvalid_mdv=count(isfinite, w.mdv),
-                            nvalid_vn2=count(isfinite, w.vn2),
+                            nvalid_vn2=count(isfinite, w.vn2_xcorr),
                         )
                         status = "sentinel"
                         message = reason
