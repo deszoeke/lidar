@@ -29,15 +29,16 @@ using .NoaaDas: cat_dicts
 # using MAT
 
 using PyPlot
-using PyCall
-using PyCall: PyObject
+using PythonCall
+const PyObject = Py
 
 # PyObject method interprets Array{Union{T,Missing}} as a
 # numpy masked array.
 # This allows for plotting with missing values.
-function PyCall.PyObject(a::Array{Union{T,Missing},N}) where {T,N}
-    numpy_ma = PyCall.pyimport("numpy").ma
-    pycall(numpy_ma.array, Any, coalesce.(a,zero(T)), mask=ismissing.(a))
+function PyObject(a::Array{Union{T,Missing},N}) where {T,N}
+    numpy = pyimport("numpy")
+    numpy_ma = numpy.ma
+    numpy_ma.array(coalesce.(a,zero(T)), mask=ismissing.(a))
 end
 
 # redefine read_stare_chunk
