@@ -25,7 +25,7 @@ export NOISE_THR, BANDPASS_PERIOD, BANDPASS_HZ, TIMESTEP, RANGEGATE
 export init_periodic_beams, load_lidar_indices_and_files, read_streamlinexr_stare!
 export init_stream_state, extract_sync_window, coarse_and_fine_lag, run_sequential_offsets, refine_offset_20hz
 export setup_sync_context, setup_sync_context_nc, process_sync_data, save_sync_netcdf
-export write_mdv_sync_pass2!
+export write_mdv_sync_pass2!, write_daily_mdv_vn2!
 export diagnostic_single_window, diagnostic_offsets, diagnostic_example_chunks
 export read_synced_motion, motion_correct_stare_velocity, read_and_motion_correct_stare
 
@@ -359,7 +359,7 @@ function extract_sync_window(beams, env, state, Vn, UV, ic; ntop=80, nc_dir="dat
     vn2_xcorr = one_hz_average_at_lidar_times(vndt20_chunk, vn2_20_chunk, stare_dt)
     vn_coverage = vn_coverage_fraction(stare_dt, Vn)
     vn2_xcorr_nan_frac = count(!isfinite, vn2_xcorr) / max(length(vn2_xcorr), 1)
-    return (; info..., stare_dt_raw, stare_dt, lidar_clock_fast_by, dopplervel, intensity, beta, pitch, roll, vn0, vn1, vn2, vn2_xcorr, Ur, Vr, mdv, mdv_builtin, goodlevels, vn_coverage, vn2_xcorr_nan_frac)
+    return (; info..., stare_dt_raw, stare_dt, lidar_clock_fast_by, dopplervel, intensity, beta, pitch, roll, vn0, vn1, vn2, vn2_xcorr, vndt20_chunk, Ur, Vr, mdv, mdv_builtin, goodlevels, vn_coverage, vn2_xcorr_nan_frac)
 end
 
 """
@@ -1376,6 +1376,306 @@ function diagnostic_offsets(result)
 
     tight_layout()
     return fig
+end
+
+"""
+    write_daily_mdv_vn2!(; out_dir, nc_dir, lidarstemdir, uv_path, nx, nz, ntop,
+                           ic_list, overwrite, log_path, log_every)
+
+Production run: loops over all VN-covered lidar chunks, computes per-chunk sync
+offsets (1 Hz sequential prior chain + 20 Hz native refinement), groups chunks by
+the calendar date of their `stare_dt[1]`, and writes one NetCDF file per day to
+`out_dir`.
+
+Each daily file has **two** dimensions:
+
+  time  (UNLIMITED) — one record per lidar beam; ncrcat-concatenable across daily files
+  chunk (fixed)     — one record per sync chunk contributing to this calendar day
+
+Variables under the `time` dimension:
+
+  time            Int64   milliseconds since 1970-01-01T00:00:00 UTC
+                          (CF-1.6; xarray/CDO auto-decode without keyword args;
+                           Int64 ms avoids Float64 sub-ms rounding near the 2024 epoch)
+  time_str        String  ISO-8601 UTC datetime of each beam
+                          (e.g. "2024-04-29T23:59:01.020"; human-readable redundancy)
+  mdv             Float32 SNR-weighted mean Doppler velocity                      [m s-1]
+  vn2_aligned     Float32 VectorNav VelNED2 aligned to lidar time                 [m s-1]
+  pitch           Float32 VectorNav pitch aligned to lidar time                   [degrees]
+  roll            Float32 VectorNav roll aligned to lidar time                    [degrees]
+  sync_chunk_id   Int32   which sync chunk this beam belongs to (one constant value
+                          per chunk); cross-references chunk_id in the chunk dimension
+
+Variables under the `chunk` dimension:
+
+  chunk_id        Int32   global 1-based sync-chunk identifier (1 … ~5938 for the
+                          full deployment); NOT a sample index within a chunk;
+                          use to join to per-chunk diagnostics and to look up ist/ien
+                          in the lidar index for the full Doppler velocity arrays
+  lidar_t_start   Int64   epoch-ms of the first lidar beam in this sync chunk     [ms]
+  lidar_t_end     Int64   epoch-ms of the last  lidar beam in this sync chunk     [ms]
+  vn_t_start      Int64   epoch-ms of the first VectorNav 20 Hz sample in the chunk
+                          window (fill=-1 when VN coverage was insufficient)      [ms]
+  vn_t_end        Int64   epoch-ms of the last  VectorNav 20 Hz sample in the chunk
+                          window (fill=-1 when VN coverage was insufficient)      [ms]
+  offset_s        Float32 total VN timing offset applied to this chunk
+                          (1 Hz sequential prior + 20 Hz native residual)         [s]
+
+Progress and per-chunk quality are appended to `log_path` (CSV) after every chunk.
+A summary line is printed to stdout every `log_every` chunks.
+"""
+function write_daily_mdv_vn2!(;
+    out_dir      = joinpath("epsilon_data", "daily"),
+    nc_dir       = "data/netcdf_stare",
+    lidarstemdir = "./data",
+    uv_path      = joinpath("data/netcdf", "ekamsat_lidar_uv_20240428-20240613.nc"),
+    nx           = 4000,
+    nz           = 80,
+    ntop         = 80,
+    ic_list      = nothing,
+    overwrite    = false,
+    log_path     = joinpath("epsilon_data",
+                     "daily_mdv_vn2_$(Dates.format(Dates.now(), dateformat"yyyymmdd_HHMMSS")).log"),
+    log_every    = 100,
+)
+    mkpath(out_dir)
+    mkpath(dirname(log_path))
+
+    ctx   = setup_sync_context_nc(; lidarstemdir, uv_path, nc_dir, nx, nz)
+    Env   = ctx.Env
+    Vn    = ctx.Vn
+    UV    = ctx.UV
+    beams = ctx.beams
+    ics   = isnothing(ic_list) ? collect(ctx.icvn) : collect(ic_list)
+    n_total = length(ics)
+    @printf("write_daily_mdv_vn2!: %d chunks → %s\n  Log: %s\n", n_total, out_dir, log_path)
+
+    # ── Phase 1: sequential 1 Hz offsets (establishes prior chain) ─────────
+    println("Phase 1: 1 Hz sequential offsets …")
+    t0 = time()
+    seq_results = run_sequential_offsets(beams, Env, Vn, UV, ics; ntop=ntop, nc_dir=nc_dir)
+    by_ic = Dict(r.ic => r for r in seq_results)
+    @printf("  done in %.1f s\n", time() - t0)
+
+    # ── Phase 2: 20 Hz refinement + beam-level data collection ─────────────
+    println("Phase 2: 20 Hz refinement + data collection …")
+    t0 = time()
+    state = init_stream_state()
+
+    # Pre-allocate per-chunk storage (NamedTuples with concrete arrays).
+    chunk_data = NamedTuple[]
+    sizehint!(chunk_data, n_total)
+
+    open(log_path, "w") do logf
+        println(logf, "ic,day,offset_1hz_s,offset_total_s,corr,vn_coverage,n_beams,nan_frac_vn2,status")
+        flush(logf)
+
+        for (ii, ic) in enumerate(ics)
+            r      = get(by_ic, ic, nothing)
+            status = "ok"
+            corr   = NaN
+            offset_total = NaN
+
+            try
+                w = extract_sync_window(beams, Env, state, Vn, UV, ic;
+                        ntop=ntop, nc_dir=nc_dir)
+                day     = Date(w.stare_dt[1])
+                n_beams = length(w.stare_dt)
+                dt1     = dt_seconds(w.stare_dt)
+                (!isfinite(dt1) || dt1 <= 0) && (dt1 = TIMESTEP)
+
+                offset_1hz = isnothing(r) ? NaN :
+                             (isfinite(r.final_offset) ? r.final_offset : NaN)
+                bad_sync = (w.vn_coverage < 0.5) || isnothing(r) ||
+                           !get(r, :accepted_sync, true) || !isfinite(offset_1hz)
+
+                if bad_sync
+                    status = w.vn_coverage < 0.5 ? "low_vn_cov" :
+                             isnothing(r)         ? "no_result"  : "rejected_sync"
+                    push!(chunk_data, (;
+                        ic, day,
+                        lidar_dt    = w.stare_dt,
+                        mdv         = Float32.(w.mdv),
+                        vn2_aligned = fill(Float32(NaN), n_beams),
+                        pitch       = Float32.(w.pitch),
+                        roll        = Float32.(w.roll),
+                        offset_s    = Float32(NaN),
+                        vn_t_start  = isempty(w.vndt20_chunk) ? missing : w.vndt20_chunk[1],
+                        vn_t_end    = isempty(w.vndt20_chunk) ? missing : w.vndt20_chunk[end],
+                    ))
+                else
+                    # Reuse the 1 Hz result from Phase 1; only run 20 Hz here.
+                    s1_stub = (; prior_seconds = isfinite(r.prior_offset) ? r.prior_offset : 0.0,
+                                 final_offset  = offset_1hz)
+                    rf = refine_offset_20hz(w, s1_stub, Vn)
+                    resid        = isfinite(rf.final_offset_native) ? rf.final_offset_native : 0.0
+                    offset_total = offset_1hz + resid
+                    vn2_aligned  = Float32.(rf.vn2_1s_aligned)
+                    corr         = finite_overlap_corr(w.mdv, vn2_aligned)
+                    status       = isfinite(corr) && corr > 0.3 ? "ok" : "low_corr"
+
+                    push!(chunk_data, (;
+                        ic, day,
+                        lidar_dt    = w.stare_dt,
+                        mdv         = Float32.(w.mdv),
+                        vn2_aligned,
+                        pitch       = Float32.(rf.pitch_1s_aligned),
+                        roll        = Float32.(rf.roll_1s_aligned),
+                        offset_s    = Float32(offset_total),
+                        vn_t_start  = isempty(w.vndt20_chunk) ? missing : w.vndt20_chunk[1],
+                        vn_t_end    = isempty(w.vndt20_chunk) ? missing : w.vndt20_chunk[end],
+                    ))
+                end
+
+                @printf(logf, "%d,%s,%.4f,%.4f,%.4f,%.4f,%d,%.4f,%s\n",
+                    ic, string(day),
+                    isfinite(offset_1hz)   ? offset_1hz   : -9999.0,
+                    isfinite(offset_total) ? offset_total : -9999.0,
+                    isfinite(corr)         ? corr         : -9999.0,
+                    w.vn_coverage, n_beams, w.vn2_xcorr_nan_frac, status)
+                flush(logf)
+
+                if ii % log_every == 0 || ii == n_total
+                    @printf("  [%5d/%5d] ic=%-5d %-12s off=%7.3f corr=%5.3f  %s\n",
+                        ii, n_total, ic, string(day),
+                        isfinite(offset_total) ? offset_total : -9999.0,
+                        isfinite(corr) ? corr : -9999.0, status)
+                end
+            catch err
+                status = "error:" * replace(sprint(showerror, err), '\n' => " | ")
+                @printf(logf, "%d,---,-9999,-9999,-9999,-9999,0,-9999,%s\n", ic, status)
+                flush(logf)
+                @printf("ERROR ic=%d: %s\n", ic, sprint(showerror, err))
+            end
+        end
+    end
+    @printf("  done in %.1f s\n", time() - t0)
+
+    # ── Phase 3: write one NC file per calendar day ─────────────────────────
+    println("Phase 3: writing daily NetCDF files …")
+    days   = sort(unique([c.day for c in chunk_data]))
+    n_days = length(days)
+    n_ok   = count(c -> any(isfinite, c.vn2_aligned), chunk_data)
+    @printf("  %d chunks → %d days  (%d chunks with valid vn2_aligned)\n",
+        length(chunk_data), n_days, n_ok)
+
+    for day in days
+        nc_out = joinpath(out_dir,
+            "mdv_vn2_sync_$(Dates.format(day, dateformat"yyyymmdd")).nc")
+        if isfile(nc_out) && !overwrite
+            @printf("  Skip (exists): %s\n", basename(nc_out))
+            continue
+        end
+
+        day_chunks   = [c for c in chunk_data if c.day == day]
+        n_chunks_day = length(day_chunks)
+
+        # ── per-beam (time dimension) arrays ─────────────────────────────────
+        lidar_dt_all = vcat([c.lidar_dt    for c in day_chunks]...)
+        mdv_all      = vcat([c.mdv         for c in day_chunks]...)
+        vn2_all      = vcat([c.vn2_aligned for c in day_chunks]...)
+        pitch_all    = vcat([c.pitch        for c in day_chunks]...)
+        roll_all     = vcat([c.roll         for c in day_chunks]...)
+        scid_all     = vcat([fill(Int32(c.ic), length(c.lidar_dt)) for c in day_chunks]...)
+        nrec         = length(lidar_dt_all)
+
+        epoch_ref_ms  = Dates.datetime2epochms(DateTime(1970, 1, 1, 0, 0, 0))
+        FILL_MS       = Int64(-1)   # impossible for valid Unix ms timestamps (all > 0)
+        to_ms(t::DateTime) = Int64(Dates.datetime2epochms(t) - epoch_ref_ms)
+        to_ms(::Missing)   = FILL_MS
+
+        time_ms  = [to_ms(t) for t in lidar_dt_all]
+        time_str = [Dates.format(t, dateformat"yyyy-mm-ddTHH:MM:SS.sss") for t in lidar_dt_all]
+
+        # ── per-chunk (chunk dimension) arrays ───────────────────────────────
+        chunk_ids    = Int32[c.ic                        for c in day_chunks]
+        lidar_t_s_ms = [to_ms(c.lidar_dt[1])            for c in day_chunks]
+        lidar_t_e_ms = [to_ms(c.lidar_dt[end])          for c in day_chunks]
+        vn_t_s_ms    = [to_ms(c.vn_t_start)             for c in day_chunks]
+        vn_t_e_ms    = [to_ms(c.vn_t_end)               for c in day_chunks]
+        off_chunk    = Float32[c.offset_s                for c in day_chunks]
+
+        # ── write NetCDF ──────────────────────────────────────────────────────
+        isfile(nc_out) && rm(nc_out)
+        ds = NCDataset(nc_out, "c")
+        defDim(ds, "time",  Inf)            # UNLIMITED → ncrcat-concatenable across days
+        defDim(ds, "chunk", n_chunks_day)   # one record per sync chunk in this day
+
+        ms_units = "milliseconds since 1970-01-01T00:00:00 UTC"
+        fv32     = Float32(NaN)
+
+        # time-dimension variables
+        v_t      = defVar(ds, "time",          Int64,   ("time",);
+            attrib=["units"=>ms_units, "calendar"=>"standard",
+                    "standard_name"=>"time", "axis"=>"T",
+                    "long_name"=>"milliseconds since 1970-01-01T00:00:00 UTC"])
+        v_tstr   = defVar(ds, "time_str",      String,  ("time",);
+            attrib=["long_name"=>"ISO-8601 UTC datetime of each lidar beam (millisecond precision)"])
+        v_mdv    = defVar(ds, "mdv",           Float32, ("time",);
+            attrib=["units"=>"m s-1",   "long_name"=>"SNR-weighted mean Doppler velocity",
+                    "_FillValue"=>fv32])
+        v_vn2    = defVar(ds, "vn2_aligned",   Float32, ("time",);
+            attrib=["units"=>"m s-1",   "long_name"=>"VectorNav VelNED2 aligned to lidar time",
+                    "_FillValue"=>fv32])
+        v_pit    = defVar(ds, "pitch",         Float32, ("time",);
+            attrib=["units"=>"degrees", "long_name"=>"VectorNav pitch aligned to lidar time",
+                    "_FillValue"=>fv32])
+        v_rol    = defVar(ds, "roll",          Float32, ("time",);
+            attrib=["units"=>"degrees", "long_name"=>"VectorNav roll aligned to lidar time",
+                    "_FillValue"=>fv32])
+        v_scid   = defVar(ds, "sync_chunk_id", Int32,   ("time",);
+            attrib=["long_name"=>"which sync chunk this beam belongs to (one constant value per chunk); cross-references chunk_id in the chunk dimension"])
+
+        # chunk-dimension variables
+        v_cid  = defVar(ds, "chunk_id",      Int32,  ("chunk",);
+            attrib=["long_name"=>"global 1-based sync-chunk identifier (1…~5938 for the full deployment); NOT a sample index within a chunk; join on sync_chunk_id to link beams to chunks"])
+        v_lst  = defVar(ds, "lidar_t_start", Int64,  ("chunk",);
+            attrib=["units"=>ms_units, "calendar"=>"standard",
+                    "long_name"=>"epoch-ms of the first lidar beam in this sync chunk"])
+        v_len  = defVar(ds, "lidar_t_end",   Int64,  ("chunk",);
+            attrib=["units"=>ms_units, "calendar"=>"standard",
+                    "long_name"=>"epoch-ms of the last lidar beam in this sync chunk"])
+        v_vst  = defVar(ds, "vn_t_start",    Int64,  ("chunk",);
+            attrib=["units"=>ms_units, "calendar"=>"standard", "_FillValue"=>FILL_MS,
+                    "long_name"=>"epoch-ms of the first VectorNav 20 Hz sample in the chunk window (fill=-1 when VN coverage insufficient)"])
+        v_ven  = defVar(ds, "vn_t_end",      Int64,  ("chunk",);
+            attrib=["units"=>ms_units, "calendar"=>"standard", "_FillValue"=>FILL_MS,
+                    "long_name"=>"epoch-ms of the last VectorNav 20 Hz sample in the chunk window (fill=-1 when VN coverage insufficient)"])
+        v_off  = defVar(ds, "offset_s",      Float32, ("chunk",);
+            attrib=["units"=>"s", "_FillValue"=>fv32,
+                    "long_name"=>"total VN timing offset applied to this chunk (1 Hz sequential prior + 20 Hz native residual)"])
+
+        # write time dimension
+        v_t[:]     = time_ms
+        v_tstr[:]  = time_str
+        v_mdv[:]   = mdv_all
+        v_vn2[:]   = vn2_all
+        v_pit[:]   = pitch_all
+        v_rol[:]   = roll_all
+        v_scid[:]  = scid_all
+
+        # write chunk dimension
+        v_cid[:] = chunk_ids
+        v_lst[:] = lidar_t_s_ms
+        v_len[:] = lidar_t_e_ms
+        v_vst[:] = vn_t_s_ms
+        v_ven[:] = vn_t_e_ms
+        v_off[:] = off_chunk
+
+        ds.attrib["date"]        = string(day)
+        ds.attrib["n_chunks"]    = n_chunks_day
+        ds.attrib["n_beams"]     = nrec
+        ds.attrib["ntop"]        = Int(ntop)
+        ds.attrib["nc_dir"]      = nc_dir
+        ds.attrib["created_utc"] = string(Dates.now(Dates.UTC))
+        ds.attrib["Conventions"] = "CF-1.6"
+        close(ds)
+
+        @printf("  Wrote: %-52s  chunks=%d  beams=%d\n",
+            basename(nc_out), length(day_chunks), nrec)
+    end
+
+    return (; n_total, n_days, out_dir, log_path)
 end
 
 function diagnostic_example_chunks(beams, Env, Vn, UV, ic_list; ntop=80, nc_dir=nothing)
