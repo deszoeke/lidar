@@ -117,8 +117,9 @@ function load_lidar_indices_and_files(; lidarstemdir="./data")
     else
         error("Expected file_beam_inds.jld2 to exist. Generate it from the production workflow before using this workbench.")
     end
-    starefiles = filter(startswith("Stare_116_"), readdir(joinpath(lidarstemdir, "all")))
-    ff = joinpath.(lidarstemdir, "all", starefiles)
+    ncdir = joinpath(lidarstemdir, "netcdf_stare")
+    starefiles = sort(filter(f -> startswith(f, "Stare_116_") && endswith(f, ".nc"), readdir(ncdir)))
+    ff = joinpath.(ncdir, starefiles)
     return (;
         LidarDt=lidardt,
         FileInds=fileinds,
@@ -243,14 +244,13 @@ function ensure_chunk_loaded_nc!(beams, env, state, ic;
         ifile = state[:ifile_loaded]
         bb    = env.bigind_file_starts[ifile]:env.bigind_file_ends[ifile]
 
-        # derive NetCDF path from the HPL filename stored in env.ff
-        stem    = splitext(basename(env.ff[ifile]))[1]   # "Stare_116_YYYYMMDD_HH"
-        nc_path = joinpath(nc_dir, stem * ".nc")
+        # env.ff already contains the NC path directly
+        nc_path = env.ff[ifile]
 
         NCDatasets.NCDataset(nc_path, "r") do ds
             t_nc = ds["time"][:]
             n = length(t_nc)
-            n != length(bb) && error("NetCDF/HPL beam count mismatch for $(basename(nc_path)): nc=$(n), expected=$(length(bb))")
+            n != length(bb) && error("NetCDF beam count mismatch for $(basename(nc_path)): nc=$(n), expected=$(length(bb))")
 
             # CF-decoded time may come back as DateTime; convert to HPL-style decimal hours.
             t_hpl_hours = Vector{Float32}(undef, n)
@@ -342,7 +342,7 @@ Calls ensure_chunk_loaded to update `beams` in-place.
 UV, not used here, is passed to read_stare_chunk. 
 The sync offset will depend only on mdv and vn2, not on Ur,Vr.
 """
-function extract_sync_window(beams, env, state, Vn, UV, ic; ntop=80, nc_dir=nothing)
+function extract_sync_window(beams, env, state, Vn, UV, ic; ntop=80, nc_dir="data/netcdf_stare")
     if isnothing(nc_dir)
         info = ensure_chunk_loaded!(beams, env, state, ic)
     else
@@ -355,10 +355,40 @@ function extract_sync_window(beams, env, state, Vn, UV, ic; ntop=80, nc_dir=noth
     beta = beams[:beta][info.ist:info.ien, 1:ntop]
     mdv, goodlevels = valid_chunk_mdv(intensity, dopplervel)
     _, vndt20_chunk, vn2_20_chunk = vn_subset_20hz(stare_dt, Vn; pad=Second(2))
+    vndt20_chunk, vn2_20_chunk, _ = remove_vn_in_lidar_gaps(stare_dt, vndt20_chunk, vn2_20_chunk)
     vn2_xcorr = one_hz_average_at_lidar_times(vndt20_chunk, vn2_20_chunk, stare_dt)
     vn_coverage = vn_coverage_fraction(stare_dt, Vn)
     vn2_xcorr_nan_frac = count(!isfinite, vn2_xcorr) / max(length(vn2_xcorr), 1)
     return (; info..., stare_dt_raw, stare_dt, lidar_clock_fast_by, dopplervel, intensity, beta, pitch, roll, vn0, vn1, vn2, vn2_xcorr, Ur, Vr, mdv, mdv_builtin, goodlevels, vn_coverage, vn2_xcorr_nan_frac)
+end
+
+"""
+    remove_vn_in_lidar_gaps(stare_dt, vndt, vn2; gap_threshold_s=1.5)
+
+Remove VN samples whose timestamps fall within lidar gap intervals (periods where
+the lidar has no beams, detected as consecutive beam times > gap_threshold_s apart,
+e.g. at file rollovers). This prevents `one_hz_average_at_lidar_times` from mixing
+VN data across the gap when computing per-beam averages near the gap boundary.
+
+Returns `(vndt_filtered, vn2_filtered, keep)` where `keep` is a BitVector.
+"""
+function remove_vn_in_lidar_gaps(stare_dt, vndt, vn2; gap_threshold_s=1.5)
+    keep = trues(length(vndt))
+    length(stare_dt) < 2 && return vndt, vn2, keep
+    beam_diffs_ms = Float64.(Dates.value.(Millisecond.(diff(stare_dt))))
+    gap_mask = beam_diffs_ms .> (gap_threshold_s * 1000)
+    any(gap_mask) || return vndt, vn2, keep
+    t_vn_ms = Float64.(Dates.datetime2epochms.(vndt))
+    for ig in findall(gap_mask)
+        t_gap_start = Float64(Dates.datetime2epochms(stare_dt[ig]))
+        t_gap_end   = Float64(Dates.datetime2epochms(stare_dt[ig + 1]))
+        for j in eachindex(t_vn_ms)
+            if t_vn_ms[j] > t_gap_start && t_vn_ms[j] < t_gap_end
+                keep[j] = false
+            end
+        end
+    end
+    return vndt[keep], vn2[keep], keep
 end
 
 function finite_overlap(x, y)
@@ -631,16 +661,22 @@ function backward_jump_robustness(beams, env, state, Vn, UV, history, post_offse
     isempty(deltas) ? NaN : median(deltas)
 end
 
-function run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=80, jump_threshold_seconds=0.8, min_fine_peak=0.08, backward_windows=2, backward_tol=0.35, max_gap_samples=3, min_accept_peak_norm=0.08, fallback_search_seconds=60.0, wide_search_seconds=30.0, reset_prior_on_file_boundary=false, reset_prior_on_rejected_sync=false, nc_dir=nothing)
+function run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=80, jump_threshold_seconds=0.8, min_fine_peak=0.08, backward_windows=2, backward_tol=0.35, max_gap_samples=3, min_accept_peak_norm=0.08, fallback_search_seconds=60.0, wide_search_seconds=30.0, reset_prior_on_file_boundary=false, reset_prior_on_rejected_sync=false, nc_dir="data/netcdf_stare")
     state = init_stream_state()
     history = NamedTuple[]
+    last_valid_offset = NaN
+    prev_failed = false
     for ic in ic_list
         win = extract_sync_window(beams, env, state, Vn, UV, ic; ntop=ntop, nc_dir=nc_dir)
         start_dt = win.stare_dt[1]
         prior = prior_from_history(history, start_dt)
 
         prior_reset = "none"
-        if !isempty(history)
+        # If previous chunk failed, use last valid offset as prior for this chunk
+        if prev_failed && isfinite(last_valid_offset)
+            prior = (; prior..., prior_seconds=last_valid_offset)
+            prior_reset = "carry_forward"
+        elseif !isempty(history)
             if reset_prior_on_file_boundary && hasproperty(history[end], :ifile) && history[end].ifile != win.ifile
                 prior = (; prior..., prior_seconds=0.0)
                 prior_reset = "file_boundary"
@@ -651,6 +687,7 @@ function run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=80, jump_thres
         end
 
         if win.vn_coverage < 0.5 || win.vn2_xcorr_nan_frac > 0.15
+            prev_failed = true
             push!(history, (; ic, ifile=win.ifile, start_dt=win.stare_dt[1], end_dt=win.stare_dt[end], parent_start=floor(win.stare_dt[1], Hour), prior_offset=prior.prior_seconds, previous_offset=prior.previous_offset, recent_offset=prior.recent_offset, parent_offset=prior.parent_offset, prior_reset, coarse_offset=NaN, fine_residual=NaN, final_offset=NaN, coarse_peak=NaN, fine_peak=NaN, goodlevels=length(win.goodlevels), jump_candidate=false, jump_robust=false, jump_accepted=false, jump_backward_metric=NaN, fallback_used=false, accepted_sync=false))
             continue
         end
@@ -692,6 +729,13 @@ function run_sequential_offsets(beams, env, Vn, UV, ic_list; ntop=80, jump_thres
         stored_coarse_offset = accepted_sync ? sync.coarse_offset : NaN
         stored_fine_residual = accepted_sync ? sync.fine.lag_seconds : NaN
         stored_final_offset = accepted_sync ? sync.final_offset : NaN
+
+        if accepted_sync && isfinite(stored_final_offset)
+            last_valid_offset = stored_final_offset
+            prev_failed = false
+        else
+            prev_failed = true
+        end
 
         push!(history, (; ic, ifile=win.ifile, start_dt=win.stare_dt[1], end_dt=win.stare_dt[end], parent_start=floor(win.stare_dt[1], Hour), prior_offset=prior.prior_seconds, previous_offset=prior.previous_offset, recent_offset=prior.recent_offset, parent_offset=prior.parent_offset, prior_reset, coarse_offset=stored_coarse_offset, fine_residual=stored_fine_residual, final_offset=stored_final_offset, coarse_peak=isempty(sync.coarse_history) ? NaN : sync.coarse_history[end].peak_norm, fine_peak=sync.fine.peak_norm, goodlevels=length(win.goodlevels), jump_candidate, jump_robust, jump_accepted, jump_backward_metric, fallback_used, accepted_sync))
     end
@@ -764,6 +808,8 @@ function refine_offset_20hz(win, sync_1s, Vn; ma_points=5, search_seconds=0.6, m
     offset_base_1hz = isfinite(sync_1s.final_offset) ? sync_1s.final_offset : prior_offset
     pad_s = ceil(Int, search_seconds) + 2
     ind20, vndt20, vn2_20 = vn_subset_20hz(win.stare_dt, Vn; pad=Second(pad_s), offset_seconds=-offset_base_1hz)
+    vndt20, vn2_20, vn_keep = remove_vn_in_lidar_gaps(win.stare_dt, vndt20, vn2_20)
+    ind20 = ind20[vn_keep]
     pitch_20 = Float64.(Vn[:Pitch][ind20])
     roll_20 = Float64.(Vn[:Roll][ind20])
     base_offset = isfinite(sync_1s.final_offset) ? sync_1s.final_offset : (isfinite(sync_1s.prior_seconds) ? sync_1s.prior_seconds : -9999.0)
@@ -836,7 +882,7 @@ function process_sync_data(beams, env, Vn, UV, ic_list;
     backward_windows=2, backward_tol=0.35, max_gap_samples=3,
     min_accept_peak_norm=0.08, fallback_search_seconds=60.0, wide_search_seconds=30.0,
     reset_prior_on_file_boundary=false, reset_prior_on_rejected_sync=false,
-    nc_dir=nothing,
+    nc_dir="data/netcdf_stare",
     offset_sentinel_seconds=-9999.0, offset_sentinel_ms=Int64(-9_999_000),
     nan_log_path=joinpath("epsilon_data", "nan_offset_chunks.log"), 
     reset_nan_log=true, 

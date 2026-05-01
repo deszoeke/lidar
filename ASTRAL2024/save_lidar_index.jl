@@ -2,6 +2,7 @@ using Revise
 using Pkg; Pkg.activate(".")
 
 using JLD2
+using NCDatasets
 
 include("./lidar_index.jl")
 using .lidar_index
@@ -14,18 +15,19 @@ function load_file_beam_inds(files)
         fileinds = load("file_beam_inds.jld2")
         file_ibeam_start = Int.(fileinds["bigind_file_start"])
         file_ibeam_end = Int.(fileinds["bigind_file_end"])
-        return file_ibeam_start, file_ibeam_end
+        if length(file_ibeam_start) == length(files)
+            return file_ibeam_start, file_ibeam_end
+        end
+        @warn "file_beam_inds.jld2 has $(length(file_ibeam_start)) files but directory has $(length(files)) files; recomputing."
     end
 
     nfiles = length(files)
     nbeams = zeros(Int, nfiles)
-    nheaderlines = 17
 
     for (i, file) in enumerate(files)
-        hdr = read_lidar.read_streamlinexr_head(file)
-        nlines = hdr[:nlines]
-        ngates = hdr[:ngates]
-        nbeams[i] = round(Int, (nlines - nheaderlines) / (1 + ngates))
+        NCDataset(file, "r") do ds
+            nbeams[i] = length(ds["time"])
+        end
     end
 
     file_ibeam_end = cumsum(nbeams)
@@ -47,8 +49,9 @@ ist = Int.(lidardata["ist"])
 ien = Int.(lidardata["ien"])
 
 lidarstemdir = "./data"
-starefiles = sort(filter(startswith("Stare_116_"), readdir(joinpath(lidarstemdir, "all"))))
-files = joinpath.(lidarstemdir, "all", starefiles)
+ncdir = joinpath(lidarstemdir, "netcdf_stare")
+ncfiles = sort(filter(f -> startswith(f, "Stare_116_") && endswith(f, ".nc"), readdir(ncdir)))
+files = joinpath.(ncdir, ncfiles)
 
 file_ibeam_start, file_ibeam_end = load_file_beam_inds(files)
 
