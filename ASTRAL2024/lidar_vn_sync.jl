@@ -1754,9 +1754,18 @@ function write_daily_mdv_vn2!(;
     t0 = time()
     state = init_stream_state()
 
-    # Pre-allocate per-chunk storage (NamedTuples with concrete arrays).
-    chunk_data = NamedTuple[]
-    sizehint!(chunk_data, n_total)
+    # Constants for NC writing (shared across all days)
+    epoch_ref_ms  = Dates.datetime2epochms(DateTime(1970, 1, 1, 0, 0, 0))
+    FILL_MS       = Int64(-1)
+    to_ms(t::DateTime) = Int64(Dates.datetime2epochms(t) - epoch_ref_ms)
+    to_ms(::Missing)   = FILL_MS
+    ms_units = "milliseconds since 1970-01-01T00:00:00 UTC"
+    fv32     = Float32(NaN)
+
+    # Accumulate chunks for the current calendar day; flush to NC when day rolls over.
+    current_day_chunks = NamedTuple[]
+    sizehint!(current_day_chunks, 100)
+    n_days = 0
 
     open(log_path, "w") do logf
         println(logf, "ic,day,offset_1hz_s,offset_total_s,corr,vn_coverage,n_beams,nan_frac_vn2,status")
@@ -1767,6 +1776,7 @@ function write_daily_mdv_vn2!(;
             status = "ok"
             corr   = NaN
             offset_total = NaN
+            day    = Date(Env.dtime[Env.ists[ic]])  # raw approx; overwritten inside try
 
             try
                 w = extract_sync_window(beams, Env, state, Vn, UV, ic;
@@ -1784,7 +1794,7 @@ function write_daily_mdv_vn2!(;
                 if bad_sync
                     status = w.vn_coverage < 0.5 ? "low_vn_cov" :
                              isnothing(r)         ? "no_result"  : "rejected_sync"
-                    push!(chunk_data, (;
+                    push!(current_day_chunks, (;
                         ic, day,
                         lidar_dt    = w.stare_dt,
                         mdv         = Float32.(w.mdv),
@@ -1806,7 +1816,7 @@ function write_daily_mdv_vn2!(;
                     corr         = finite_overlap_corr(w.mdv, vn2_aligned)
                     status       = isfinite(corr) && corr > 0.3 ? "ok" : "low_corr"
 
-                    push!(chunk_data, (;
+                    push!(current_day_chunks, (;
                         ic, day,
                         lidar_dt    = w.stare_dt,
                         mdv         = Float32.(w.mdv),
@@ -1839,151 +1849,113 @@ function write_daily_mdv_vn2!(;
                 flush(logf)
                 @printf("ERROR ic=%d: %s\n", ic, sprint(showerror, err))
             end
+
+            # ── flush completed day to NC (outside try, so errors don't block writes) ──
+            is_last_ic   = (ii == n_total)
+            next_new_day = !is_last_ic &&
+                Date(Env.dtime[Env.ists[ics[ii+1]]]) != day
+            if (is_last_ic || next_new_day) && !isempty(current_day_chunks)
+                _day = current_day_chunks[end].day
+                nc_out = joinpath(out_dir,
+                    "mdv_vn2_sync_$(Dates.format(_day, dateformat"yyyymmdd")).nc")
+                if isfile(nc_out) && !overwrite
+                    @printf("  Skip (exists): %s\n", basename(nc_out))
+                else
+                    day_chunks   = current_day_chunks
+                    n_chunks_day = length(day_chunks)
+                    lidar_dt_all = vcat([c.lidar_dt    for c in day_chunks]...)
+                    mdv_all      = vcat([c.mdv         for c in day_chunks]...)
+                    vn2_all      = vcat([c.vn2_aligned for c in day_chunks]...)
+                    pitch_all    = vcat([c.pitch        for c in day_chunks]...)
+                    roll_all     = vcat([c.roll         for c in day_chunks]...)
+                    scid_all     = vcat([fill(Int32(c.ic), length(c.lidar_dt)) for c in day_chunks]...)
+                    nrec         = length(lidar_dt_all)
+                    time_ms  = [to_ms(t) for t in lidar_dt_all]
+                    time_str = [Dates.format(t, dateformat"yyyy-mm-ddTHH:MM:SS.sss") for t in lidar_dt_all]
+                    beam_lengths   = [length(c.lidar_dt) for c in day_chunks]
+                    chunk_ic_vals  = Int32[c.ic           for c in day_chunks]
+                    ist_vals       = Int32[Env.ists[c.ic] for c in day_chunks]
+                    ien_vals       = Int32[Env.iens[c.ic] for c in day_chunks]
+                    time_start_idx = Int32.(cumsum([1; beam_lengths[1:end-1]]))
+                    time_end_idx   = Int32.(cumsum(beam_lengths))
+                    lidar_t_s_ms   = [to_ms(c.lidar_dt[1])  for c in day_chunks]
+                    lidar_t_e_ms   = [to_ms(c.lidar_dt[end]) for c in day_chunks]
+                    vn_t_s_ms      = [to_ms(c.vn_t_start)   for c in day_chunks]
+                    vn_t_e_ms      = [to_ms(c.vn_t_end)     for c in day_chunks]
+                    off_chunk      = Float32[c.offset_s      for c in day_chunks]
+                    isfile(nc_out) && rm(nc_out)
+                    ds = NCDataset(nc_out, "c")
+                    defDim(ds, "time",  Inf)
+                    defDim(ds, "chunk", n_chunks_day)
+                    v_t    = defVar(ds, "time",          Int64,   ("time",);
+                        attrib=["units"=>ms_units, "calendar"=>"standard",
+                                "standard_name"=>"time", "axis"=>"T",
+                                "long_name"=>"milliseconds since 1970-01-01T00:00:00 UTC"])
+                    v_tstr = defVar(ds, "time_str",      String,  ("time",);
+                        attrib=["long_name"=>"ISO-8601 UTC datetime of each lidar beam (millisecond precision)"])
+                    v_mdv  = defVar(ds, "mdv",           Float32, ("time",);
+                        attrib=["units"=>"m s-1",   "long_name"=>"SNR-weighted mean Doppler velocity",
+                                "_FillValue"=>fv32])
+                    v_vn2  = defVar(ds, "vn2_aligned",   Float32, ("time",);
+                        attrib=["units"=>"m s-1",   "long_name"=>"VectorNav VelNED2 aligned to lidar time",
+                                "_FillValue"=>fv32])
+                    v_pit  = defVar(ds, "pitch",         Float32, ("time",);
+                        attrib=["units"=>"degrees", "long_name"=>"VectorNav pitch aligned to lidar time",
+                                "_FillValue"=>fv32])
+                    v_rol  = defVar(ds, "roll",          Float32, ("time",);
+                        attrib=["units"=>"degrees", "long_name"=>"VectorNav roll aligned to lidar time",
+                                "_FillValue"=>fv32])
+                    v_scid = defVar(ds, "sync_chunk_id", Int32,   ("time",);
+                        attrib=["long_name"=>"global sync-chunk identifier for this beam; equals chunk_ic for the owning chunk"])
+                    v_cic  = defVar(ds, "chunk_ic",       Int32,  ("chunk",);
+                        attrib=["long_name"=>"global sync-chunk identifier ic (1…~5938); find row k with findfirst(chunk_ic .== ic)"])
+                    v_ist  = defVar(ds, "ist",            Int32,  ("chunk",);
+                        attrib=["long_name"=>"global first-beam index in the stare NC files (Env.ists[ic]); stare slice: dopplervel[ist:ien, :]"])
+                    v_ien  = defVar(ds, "ien",            Int32,  ("chunk",);
+                        attrib=["long_name"=>"global last-beam index in the stare NC files (Env.iens[ic])"])
+                    v_ts   = defVar(ds, "time_start_idx", Int32,  ("chunk",);
+                        attrib=["long_name"=>"1-based start index into this file's time dimension; daily slice: vn2_aligned[time_start_idx:time_end_idx]"])
+                    v_te   = defVar(ds, "time_end_idx",   Int32,  ("chunk",);
+                        attrib=["long_name"=>"1-based end index; DateTime(ds[\"time\"][time_start_idx]) == stare_dt[1] (within clock tolerance)"])
+                    v_lst  = defVar(ds, "lidar_t_start",  Int64,  ("chunk",);
+                        attrib=["units"=>ms_units, "calendar"=>"standard",
+                                "long_name"=>"epoch-ms of the first lidar beam in this sync chunk"])
+                    v_len  = defVar(ds, "lidar_t_end",    Int64,  ("chunk",);
+                        attrib=["units"=>ms_units, "calendar"=>"standard",
+                                "long_name"=>"epoch-ms of the last lidar beam in this sync chunk"])
+                    v_vst  = defVar(ds, "vn_t_start",     Int64,  ("chunk",);
+                        attrib=["units"=>ms_units, "calendar"=>"standard", "_FillValue"=>FILL_MS,
+                                "long_name"=>"epoch-ms of the first VectorNav 20 Hz sample in the chunk window (fill=-1 when VN coverage insufficient)"])
+                    v_ven  = defVar(ds, "vn_t_end",       Int64,  ("chunk",);
+                        attrib=["units"=>ms_units, "calendar"=>"standard", "_FillValue"=>FILL_MS,
+                                "long_name"=>"epoch-ms of the last VectorNav 20 Hz sample in the chunk window (fill=-1 when VN coverage insufficient)"])
+                    v_off  = defVar(ds, "offset_s",       Float32, ("chunk",);
+                        attrib=["units"=>"s", "_FillValue"=>fv32,
+                                "long_name"=>"total VN timing offset applied to this chunk (1 Hz sequential prior + 20 Hz native residual)"])
+                    v_t[:]    = time_ms;    v_tstr[:] = time_str
+                    v_mdv[:]  = mdv_all;   v_vn2[:]  = vn2_all
+                    v_pit[:]  = pitch_all; v_rol[:]  = roll_all;  v_scid[:] = scid_all
+                    v_cic[:] = chunk_ic_vals; v_ist[:] = ist_vals;  v_ien[:] = ien_vals
+                    v_ts[:]  = time_start_idx; v_te[:] = time_end_idx
+                    v_lst[:] = lidar_t_s_ms;  v_len[:] = lidar_t_e_ms
+                    v_vst[:] = vn_t_s_ms;     v_ven[:] = vn_t_e_ms;  v_off[:] = off_chunk
+                    ds.attrib["date"]        = string(_day)
+                    ds.attrib["n_chunks"]    = n_chunks_day
+                    ds.attrib["n_beams"]     = nrec
+                    ds.attrib["ntop"]        = Int(ntop)
+                    ds.attrib["nc_dir"]      = nc_dir
+                    ds.attrib["created_utc"] = string(Dates.now(Dates.UTC))
+                    ds.attrib["Conventions"] = "CF-1.6"
+                    close(ds)
+                    @printf("  Wrote: %-52s  chunks=%d  beams=%d\n",
+                        basename(nc_out), n_chunks_day, nrec)
+                    n_days += 1
+                end
+                empty!(current_day_chunks)
+            end
         end
     end
     @printf("  done in %.1f s\n", time() - t0)
-
-    # ── Phase 3: write one NC file per calendar day ─────────────────────────
-    println("Phase 3: writing daily NetCDF files …")
-    days   = sort(unique([c.day for c in chunk_data]))
-    n_days = length(days)
-    n_ok   = count(c -> any(isfinite, c.vn2_aligned), chunk_data)
-    @printf("  %d chunks → %d days  (%d chunks with valid vn2_aligned)\n",
-        length(chunk_data), n_days, n_ok)
-
-    for day in days
-        nc_out = joinpath(out_dir,
-            "mdv_vn2_sync_$(Dates.format(day, dateformat"yyyymmdd")).nc")
-        if isfile(nc_out) && !overwrite
-            @printf("  Skip (exists): %s\n", basename(nc_out))
-            continue
-        end
-
-        day_chunks   = [c for c in chunk_data if c.day == day]
-        n_chunks_day = length(day_chunks)
-
-        # ── per-beam (time dimension) arrays ─────────────────────────────────
-        lidar_dt_all = vcat([c.lidar_dt    for c in day_chunks]...)
-        mdv_all      = vcat([c.mdv         for c in day_chunks]...)
-        vn2_all      = vcat([c.vn2_aligned for c in day_chunks]...)
-        pitch_all    = vcat([c.pitch        for c in day_chunks]...)
-        roll_all     = vcat([c.roll         for c in day_chunks]...)
-        scid_all     = vcat([fill(Int32(c.ic), length(c.lidar_dt)) for c in day_chunks]...)
-        nrec         = length(lidar_dt_all)
-
-        epoch_ref_ms  = Dates.datetime2epochms(DateTime(1970, 1, 1, 0, 0, 0))
-        FILL_MS       = Int64(-1)   # impossible for valid Unix ms timestamps (all > 0)
-        to_ms(t::DateTime) = Int64(Dates.datetime2epochms(t) - epoch_ref_ms)
-        to_ms(::Missing)   = FILL_MS
-
-        time_ms  = [to_ms(t) for t in lidar_dt_all]
-        time_str = [Dates.format(t, dateformat"yyyy-mm-ddTHH:MM:SS.sss") for t in lidar_dt_all]
-
-        # ── per-chunk (chunk dimension) arrays ───────────────────────────────
-        beam_lengths   = [length(c.lidar_dt) for c in day_chunks]
-        chunk_ic_vals  = Int32[c.ic           for c in day_chunks]
-        ist_vals       = Int32[Env.ists[c.ic] for c in day_chunks]
-        ien_vals       = Int32[Env.iens[c.ic] for c in day_chunks]
-        # 1-based indices into this file's time dim: direct slicing, no mask needed
-        time_start_idx = Int32.(cumsum([1; beam_lengths[1:end-1]]))
-        time_end_idx   = Int32.(cumsum(beam_lengths))
-        lidar_t_s_ms   = [to_ms(c.lidar_dt[1])   for c in day_chunks]
-        lidar_t_e_ms   = [to_ms(c.lidar_dt[end])  for c in day_chunks]
-        vn_t_s_ms      = [to_ms(c.vn_t_start)    for c in day_chunks]
-        vn_t_e_ms      = [to_ms(c.vn_t_end)      for c in day_chunks]
-        off_chunk      = Float32[c.offset_s       for c in day_chunks]
-
-        # ── write NetCDF ──────────────────────────────────────────────────────
-        isfile(nc_out) && rm(nc_out)
-        ds = NCDataset(nc_out, "c")
-        defDim(ds, "time",  Inf)            # UNLIMITED → ncrcat-concatenable across days
-        defDim(ds, "chunk", n_chunks_day)   # one record per sync chunk in this day
-
-        ms_units = "milliseconds since 1970-01-01T00:00:00 UTC"
-        fv32     = Float32(NaN)
-
-        # time-dimension variables
-        v_t      = defVar(ds, "time",          Int64,   ("time",);
-            attrib=["units"=>ms_units, "calendar"=>"standard",
-                    "standard_name"=>"time", "axis"=>"T",
-                    "long_name"=>"milliseconds since 1970-01-01T00:00:00 UTC"])
-        v_tstr   = defVar(ds, "time_str",      String,  ("time",);
-            attrib=["long_name"=>"ISO-8601 UTC datetime of each lidar beam (millisecond precision)"])
-        v_mdv    = defVar(ds, "mdv",           Float32, ("time",);
-            attrib=["units"=>"m s-1",   "long_name"=>"SNR-weighted mean Doppler velocity",
-                    "_FillValue"=>fv32])
-        v_vn2    = defVar(ds, "vn2_aligned",   Float32, ("time",);
-            attrib=["units"=>"m s-1",   "long_name"=>"VectorNav VelNED2 aligned to lidar time",
-                    "_FillValue"=>fv32])
-        v_pit    = defVar(ds, "pitch",         Float32, ("time",);
-            attrib=["units"=>"degrees", "long_name"=>"VectorNav pitch aligned to lidar time",
-                    "_FillValue"=>fv32])
-        v_rol    = defVar(ds, "roll",          Float32, ("time",);
-            attrib=["units"=>"degrees", "long_name"=>"VectorNav roll aligned to lidar time",
-                    "_FillValue"=>fv32])
-        v_scid   = defVar(ds, "sync_chunk_id", Int32,   ("time",);
-            attrib=["long_name"=>"global sync-chunk identifier for this beam; equals chunk_ic for the owning chunk"])
-
-        # chunk-dimension variables
-        v_cic  = defVar(ds, "chunk_ic",        Int32,  ("chunk",);
-            attrib=["long_name"=>"global sync-chunk identifier ic (1…~5938); find row k with findfirst(chunk_ic .== ic)"])
-        v_ist  = defVar(ds, "ist",             Int32,  ("chunk",);
-            attrib=["long_name"=>"global first-beam index in the stare NC files (Env.ists[ic]); stare slice: dopplervel[ist:ien, :]"])
-        v_ien  = defVar(ds, "ien",             Int32,  ("chunk",);
-            attrib=["long_name"=>"global last-beam index in the stare NC files (Env.iens[ic])"])
-        v_ts   = defVar(ds, "time_start_idx",  Int32,  ("chunk",);
-            attrib=["long_name"=>"1-based start index into this file's time dimension; daily slice: vn2_aligned[time_start_idx:time_end_idx]"])
-        v_te   = defVar(ds, "time_end_idx",    Int32,  ("chunk",);
-            attrib=["long_name"=>"1-based end index into this file's time dimension; time[time_start_idx] ≡ stare_dt[ist] (within clock tolerance)"])
-        v_lst  = defVar(ds, "lidar_t_start", Int64,  ("chunk",);
-            attrib=["units"=>ms_units, "calendar"=>"standard",
-                    "long_name"=>"epoch-ms of the first lidar beam in this sync chunk"])
-        v_len  = defVar(ds, "lidar_t_end",   Int64,  ("chunk",);
-            attrib=["units"=>ms_units, "calendar"=>"standard",
-                    "long_name"=>"epoch-ms of the last lidar beam in this sync chunk"])
-        v_vst  = defVar(ds, "vn_t_start",    Int64,  ("chunk",);
-            attrib=["units"=>ms_units, "calendar"=>"standard", "_FillValue"=>FILL_MS,
-                    "long_name"=>"epoch-ms of the first VectorNav 20 Hz sample in the chunk window (fill=-1 when VN coverage insufficient)"])
-        v_ven  = defVar(ds, "vn_t_end",      Int64,  ("chunk",);
-            attrib=["units"=>ms_units, "calendar"=>"standard", "_FillValue"=>FILL_MS,
-                    "long_name"=>"epoch-ms of the last VectorNav 20 Hz sample in the chunk window (fill=-1 when VN coverage insufficient)"])
-        v_off  = defVar(ds, "offset_s",      Float32, ("chunk",);
-            attrib=["units"=>"s", "_FillValue"=>fv32,
-                    "long_name"=>"total VN timing offset applied to this chunk (1 Hz sequential prior + 20 Hz native residual)"])
-
-        # write time dimension
-        v_t[:]     = time_ms
-        v_tstr[:]  = time_str
-        v_mdv[:]   = mdv_all
-        v_vn2[:]   = vn2_all
-        v_pit[:]   = pitch_all
-        v_rol[:]   = roll_all
-        v_scid[:]  = scid_all
-
-        # write chunk dimension
-        v_cic[:] = chunk_ic_vals
-        v_ist[:] = ist_vals
-        v_ien[:] = ien_vals
-        v_ts[:]  = time_start_idx
-        v_te[:]  = time_end_idx
-        v_lst[:] = lidar_t_s_ms
-        v_len[:] = lidar_t_e_ms
-        v_vst[:] = vn_t_s_ms
-        v_ven[:] = vn_t_e_ms
-        v_off[:] = off_chunk
-
-        ds.attrib["date"]        = string(day)
-        ds.attrib["n_chunks"]    = n_chunks_day
-        ds.attrib["n_beams"]     = nrec
-        ds.attrib["ntop"]        = Int(ntop)
-        ds.attrib["nc_dir"]      = nc_dir
-        ds.attrib["created_utc"] = string(Dates.now(Dates.UTC))
-        ds.attrib["Conventions"] = "CF-1.6"
-        close(ds)
-
-        @printf("  Wrote: %-52s  chunks=%d  beams=%d\n",
-            basename(nc_out), length(day_chunks), nrec)
-    end
 
     return (; n_total, n_days, out_dir, log_path)
 end
