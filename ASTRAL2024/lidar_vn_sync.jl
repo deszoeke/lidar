@@ -26,6 +26,7 @@ export init_periodic_beams, load_lidar_indices_and_files, read_streamlinexr_star
 export init_stream_state, extract_sync_window, coarse_and_fine_lag, run_sequential_offsets, refine_offset_20hz
 export setup_sync_context, setup_sync_context_nc, process_sync_data, save_sync_netcdf
 export write_mdv_sync_pass2!, write_daily_mdv_vn2!
+export chunk_ids_for_day, load_chunk_for_dissipation, check_chunk_alignment_contract
 export diagnostic_single_window, diagnostic_offsets, diagnostic_example_chunks
 export read_synced_motion, motion_correct_stare_velocity, read_and_motion_correct_stare
 
@@ -1284,6 +1285,293 @@ function read_and_motion_correct_stare(dopplervel, nc_path=joinpath("epsilon_dat
     return (; corrected, motion=(; time=motion.time[inds], time_dt=motion.time_dt[inds], record_chunk_index=motion.record_chunk_index[inds], vn2_1s_aligned=motion.vn2_1s_aligned[inds], pitch_degrees=motion.pitch_degrees[inds], roll_degrees=motion.roll_degrees[inds]))
 end
 
+# ──────────────────────────────────────────────────────────────────────────────
+# Daily-sync-NC-based loading for the dissipation workflow
+# ──────────────────────────────────────────────────────────────────────────────
+
+"""
+    chunk_ids_for_day(day; daily_dir) → Vector{Int32}
+
+Return the `chunk_ic` values stored in the daily sync NC file for `day`
+(one entry per sync chunk contributing to that calendar day).
+Returns an empty vector when no daily file exists for that day.
+"""
+function chunk_ids_for_day(day::Date;
+    daily_dir = joinpath("epsilon_data", "daily"),
+)
+    nc_path = joinpath(daily_dir,
+        "mdv_vn2_sync_$(Dates.format(day, dateformat"yyyymmdd")).nc")
+    isfile(nc_path) || return Int32[]
+    NCDatasets.NCDataset(nc_path, "r") do ds
+        return Int32.(ds["chunk_ic"][:])
+    end
+end
+
+"""
+    load_chunk_for_dissipation(ic; daily_dir, nc_dir, Env, beams, state, ntop)
+
+Load one sync chunk of motion-corrected Doppler velocity, ready for the
+structure-function dissipation calculation.
+
+**File naming convention:** daily sync NC files are named by the calendar date
+of the clock-corrected first beam of each chunk (`Date(stare_dt[1])`).  A chunk
+that crosses midnight is stored **in its entirety** in the file for its start
+date; it does not appear in the next day's file.  This function always resolves
+the correct file deterministically by computing `stare_dt` from the stare beams
+before opening the daily NC.
+
+**Alignment contract** — the two file families use different time axes and
+cannot be joined by matching timestamps directly.  The join key is `ic`:
+
+  Stare NC (hourly, data/netcdf_stare/Stare_116_YYYYMMDD_HHMMSS.nc)
+  ┌─────────────────────────────────────────────────────────┐
+  │  global beam index:  1 … N   (across all files)         │
+  │  ist = Env.ists[ic]   ←── chunk ic starts here          │
+  │  ien = Env.iens[ic]   ←── chunk ic ends   here          │
+  │  beams[:dopplervel][ist:ien, 1:ntop]  ← nbeams × ntop  │
+  │  chunk_lidar_datetimes(...)           ← stare_dt[1:n]   │
+  └─────────────────────────────────────────────────────────┘
+              join by ic (position-exact, 1-based)
+  ┌─────────────────────────────────────────────────────────┐
+  │  Daily sync NC  mdv_vn2_sync_YYYYMMDD.nc               │
+  │  time dim:  all beams for all chunks starting this day  │
+  │    sync_chunk_id[j] == ic  →  beam j belongs to chunk ic│
+  │  chunk dim:  one row k per sync chunk starting this day │
+  │    k  = findfirst(chunk_ic .== ic)                      │
+  │    t0 = time_start_idx[k]; t1 = time_end_idx[k]        │
+  │    vn2_aligned[t0:t1] aligns with dopplervel[ist:ien,:] │
+  │    ist[k], ien[k], offset_s[k], lidar_t_start[k]       │
+  └─────────────────────────────────────────────────────────┘
+
+Beams appear in the daily NC in the same order they were written by
+`write_daily_mdv_vn2!`, which iterates `ist:ien` in ascending order for each
+chunk.  The masked subset `ds["vn2_aligned"][:][mask]` is therefore
+position-aligned with `beams[:dopplervel][ist:ien, :]` with no further sorting
+needed.  Use `check_chunk_alignment_contract` to verify this for any set of
+chunks after running the production writer.
+
+**Steps:**
+1. Load `dopplervel[nbeams × ntop]` and heights from hourly stare NC; compute
+   clock-corrected `stare_dt` via `chunk_lidar_datetimes`.  (`stare_dt[1]`
+   determines which daily file to open — done first so the date key is exact.)
+2. Open `daily_dir/mdv_vn2_sync_YYYYMMDD.nc` for `Date(stare_dt[1])`; find row
+   `k = findfirst(chunk_ic .== ic)` in the chunk dimension; read
+   `vn2_aligned[t0:t1]`, `pitch[t0:t1]`, `roll[t0:t1]` where
+   `t0 = time_start_idx[k]`, `t1 = time_end_idx[k]`; read `offset_s[k]`.
+3. Apply motion correction:
+   `w[t,z] = dopplervel[t,z] / (cos(pitch[t])·cos(roll[t])) − vn2_aligned[t]`
+
+When VN coverage was insufficient, `vn2_aligned` will be all NaN and `w` equals
+`dopplervel / tilt_factor` only (no heave removal).  Check `result.vn_ok`.
+
+Returns `(; stare_dt, w, dopplervel_raw, vn2_aligned, pitch, roll, height,
+            offset_s, vn_ok, ic)`:
+
+  stare_dt        Vector{DateTime}  clock-corrected beam timestamps
+  w               Matrix{Float64}   motion-corrected radial velocity  [nbeams × ntop]
+  dopplervel_raw  Matrix{Float64}   raw radial velocity               [nbeams × ntop]
+  vn2_aligned     Vector{Float64}   VN VelNED2 heave at lidar time    [nbeams]
+  pitch           Vector{Float64}   pitch at each beam                [degrees]
+  roll            Vector{Float64}   roll  at each beam                [degrees]
+  height          Vector{Float64}   range-gate centre heights         [m, ntop]
+  offset_s        Float32           total timing offset applied       [s]
+  vn_ok           Bool              true when ≥1 finite vn2_aligned value
+  ic              Int               sync-chunk identifier
+"""
+function load_chunk_for_dissipation(ic::Integer;
+    daily_dir = joinpath("epsilon_data", "daily"),
+    nc_dir    = "data/netcdf_stare",
+    Env,
+    beams,
+    state,
+    ntop      = 80,
+)
+    ist    = Env.ists[ic]
+    ien    = Env.iens[ic]
+    nbeams = ien - ist + 1
+
+    # ── Step 1: load stare beams + compute clock-corrected timestamps ──────
+    # Must happen first: `stare_dt[1]` is the authoritative start time used to
+    # name the daily sync NC file.  Even if a chunk crosses midnight, the complete
+    # chunk lives in the file whose date matches Date(stare_dt[1]).  Beams from
+    # the stare NC and beams in the daily NC align by their position within the
+    # chunk (ist…ien in the lidar global index); the two sources are joined by
+    # the chunk identifier `ic`, not by matching individual timestamps.
+    ensure_chunk_loaded_nc!(beams, Env, state, ic; nc_dir=nc_dir)
+    dopplervel_raw = Float64.(coalesce.(beams[:dopplervel][ist:ien, 1:ntop], NaN))
+    height         = Float64[coalesce(beams[:height][iz], NaN) for iz in 1:ntop]
+    _, stare_dt, _ = chunk_lidar_datetimes(Env.dtime[ist], beams, ist, ien)
+
+    # ── Step 2: open the daily sync NC for the chunk's start date ─────────
+    start_day = Date(stare_dt[1])
+    nc_path   = joinpath(daily_dir,
+        "mdv_vn2_sync_$(Dates.format(start_day, dateformat"yyyymmdd")).nc")
+    isfile(nc_path) ||
+        error("Daily sync NC not found: $nc_path  (ic=$ic, start_day=$start_day)\n" *
+              "Run write_daily_mdv_vn2! to generate daily files.")
+
+    vn2_aligned = fill(NaN, nbeams)
+    pitch_deg   = fill(NaN, nbeams)
+    roll_deg    = fill(NaN, nbeams)
+    offset_s    = Float32(NaN)
+
+    NCDatasets.NCDataset(nc_path, "r") do ds
+        # Find chunk row k by matching chunk_ic, then slice by direct indices.
+        cics = ds["chunk_ic"][:]
+        k    = findfirst(cics .== Int32(ic))
+        isnothing(k) &&
+            error("Chunk ic=$ic not found in $(basename(nc_path)) " *
+                  "(start_day=$start_day).  Was write_daily_mdv_vn2! run for this day?")
+        t0     = Int(ds["time_start_idx"][k])
+        t1     = Int(ds["time_end_idx"][k])
+        n_daily = t1 - t0 + 1
+        if n_daily != nbeams
+            @warn "load_chunk_for_dissipation: beam count mismatch for ic=$ic " *
+                  "(daily NC: $n_daily, lidar index: $nbeams); using min"
+        end
+        n_use = min(n_daily, nbeams)
+        vn2_aligned[1:n_use] .= Float64.(coalesce.(ds["vn2_aligned"][t0:t0+n_use-1], NaN))
+        pitch_deg[1:n_use]   .= Float64.(coalesce.(ds["pitch"][t0:t0+n_use-1],       NaN))
+        roll_deg[1:n_use]    .= Float64.(coalesce.(ds["roll"][t0:t0+n_use-1],        NaN))
+        offset_s = Float32(coalesce(ds["offset_s"][k], NaN))
+    end
+
+    # ── Step 3: motion correction ──────────────────────────────────────────
+    #   w[t,z] = dopplervel[t,z] / (cos(pitch[t])·cos(roll[t])) - vn2_aligned[t]
+    w = motion_correct_stare_velocity(dopplervel_raw, vn2_aligned, pitch_deg, roll_deg)
+
+    return (;
+        stare_dt,
+        w,
+        dopplervel_raw,
+        vn2_aligned,
+        pitch    = pitch_deg,
+        roll     = roll_deg,
+        height,
+        offset_s,
+        vn_ok    = any(isfinite, vn2_aligned),
+        ic,
+    )
+end
+
+# The alignment contract is verifiable by inspection:
+#   DateTime(ds["time"][t0]) == stare_dt[1]        # human-readable; NCDatasets decodes CF time
+#   DateTime(ds["time"][t1]) == stare_dt[end]
+# For code that needs raw integers, use .var to bypass CF decoding:
+#   ds["time"].var[t0] == epoch_ms(stare_dt[1])
+
+# ──────────────────────────────────────────────────────────────────────────────
+
+"""
+    check_chunk_alignment_contract(ic_list; Env, beams, state, daily_dir, nc_dir)
+
+Spot-check the alignment contract between the hourly stare NC files and the
+daily sync NC files for the chunks in `ic_list`.  For each chunk the function
+reads:
+
+  From the **stare NC** (via `ensure_chunk_loaded_nc!` + `chunk_lidar_datetimes`):
+    • `stare_dt[1]`   — clock-corrected first-beam timestamp
+    • `stare_dt[end]` — clock-corrected last-beam timestamp
+    • `nbeams`        — `Env.iens[ic] - Env.ists[ic] + 1`
+
+  From the **daily sync NC** (chunk dimension, row `k` where `chunk_ic[k] == ic`):
+    • `time_start_idx[k]`, `time_end_idx[k]` — direct slice indices into the
+      time dimension; `n_beams_daily = time_end_idx - time_start_idx + 1`
+    • `lidar_t_start[k]` — stored epoch-ms of first beam
+    • `lidar_t_end[k]`   — stored epoch-ms of last  beam
+
+For each chunk it prints one line:
+
+  ic=NNN  nbeams: stare=NNN daily=NNN  Δstart=±Xms  Δend=±Xms  [OK / FAIL]
+
+Pass/fail criteria:
+  • `n_beams_daily == nbeams`
+  • |lidar_t_start − stare epoch_ms(stare_dt[1])|   ≤ tol_ms
+  • |lidar_t_end   − stare epoch_ms(stare_dt[end])| ≤ tol_ms
+
+Returns `(n_ok, n_fail, results)` where `results` is a Vector of NamedTuples
+with one entry per chunk.
+"""
+function check_chunk_alignment_contract(ic_list;
+    Env,
+    beams,
+    state,
+    daily_dir = joinpath("epsilon_data", "daily"),
+    nc_dir    = "data/netcdf_stare",
+    tol_ms    = 10,        # milliseconds; lidar clock resolution is ~1 ms
+)
+    epoch_ms(dt::DateTime) = Int64(Dates.datetime2epochms(dt) -
+                                   Dates.datetime2epochms(DateTime(1970,1,1)))
+    daily_nc_path(d) = joinpath(daily_dir,
+        "mdv_vn2_sync_$(Dates.format(d, dateformat"yyyymmdd")).nc")
+
+    results = NamedTuple[]
+    n_ok = 0; n_fail = 0
+
+    for ic in ic_list
+        ist    = Env.ists[ic]
+        ien    = Env.iens[ic]
+        nbeams = ien - ist + 1
+
+        # ── stare side ────────────────────────────────────────────────────
+        ensure_chunk_loaded_nc!(beams, Env, state, ic; nc_dir=nc_dir)
+        _, stare_dt, _ = chunk_lidar_datetimes(Env.dtime[ist], beams, ist, ien)
+        start_day      = Date(stare_dt[1])
+        stare_ms_start = epoch_ms(stare_dt[1])
+        stare_ms_end   = epoch_ms(stare_dt[end])
+
+        # ── daily NC side ─────────────────────────────────────────────────
+        nc_path = daily_nc_path(start_day)
+        if !isfile(nc_path)
+            @printf("ic=%-5d  %-12s  SKIP (no daily NC: %s)\n", ic, string(start_day), basename(nc_path))
+            push!(results, (; ic, status=:missing_file))
+            n_fail += 1
+            continue
+        end
+
+        n_daily  = 0
+        ms_start = Int64(-1)
+        ms_end   = Int64(-1)
+        found_in_chunk_dim = false
+
+        NCDatasets.NCDataset(nc_path, "r") do ds
+            cics = ds["chunk_ic"][:]
+            k    = findfirst(cics .== Int32(ic))
+            if !isnothing(k)
+                found_in_chunk_dim = true
+                t0      = Int(ds["time_start_idx"][k])
+                t1      = Int(ds["time_end_idx"][k])
+                n_daily = t1 - t0 + 1
+                ms_start = Int64(coalesce(ds["lidar_t_start"].var[k], Int64(-1)))
+                ms_end   = Int64(coalesce(ds["lidar_t_end"].var[k],   Int64(-1)))
+            end
+        end
+
+        Δstart = ms_start >= 0 ? abs(ms_start - stare_ms_start) : typemax(Int64)
+        Δend   = ms_end   >= 0 ? abs(ms_end   - stare_ms_end)   : typemax(Int64)
+        beam_ok  = n_daily == nbeams
+        time_ok  = found_in_chunk_dim && Δstart <= tol_ms && Δend <= tol_ms
+        ok       = beam_ok && time_ok
+        ok ? (n_ok += 1) : (n_fail += 1)
+
+        @printf("ic=%-5d  nbeams: stare=%-4d daily=%-4d  Δstart=%+5d ms  Δend=%+5d ms  %s\n",
+            ic, nbeams, n_daily,
+            ms_start >= 0 ? ms_start - stare_ms_start : 999999,
+            ms_end   >= 0 ? ms_end   - stare_ms_end   : 999999,
+            ok ? "OK" : "FAIL (beam_ok=$beam_ok time_ok=$time_ok chunk_dim=$found_in_chunk_dim)")
+
+        push!(results, (;
+            ic, start_day, nbeams, n_daily,
+            stare_ms_start, stare_ms_end, ms_start, ms_end,
+            Δstart, Δend, beam_ok, time_ok, ok,
+        ))
+    end
+
+    @printf("\n%d / %d chunks passed alignment contract (tol=%d ms)\n",
+        n_ok, n_ok + n_fail, tol_ms)
+    return (; n_ok, n_fail, results)
+end
+
 function diagnostic_single_window(beams, Env, Vn, UV, ic; ntop=80)
     single_state = init_stream_state()
     win = extract_sync_window(beams, Env, single_state, Vn, UV, ic; ntop=ntop)
@@ -1403,15 +1691,19 @@ Variables under the `time` dimension:
   vn2_aligned     Float32 VectorNav VelNED2 aligned to lidar time                 [m s-1]
   pitch           Float32 VectorNav pitch aligned to lidar time                   [degrees]
   roll            Float32 VectorNav roll aligned to lidar time                    [degrees]
-  sync_chunk_id   Int32   which sync chunk this beam belongs to (one constant value
-                          per chunk); cross-references chunk_id in the chunk dimension
+  sync_chunk_id   Int32   global sync-chunk identifier for this beam; equals chunk_ic
+                          for the owning chunk (convenience for per-beam lookup)
 
-Variables under the `chunk` dimension:
+Variables under the `chunk` dimension (one row k per sync chunk in this day):
 
-  chunk_id        Int32   global 1-based sync-chunk identifier (1 … ~5938 for the
-                          full deployment); NOT a sample index within a chunk;
-                          use to join to per-chunk diagnostics and to look up ist/ien
-                          in the lidar index for the full Doppler velocity arrays
+  chunk_ic        Int32   global sync-chunk identifier ic (1 … ~5938 for the full
+                          deployment); find row k with findfirst(chunk_ic .== ic)
+  ist             Int32   global first-beam index of this chunk in the stare NC files;
+                          stare slice = dopplervel[ist:ien, :]  (Env.ists[ic])
+  ien             Int32   global last-beam index of this chunk  (Env.iens[ic])
+  time_start_idx  Int32   1-based start index into this file's time dimension;
+                          daily slice = vn2_aligned[time_start_idx:time_end_idx]
+  time_end_idx    Int32   1-based end index; time[time_start_idx] ≡ stare_dt[ist]
   lidar_t_start   Int64   epoch-ms of the first lidar beam in this sync chunk     [ms]
   lidar_t_end     Int64   epoch-ms of the last  lidar beam in this sync chunk     [ms]
   vn_t_start      Int64   epoch-ms of the first VectorNav 20 Hz sample in the chunk
@@ -1588,12 +1880,18 @@ function write_daily_mdv_vn2!(;
         time_str = [Dates.format(t, dateformat"yyyy-mm-ddTHH:MM:SS.sss") for t in lidar_dt_all]
 
         # ── per-chunk (chunk dimension) arrays ───────────────────────────────
-        chunk_ids    = Int32[c.ic                        for c in day_chunks]
-        lidar_t_s_ms = [to_ms(c.lidar_dt[1])            for c in day_chunks]
-        lidar_t_e_ms = [to_ms(c.lidar_dt[end])          for c in day_chunks]
-        vn_t_s_ms    = [to_ms(c.vn_t_start)             for c in day_chunks]
-        vn_t_e_ms    = [to_ms(c.vn_t_end)               for c in day_chunks]
-        off_chunk    = Float32[c.offset_s                for c in day_chunks]
+        beam_lengths   = [length(c.lidar_dt) for c in day_chunks]
+        chunk_ic_vals  = Int32[c.ic           for c in day_chunks]
+        ist_vals       = Int32[Env.ists[c.ic] for c in day_chunks]
+        ien_vals       = Int32[Env.iens[c.ic] for c in day_chunks]
+        # 1-based indices into this file's time dim: direct slicing, no mask needed
+        time_start_idx = Int32.(cumsum([1; beam_lengths[1:end-1]]))
+        time_end_idx   = Int32.(cumsum(beam_lengths))
+        lidar_t_s_ms   = [to_ms(c.lidar_dt[1])   for c in day_chunks]
+        lidar_t_e_ms   = [to_ms(c.lidar_dt[end])  for c in day_chunks]
+        vn_t_s_ms      = [to_ms(c.vn_t_start)    for c in day_chunks]
+        vn_t_e_ms      = [to_ms(c.vn_t_end)      for c in day_chunks]
+        off_chunk      = Float32[c.offset_s       for c in day_chunks]
 
         # ── write NetCDF ──────────────────────────────────────────────────────
         isfile(nc_out) && rm(nc_out)
@@ -1624,11 +1922,19 @@ function write_daily_mdv_vn2!(;
             attrib=["units"=>"degrees", "long_name"=>"VectorNav roll aligned to lidar time",
                     "_FillValue"=>fv32])
         v_scid   = defVar(ds, "sync_chunk_id", Int32,   ("time",);
-            attrib=["long_name"=>"which sync chunk this beam belongs to (one constant value per chunk); cross-references chunk_id in the chunk dimension"])
+            attrib=["long_name"=>"global sync-chunk identifier for this beam; equals chunk_ic for the owning chunk"])
 
         # chunk-dimension variables
-        v_cid  = defVar(ds, "chunk_id",      Int32,  ("chunk",);
-            attrib=["long_name"=>"global 1-based sync-chunk identifier (1…~5938 for the full deployment); NOT a sample index within a chunk; join on sync_chunk_id to link beams to chunks"])
+        v_cic  = defVar(ds, "chunk_ic",        Int32,  ("chunk",);
+            attrib=["long_name"=>"global sync-chunk identifier ic (1…~5938); find row k with findfirst(chunk_ic .== ic)"])
+        v_ist  = defVar(ds, "ist",             Int32,  ("chunk",);
+            attrib=["long_name"=>"global first-beam index in the stare NC files (Env.ists[ic]); stare slice: dopplervel[ist:ien, :]"])
+        v_ien  = defVar(ds, "ien",             Int32,  ("chunk",);
+            attrib=["long_name"=>"global last-beam index in the stare NC files (Env.iens[ic])"])
+        v_ts   = defVar(ds, "time_start_idx",  Int32,  ("chunk",);
+            attrib=["long_name"=>"1-based start index into this file's time dimension; daily slice: vn2_aligned[time_start_idx:time_end_idx]"])
+        v_te   = defVar(ds, "time_end_idx",    Int32,  ("chunk",);
+            attrib=["long_name"=>"1-based end index into this file's time dimension; time[time_start_idx] ≡ stare_dt[ist] (within clock tolerance)"])
         v_lst  = defVar(ds, "lidar_t_start", Int64,  ("chunk",);
             attrib=["units"=>ms_units, "calendar"=>"standard",
                     "long_name"=>"epoch-ms of the first lidar beam in this sync chunk"])
@@ -1655,7 +1961,11 @@ function write_daily_mdv_vn2!(;
         v_scid[:]  = scid_all
 
         # write chunk dimension
-        v_cid[:] = chunk_ids
+        v_cic[:] = chunk_ic_vals
+        v_ist[:] = ist_vals
+        v_ien[:] = ien_vals
+        v_ts[:]  = time_start_idx
+        v_te[:]  = time_end_idx
         v_lst[:] = lidar_t_s_ms
         v_len[:] = lidar_t_e_ms
         v_vst[:] = vn_t_s_ms
