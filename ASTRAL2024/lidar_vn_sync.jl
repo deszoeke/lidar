@@ -28,7 +28,7 @@ export setup_sync_context, setup_sync_context_nc, process_sync_data, save_sync_n
 export write_mdv_sync_pass2!, write_daily_mdv_vn2!
 export chunk_ids_for_day, load_chunk_for_dissipation, check_chunk_alignment_contract
 export diagnostic_single_window, diagnostic_offsets, diagnostic_example_chunks
-export read_synced_motion, motion_correct_stare_velocity, read_and_motion_correct_stare
+export read_synced_motion, motion_correct_stare_vel, read_and_motion_correct_stare
 
 const NOISE_THR = 1.03
 const BANDPASS_PERIOD = (5.0, 20.0)
@@ -37,7 +37,7 @@ const TIMESTEP = 1.02
 const RANGEGATE = 24.0
 const OFFSET_SENTINEL_S = -9999.0
 const OFFSET_SENTINEL_MS = Int64(-9_999_000)
-const NAN_OFFSET_LOG_PATH = joinpath("epsilon_data", "nan_offset_chunks.log")
+const NAN_OFFSET_LOG_PATH = joinpath("data", "vn_sync_chunk_daily", "nan_offset_chunks.log")
 
 pd = permutedims
 
@@ -885,9 +885,9 @@ function process_sync_data(beams, env, Vn, UV, ic_list;
     reset_prior_on_file_boundary=false, reset_prior_on_rejected_sync=false,
     nc_dir="data/netcdf_stare",
     offset_sentinel_seconds=-9999.0, offset_sentinel_ms=Int64(-9_999_000),
-    nan_log_path=joinpath("epsilon_data", "nan_offset_chunks.log"), 
+    nan_log_path=joinpath("data", "vn_sync_chunk_daily", "nan_offset_chunks.log"), 
     reset_nan_log=true, 
-    iter_log_path=joinpath("epsilon_data", "vn_log_$(Dates.format(Dates.now(), dateformat"yyyymmdd_HHMMSS")).txt"), 
+    iter_log_path=joinpath("data", "vn_sync_chunk_daily", "vn_log_$(Dates.format(Dates.now(), dateformat"yyyymmdd_HHMMSS")).txt"), 
     reset_iter_log=true )
     
     if reset_nan_log && isfile(nan_log_path)
@@ -1149,7 +1149,7 @@ function write_mdv_sync_pass2!(;
     return (; nchunks=n_total, done=n_done, errors=n_err, ntop=ntop, nc_dir)
 end
 
-function save_sync_netcdf(result; nc_out=joinpath("epsilon_data", "vn_sync_offsets.nc"), time_ref_dt=DateTime(2024, 4, 29, 0, 0, 0))
+function save_sync_netcdf(result; nc_out=joinpath("data", "vn_sync_chunk_daily", "vn_sync_offsets.nc"), time_ref_dt=DateTime(2024, 4, 29, 0, 0, 0))
     seq_ref20 = result.seq_ref20
     chunk_lens = result.chunk_lens
     chunk_record_starts = result.chunk_record_starts
@@ -1249,40 +1249,32 @@ function save_sync_netcdf(result; nc_out=joinpath("epsilon_data", "vn_sync_offse
     return nc_out
 end
 
-function read_synced_motion(nc_path=joinpath("epsilon_data", "vn_sync_offsets.nc"))
-    ds = NCDataset(nc_path, "r")
-    motion = (; 
-        time = ds["time"][:],
-        time_dt = String.(ds["time_dt"][:]),
-        record_chunk_index = ds["record_chunk_index"][:],
-        vn2_1s_aligned = Float64.(ds["vn2_1s_aligned"][:]),
-        pitch_degrees = Float64.(ds["pitch_degrees"][:]),
-        roll_degrees = Float64.(ds["roll_degrees"][:]),
-        chunk_record_start_idx = ds["chunk_record_start_idx"][:],
-        chunk_record_end_idx = ds["chunk_record_end_idx"][:],
-    )
-    close(ds)
-    return motion
+function read_synced_motion(nc_path)
+    NCDatasets.NCDataset(nc_path, "r") do ds
+        return (;
+            time           = ds["time"][:],
+            time_str       = String.(ds["time_str"][:]),
+            sync_chunk_id  = ds["sync_chunk_id"][:],
+            vn2_aligned    = Float64.(ds["vn2_aligned"][:]),
+            pitch          = Float64.(ds["pitch"][:]),
+            roll           = Float64.(ds["roll"][:]),
+            chunk_ic       = ds["chunk_ic"][:],
+            time_start_idx = ds["time_start_idx"][:],
+            time_end_idx   = ds["time_end_idx"][:],
+            offset_s       = Float32.(ds["offset_s"][:]),
+        )
+    end
 end
 
 tilt_factor(pitch_degrees, roll_degrees) = cosd.(pitch_degrees) .* cosd.(roll_degrees)
 
-function motion_correct_stare_velocity(dopplervel::AbstractVector, vn2_1s_aligned, pitch_degrees, roll_degrees)
-    scale = tilt_factor(pitch_degrees, roll_degrees)
-    return Float64.(dopplervel) ./ scale .- Float64.(vn2_1s_aligned)
-end
+motion_correct_stare_vel(dopplervel, vn2_1s_aligned) = dopplervel - vn2_1s_aligned
+# can be broadcasted over Matrix(nbeams,ntop) with Vector(nbeams)
 
-function motion_correct_stare_velocity(dopplervel::AbstractMatrix, vn2_1s_aligned, pitch_degrees, roll_degrees)
-    scale = reshape(tilt_factor(pitch_degrees, roll_degrees), :, 1)
-    heave = reshape(Float64.(vn2_1s_aligned), :, 1)
-    return Float64.(dopplervel) ./ scale .- heave
-end
-
-function read_and_motion_correct_stare(dopplervel, nc_path=joinpath("epsilon_data", "vn_sync_offsets.nc"); record_inds=:)
+function read_and_motion_correct_stare(dopplervel, nc_path; record_inds=:)
     motion = read_synced_motion(nc_path)
-    inds = record_inds isa Colon ? collect(eachindex(motion.vn2_1s_aligned)) : record_inds
-    corrected = motion_correct_stare_velocity(dopplervel, motion.vn2_1s_aligned[inds], motion.pitch_degrees[inds], motion.roll_degrees[inds])
-    return (; corrected, motion=(; time=motion.time[inds], time_dt=motion.time_dt[inds], record_chunk_index=motion.record_chunk_index[inds], vn2_1s_aligned=motion.vn2_1s_aligned[inds], pitch_degrees=motion.pitch_degrees[inds], roll_degrees=motion.roll_degrees[inds]))
+    inds = record_inds isa Colon ? collect(eachindex(motion.vn2_aligned)) : record_inds
+    return motion_correct_stare_vel(dopplervel, motion.vn2_aligned[inds])
 end
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -1297,7 +1289,7 @@ Return the `chunk_ic` values stored in the daily sync NC file for `day`
 Returns an empty vector when no daily file exists for that day.
 """
 function chunk_ids_for_day(day::Date;
-    daily_dir = joinpath("epsilon_data", "daily"),
+    daily_dir = joinpath("data", "vn_sync_chunk_daily"),
 )
     nc_path = joinpath(daily_dir,
         "mdv_vn2_sync_$(Dates.format(day, dateformat"yyyymmdd")).nc")
@@ -1358,11 +1350,12 @@ chunks after running the production writer.
    `k = findfirst(chunk_ic .== ic)` in the chunk dimension; read
    `vn2_aligned[t0:t1]`, `pitch[t0:t1]`, `roll[t0:t1]` where
    `t0 = time_start_idx[k]`, `t1 = time_end_idx[k]`; read `offset_s[k]`.
-3. Apply motion correction:
-   `w[t,z] = dopplervel[t,z] / (cos(pitch[t])·cos(roll[t])) − vn2_aligned[t]`
+3. Apply motion correction (the VN sensor is aligned with the lidar telescope,
+   so no tilt correction is needed):
+   `w[t,z] = dopplervel[t,z] − vn2_aligned[t]`
 
 When VN coverage was insufficient, `vn2_aligned` will be all NaN and `w` equals
-`dopplervel / tilt_factor` only (no heave removal).  Check `result.vn_ok`.
+`dopplervel` unchanged (no heave removal).  Check `result.vn_ok`.
 
 Returns `(; stare_dt, w, dopplervel_raw, vn2_aligned, pitch, roll, height,
             offset_s, vn_ok, ic)`:
@@ -1379,7 +1372,7 @@ Returns `(; stare_dt, w, dopplervel_raw, vn2_aligned, pitch, roll, height,
   ic              Int               sync-chunk identifier
 """
 function load_chunk_for_dissipation(ic::Integer;
-    daily_dir = joinpath("epsilon_data", "daily"),
+    daily_dir = joinpath("data", "vn_sync_chunk_daily"),
     nc_dir    = "data/netcdf_stare",
     Env,
     beams,
@@ -1438,7 +1431,7 @@ function load_chunk_for_dissipation(ic::Integer;
 
     # ── Step 3: motion correction ──────────────────────────────────────────
     #   w[t,z] = dopplervel[t,z] / (cos(pitch[t])·cos(roll[t])) - vn2_aligned[t]
-    w = motion_correct_stare_velocity(dopplervel_raw, vn2_aligned, pitch_deg, roll_deg)
+    w = motion_correct_stare_vel.(dopplervel_raw, vn2_aligned)
 
     return (;
         stare_dt,
@@ -1496,7 +1489,7 @@ function check_chunk_alignment_contract(ic_list;
     Env,
     beams,
     state,
-    daily_dir = joinpath("epsilon_data", "daily"),
+    daily_dir = joinpath("data", "vn_sync_chunk_daily"),
     nc_dir    = "data/netcdf_stare",
     tol_ms    = 10,        # milliseconds; lidar clock resolution is ~1 ms
 )
@@ -1717,7 +1710,7 @@ Progress and per-chunk quality are appended to `log_path` (CSV) after every chun
 A summary line is printed to stdout every `log_every` chunks.
 """
 function write_daily_mdv_vn2!(;
-    out_dir      = joinpath("epsilon_data", "daily"),
+    out_dir      = joinpath("data", "vn_sync_chunk_daily"),
     nc_dir       = "data/netcdf_stare",
     lidarstemdir = "./data",
     uv_path      = joinpath("data/netcdf", "ekamsat_lidar_uv_20240428-20240613.nc"),
@@ -1726,7 +1719,7 @@ function write_daily_mdv_vn2!(;
     ntop         = 80,
     ic_list      = nothing,
     overwrite    = false,
-    log_path     = joinpath("epsilon_data",
+    log_path     = joinpath("data", "vn_sync_chunk_daily",
                      "daily_mdv_vn2_$(Dates.format(Dates.now(), dateformat"yyyymmdd_HHMMSS")).log"),
     log_every    = 100,
 )
@@ -1932,9 +1925,10 @@ function write_daily_mdv_vn2!(;
                     v_off  = defVar(ds, "offset_s",       Float32, ("chunk",);
                         attrib=["units"=>"s", "_FillValue"=>fv32,
                                 "long_name"=>"total VN timing offset applied to this chunk (1 Hz sequential prior + 20 Hz native residual)"])
-                    v_t[:]    = time_ms;    v_tstr[:] = time_str
-                    v_mdv[:]  = mdv_all;   v_vn2[:]  = vn2_all
-                    v_pit[:]  = pitch_all; v_rol[:]  = roll_all;  v_scid[:] = scid_all
+                    # nrec = length of time dimension
+                    v_t[1:nrec]    = time_ms;    v_tstr[1:nrec] = time_str
+                    v_mdv[1:nrec]  = mdv_all;   v_vn2[1:nrec]  = vn2_all
+                    v_pit[1:nrec]  = pitch_all; v_rol[1:nrec]  = roll_all;  v_scid[1:nrec] = scid_all
                     v_cic[:] = chunk_ic_vals; v_ist[:] = ist_vals;  v_ien[:] = ien_vals
                     v_ts[:]  = time_start_idx; v_te[:] = time_end_idx
                     v_lst[:] = lidar_t_s_ms;  v_len[:] = lidar_t_e_ms

@@ -196,12 +196,12 @@ for ic in scan_chunks
         win.vn_coverage, win.vn2_xcorr_nan_frac,
         length(win.goodlevels), count(isfinite, win.mdv),
         lidar_dt_s, lidar_dt_std_s,
-        isfinite(vn_dt_s)     ? vn_dt_s     : -9999.0,
-        isfinite(vn_dt_std_s) ? vn_dt_std_s : -9999.0,
-        isfinite(vn_gap_max_s)? vn_gap_max_s: -9999.0,
-        isfinite(offset_s)    ? offset_s    : -9999.0,
-        isfinite(corr)        ? corr        : -9999.0,
-        isfinite(coh)         ? coh         : -9999.0,
+        isfinite(vn_dt_s)      ? vn_dt_s      : -9999.0,
+        isfinite(vn_dt_std_s)  ? vn_dt_std_s  : -9999.0,
+        isfinite(vn_gap_max_s) ? vn_gap_max_s : -9999.0,
+        isfinite(offset_s)     ? offset_s     : -9999.0,
+        isfinite(corr)         ? corr         : -9999.0,
+        isfinite(coh)          ? coh          : -9999.0,
         flag_str)
 end
 
@@ -217,12 +217,12 @@ open(csv_path, "w") do io
             r.vn_coverage, r.vn_nan_frac,
             r.ngoodlevels, r.mdv_nfinite,
             r.lidar_dt_s, r.lidar_dt_std_s,
-            isfinite(r.vn_dt_s)     ? r.vn_dt_s     : -9999.0,
-            isfinite(r.vn_dt_std_s) ? r.vn_dt_std_s : -9999.0,
-            isfinite(r.vn_gap_max_s)? r.vn_gap_max_s: -9999.0,
-            isfinite(r.offset_s)    ? r.offset_s    : -9999.0,
-            isfinite(r.corr)        ? r.corr        : -9999.0,
-            isfinite(r.coh)         ? r.coh         : -9999.0,
+            isfinite(r.vn_dt_s)      ? r.vn_dt_s      : -9999.0,
+            isfinite(r.vn_dt_std_s)  ? r.vn_dt_std_s  : -9999.0,
+            isfinite(r.vn_gap_max_s) ? r.vn_gap_max_s : -9999.0,
+            isfinite(r.offset_s)     ? r.offset_s     : -9999.0,
+            isfinite(r.corr)         ? r.corr         : -9999.0,
+            isfinite(r.coh)          ? r.coh          : -9999.0,
             r.flag)
     end
 end
