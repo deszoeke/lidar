@@ -99,3 +99,54 @@ The four specialized agents are defined in `.github/agents/`. Read the relevant 
 | Tester | `.github/agents/tester.agent.md` | validate / test / diagnose |
 
 On session start, load this file plus the agent file for the first role you are about to play.
+
+---
+
+## LidarVNSync Core API Conventions
+
+### Key data structures
+
+| Symbol | Type | Meaning |
+|--------|------|---------|
+| `icvn` | `UnitRange{Int}` | Chunk indices covered by VectorNav data (from `setup_sync_context`) |
+| `Env.ists[ic]` | `Int` | Index of the first lidar beam in chunk `ic` |
+| `Env.dtime[Env.ists[ic]]` | `DateTime` | Wall-clock start time of chunk `ic` |
+| `Env.dtime[Env.iens[ic]]` | `DateTime` | Wall-clock end time of chunk `ic` |
+
+### Selecting chunks by date — correct idiom
+
+```julia
+# ✓ correct: lambda contains the full predicate, collect(icvn) is the collection
+ic_day1 = filter(ic -> Date(Env.dtime[Env.ists[ic]]) == Date(2024, 4, 28), collect(icvn))
+```
+
+**Common mistake** — stray `) == Date(...)` outside the lambda produces a parse error:
+```julia
+# ✗ wrong (syntax error):
+ic_day1 = filter(ic -> Date(Env.dtime[Env.ists[ic]]) == Date(2024,4,28)) == Date(2024,4,28), collect(icvn))
+```
+
+### Key function signatures
+
+```julia
+# Run sync over an explicit chunk list (ic_list=nothing → all icvn)
+LidarVNSync.write_daily_mdv_vn2!(;
+    out_dir  = "data/vn_sync_chunk_daily",
+    ic_list  = ic_day1,   # Vector{Int} or nothing
+    overwrite = false,
+)
+
+# Sequential offset computation (returns NamedTuple result)
+result = LidarVNSync.process_sync_data(beams, Env, Vn, UV, ic_list; ntop=nz)
+
+# Single-chunk window extraction (stateful: pass the same `state` across calls)
+win = LidarVNSync.extract_sync_window(beams, Env, state, Vn, UV, ic; ntop=nz, nc_dir="./data/netcdf_stare")
+```
+
+### Sync-quality gates
+
+A chunk is skipped (offset → sentinel `−9999`) when:
+- `win.vn_coverage < 0.5` — VN 20 Hz data covers < 50 % of the window
+- `win.vn2_xcorr_nan_frac > 0.15` — too many NaN samples in the interpolated VN signal
+
+Downstream code must guard: `isfinite(offset_s) && offset_s != LidarVNSync.OFFSET_SENTINEL_S`.
