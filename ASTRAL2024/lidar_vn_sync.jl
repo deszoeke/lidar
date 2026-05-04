@@ -465,10 +465,11 @@ function detrend_center(x)
     y
 end
 
+"returns version of x sampled at earlier times by lag_seconds, using linear interpolation and NaN for out-of-bounds"
 function shift_signal_linear(x, lag_seconds; dt=TIMESTEP, fill_value=NaN)
     y = Float64.(x)
     n = length(y)
-    q = collect(1:n) .- lag_seconds / dt
+    q = collect(1:n) .- lag_seconds / dt # decremented index samples earlier
     out = fill(fill_value, n)
     for i in eachindex(q)
         qi = q[i]
