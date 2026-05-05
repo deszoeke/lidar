@@ -877,6 +877,15 @@ function finite_overlap_corr(x, y)
     return cor(xv, yv)
 end
 
+"""
+hamming bandpass filter for mdv selects frequencies coherent with ship motion.
+uses FFT method and doesn't tolerate gaps, so caller should fill short NaN gaps and handle edge effects as needed
+"""
+function filter_mdv(mdv; fs=1/TIMESTEP)
+    fflt = digitalfilter(Bandpass(0.045, 0.27), FIRWindow(hamming(91)); fs=fs)
+    return fftfilt(fflt, Float64.(mdv))
+end
+
 # UV is passed through for shared reader compatibility and later motion correction.
 # The timing offsets computed here are fit only from mdv and vn2.
 function process_sync_data(beams, env, Vn, UV, ic_list; 
