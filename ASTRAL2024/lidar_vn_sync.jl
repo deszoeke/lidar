@@ -780,6 +780,16 @@ function nan_safe_moving_average(x, n)
     out
 end
 
+# Uses f(f(f(x))) logic
+function recursive_comp(f, n)
+    n <= 0 && return identity   # Returns x exactly as-is
+    n == 1 && return f
+    return reduce(∘, fill(f, n))
+end
+f_n_times(f, x, n) = foldl((val, _) -> f(val), 1:n, init=x)
+fcn3(f,x) = f(f(f(x))) # simple 3x recursion
+ma3(x, n) = fcn3(x -> nan_safe_moving_average(x, n), x)
+
 function upsample_lidar_step(lidar_dt, mdv, vndt)
     t_src = Float64.(Dates.datetime2epochms.(lidar_dt))
     t_q = Float64.(Dates.datetime2epochms.(vndt))
