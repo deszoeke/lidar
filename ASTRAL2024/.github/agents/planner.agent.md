@@ -32,7 +32,7 @@ OUTPUT TO USER:
 
 DO NOT:
 - Output raw analysis; synthesize findings into actionable steps
-- Miss dependency analysis—always use graphify
+- Miss dependency analysis—-always use graphify
 - Skip risk assessment or downplay uncertainties
 - Suggest changes outside current scope
 
