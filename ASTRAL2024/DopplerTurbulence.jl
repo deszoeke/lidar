@@ -9,6 +9,14 @@ using Interpolations
 using DSP
 using FFTW
 
+# Include and import uncertainty propagation functions
+include("displacement_uncertainty.jl")
+using .DisplacementUncertainty
+
+# Export DisplacementUncertainty functions for use in notebooks
+export displacement_variance_pitch_roll, propagate_rho_uncertainty,
+       combine_variances, estimate_pitch_roll_uncertainty
+
 # utility functions
 pd = permutedims
 m2n(x) = ismissing(x) ? NaN : x
@@ -275,6 +283,65 @@ function displacements( ci1,ci2, Udt,Vdt, pitch,roll, w; rangegate=rangegate , t
     # return properties of pairs
     return zm, dr2, dz2, D2
 end
+
+"""
+zm, dr2, dz2, D2, var_dr2, var_dz2 = displacements(ci1, ci2, Udt, Vdt, pitch, roll, w, σ_pitch, σ_roll;
+                                                     rangegate=rangegate, timestep=timestep)
+
+Displacements with uncertainty propagation from pitch/roll measurement errors.
+
+Multiple dispatch version that propagates pitch/roll uncertainties through
+the displacement calculation for use with weighted total least squares.
+
+# Additional Arguments (vs base method)
+- `σ_pitch`: pitch uncertainty (rad)
+- `σ_roll`: roll uncertainty (rad)
+
+# Additional Returns
+- `var_dr2`: variance of dr² from pitch/roll uncertainty
+- `var_dz2`: variance of dz² from pitch/roll uncertainty
+"""
+function displacements(ci1, ci2, Udt, Vdt, pitch, roll, w, σ_pitch::Real, σ_roll::Real;
+                      rangegate=rangegate, timestep=timestep)
+    # Base displacement calculation (same as original method)
+    it1 = map(idx->idx[1], ci1)
+    iz1 = map(idx->idx[2], ci1)
+    it2 = map(idx->idx[1], ci2)
+    iz2 = map(idx->idx[2], ci2)
+
+    rng(iz) = rangegate * (iz-1 + 0.5)
+
+    Udtbar = @. (Udt[iz2] + Udt[iz1]) / 2
+    Vdtbar = @. (Vdt[iz2] + Vdt[iz1]) / 2
+    X = @. Udtbar * (it2 - it1)
+    Y = @. Vdtbar * (it2 - it1)
+
+    zm = @. (rng(iz2) * cos(pitch[it2])*cos(roll[it2]) + rng(iz1) * cos(pitch[it1])*cos(roll[it1])) / 2
+
+    dz = @. rng(iz2) * cos(pitch[it2])*cos(roll[it2]) - rng(iz1) * cos(pitch[it1])*cos(roll[it1])
+    dx = @. X + rng(iz2) *-sin(pitch[it2]) - rng(iz1) *-sin(pitch[it1])
+    dy = @. Y + rng(iz2) * cos(pitch[it2])*sin(roll[it2]) - rng(iz1) * cos(pitch[it1])*sin(roll[it1])
+
+    dz2 = dz .* dz
+    dr2 = @. dz2 + dx*dx + dy*dy
+    D2 = @. (w[ci2] - w[ci1])^2
+
+    # NEW: Compute uncertainty contributions from pitch/roll
+    var_dr2 = similar(dr2)
+    var_dz2 = similar(dz2)
+
+    for i in eachindex(dr2)
+        var_dr2[i], var_dz2[i] = displacement_variance_pitch_roll(
+            rng(iz1[i]), rng(iz2[i]),
+            pitch[it1[i]], pitch[it2[i]],
+            roll[it1[i]], roll[it2[i]],
+            σ_pitch, σ_roll
+        )
+    end
+
+    return zm, dr2, dz2, D2, var_dr2, var_dz2
+end
+
 
 "dr^2/3 (1-(dz/dr)^2/4) displacement function for computing dissipation from structure function pairs"
 rhopair(dr2, dz2) = dr2^(1/3) * (1 - dz2/(4*dr2))
