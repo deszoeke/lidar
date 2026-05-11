@@ -1,11 +1,11 @@
-# Graph Report - /Users/deszoeks/Projects/lidar/ASTRAL2024  (2026-05-06)
+# Graph Report - /Users/deszoeks/Projects/lidar/ASTRAL2024  (2026-05-10)
 
 ## Corpus Check
-- 23 files · ~9,238,514 words
+- 24 files · ~9,215,522 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 342 nodes · 629 edges · 13 communities detected
+- 348 nodes · 635 edges · 13 communities detected
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
@@ -46,8 +46,8 @@ Cohesion: 0.07
 Nodes (54): analytic_envelope_fft(), append_nan_offset_log(), backward_jump_robustness(), check_chunk_alignment_contract(), chunk_lidar_datetimes(), coarse_and_fine_lag(), cosine_edge_mask(), detrend_center() (+46 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.07
-Nodes (21): Dates, f_taper(), taper(), FFTW, Interpolations, JLD2, NCDatasets, Pkg (+13 more)
+Cohesion: 0.06
+Nodes (23): Dates, f_taper(), taper(), FFTW, ImageFiltering, Interpolations, JLD2, LinearAlgebra (+15 more)
 
 ### Community 2 - "Community 2"
 Cohesion: 0.07
@@ -70,8 +70,8 @@ Cohesion: 0.12
 Nodes (9): allcross(), displacements(), DopplerTurbulence, lidarindices(), rng(), trigs(), uniquepairs(), wtrue() (+1 more)
 
 ### Community 7 - "Community 7"
-Cohesion: 0.16
-Nodes (12): estimate_heave_ts(), iterative_despike_rain(), nanmedian(), rain_mask_vertical(), running_median(), subtract_rain_layers!(), ImageFiltering, infer_heave_from_stare() (+4 more)
+Cohesion: 0.15
+Nodes (13): compute_hmix_for_matrix(), extract_epsilon_and_meta(), hmix_first_crossing(), is_valid_eps(), list_epsilon_files(), main(), process_file(), rng_height() (+5 more)
 
 ### Community 8 - "Community 8"
 Cohesion: 0.18
@@ -82,35 +82,35 @@ Cohesion: 0.23
 Nodes (5): chunken(), chunkst(), nextchunki(), prevchunki(), thisj()
 
 ### Community 10 - "Community 10"
-Cohesion: 0.42
-Nodes (8): compute_hmix_for_matrix(), extract_epsilon_and_meta(), hmix_first_crossing(), is_valid_eps(), list_epsilon_files(), main(), process_file(), rng_height()
+Cohesion: 0.39
+Nodes (9): flatten, get_nav_file(), get_posmv_file(), itr_expand(), read_gyro_data(), read_gyro_dict(), read_pashr_data(), read_pashr_dict() (+1 more)
 
 ### Community 11 - "Community 11"
 Cohesion: 0.25
 Nodes (3): build_lidar_index(), lidar_index, LidarIndex
 
 ### Community 12 - "Community 12"
-Cohesion: 0.39
-Nodes (9): flatten, get_nav_file(), get_posmv_file(), itr_expand(), read_gyro_data(), read_gyro_dict(), read_pashr_data(), read_pashr_dict() (+1 more)
+Cohesion: 0.36
+Nodes (6): estimate_heave_ts(), iterative_despike_rain(), nanmedian(), rain_mask_vertical(), running_median(), subtract_rain_layers!()
 
 ## Knowledge Gaps
-- **10 isolated node(s):** `Plots`, `PythonPlot`, `read_stare_chunk`, `read_streamlinexr_stare`, `cat_dicts` (+5 more)
+- **10 isolated node(s):** `PythonPlot`, `read_stare_chunk`, `read_streamlinexr_stare`, `das_dict`, `flatten` (+5 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Dates` connect `Community 1` to `Community 0`, `Community 2`, `Community 3`, `Community 4`, `Community 5`, `Community 6`, `Community 8`, `Community 9`, `Community 10`, `Community 11`, `Community 12`?**
-  _High betweenness centrality (0.470) - this node is a cross-community bridge._
+- **Why does `Dates` connect `Community 1` to `Community 0`, `Community 2`, `Community 3`, `Community 4`, `Community 5`, `Community 6`, `Community 7`, `Community 8`, `Community 9`, `Community 10`, `Community 11`?**
+  _High betweenness centrality (0.462) - this node is a cross-community bridge._
 - **Why does `LidarVNSync` connect `Community 0` to `Community 1`, `Community 2`, `Community 5`, `Community 6`, `Community 7`?**
-  _High betweenness centrality (0.355) - this node is a cross-community bridge._
-- **Why does `Statistics` connect `Community 7` to `Community 0`, `Community 1`, `Community 2`, `Community 5`, `Community 6`, `Community 8`, `Community 10`?**
-  _High betweenness centrality (0.154) - this node is a cross-community bridge._
-- **What connects `Plots`, `PythonPlot`, `read_stare_chunk` to the rest of the system?**
+  _High betweenness centrality (0.352) - this node is a cross-community bridge._
+- **Why does `Statistics` connect `Community 7` to `Community 0`, `Community 1`, `Community 2`, `Community 5`, `Community 6`, `Community 8`, `Community 12`?**
+  _High betweenness centrality (0.182) - this node is a cross-community bridge._
+- **What connects `PythonPlot`, `read_stare_chunk`, `read_streamlinexr_stare` to the rest of the system?**
   _10 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.07 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.07 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
   _Cohesion score 0.07 - nodes in this community are weakly interconnected._

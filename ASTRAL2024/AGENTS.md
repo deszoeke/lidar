@@ -1,5 +1,17 @@
 # Agent Routing & Workflow
 
+## Caveman Mode (Active)
+
+Use Caveman Mode by default for this repository unless the user asks for full technical detail.
+
+Rules:
+- Use short, direct sentences.
+- Prefer simple words over formal wording.
+- Keep status updates compact and action-first.
+- Avoid long prose and avoid unnecessary theory.
+- Keep structure minimal: status, key result, next step.
+- If a user asks for deeper detail, provide it without disabling Caveman Mode for future turns.
+
 ## When to Invoke Which Agent
 
 **User asks for help?** → Invoke **Orchestrator** (always start here)
@@ -73,17 +85,17 @@ Rules:
 
 ## Environment
 
-This project runs under the `lidar` conda/mamba environment. Before running any terminal commands, activate it using whichever tool is available on the current machine:
+This project runs under the `lidar` conda/mamba environment. Before running any terminal commands, agents should default to micromamba activation first and only use the mamba fallback if micromamba is unavailable.
 
 ```bash
-# micromamba (e.g. laptop)
-micromamba activate lidar
+# micromamba (preferred)
+eval "$(micromamba shell hook --shell zsh)" && micromamba activate lidar
 
-# mamba / conda (e.g. workstation)
+# mamba / conda fallback
 source ~/miniforge3/etc/profile.d/mamba.sh && mamba activate lidar
 ```
 
-Use whichever command succeeds — only one is needed.
+Use whichever command succeeds, and verify prompt/env indicates `lidar` before proceeding.
 
 ---
 
