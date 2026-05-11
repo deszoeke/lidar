@@ -1,7 +1,7 @@
-# Graph Report - /Users/deszoeks/Projects/lidar/ASTRAL2024  (2026-05-10)
+# Graph Report - /Users/deszoeks/Projects/lidar/ASTRAL2024  (2026-05-11)
 
 ## Corpus Check
-- 24 files · ~9,215,522 words
+- 24 files · ~9,240,776 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
