@@ -1177,6 +1177,13 @@ function read_stare_chunk( dt::TimeType, St, Vn, UV, st, en, ntop=80 )
     # lidar_clock_fast_by = Millisecond( 126832 ) # adjust for lidar clock fast (ahead) by 126832 milliseconds compared to the GPS.
     lidar_clock_fast_by = Millisecond( round(Int64, 1_000 * fit_offset(stare_dt_raw[1])) )
     stare_dt = stare_dt_raw .- lidar_clock_fast_by # synced to within 1 s
+    # After computing stare_dt (corrected),
+    # detect and fix midnight wraparound:
+    for i in 2:length(stare_dt)
+        while stare_dt[i] < stare_dt[i-1] - Second(1800)  # if time jumps backward by >30 min
+            stare_dt[i] += Day(1)
+        end
+    end
     stare1dt = stare_dt[:] # subset
 
     # pre-subset
@@ -1281,6 +1288,62 @@ function read_stare_chunk( dt::TimeType, St, Vn, UV, st, en, ntop=80 )
     end
     
     return dopplervel, pitch, roll, VelNED0, VelNED1, VelNED2, Ur, Vr, mdv
+end
+
+# Returns Ur, Vr as a Matrix of time x height.
+# Caller might expect a Vector of height for each chunk.
+# Copy the Ur,Vr procedure below for testing...
+
+# mean relative velocity
+# Ur = Matrix{Union{Missing,Float64}}(missing, size(UV[:ur]))
+# Vr = Matrix{Union{Missing,Float64}}(missing, size(UV[:vr]))
+"excerpt get_mean_uv_chunk(UV)"
+function get_mean_uv_chunk!(Ur,Vr, UV, stare1dt, ntop=80)
+
+    # if isempty(UV["time"]) # no UV data for this period: return NaN wind, keep VN motion
+    #     Ur .= NaN
+    #     Vr .= NaN
+    #     return Ur, Vr
+    # end
+    ind = findindices( Dates.value.(stare1dt), Dates.value.(UV["time"]))
+    # result must be 1:1 for stare1dt and ind
+    ls = length(stare1dt)
+    li = length(ind)
+    if li < ls # extend ind with last index of UV
+        ind = [ind; length(UV["time"]).+zeros(Int32, ls-li)]
+    end
+    # Handle either UV layout: [range, time] or [time, range].
+    ur = UV[:ur][:,:]
+    vr = UV[:vr][:,:]
+    ntime_uv = length(UV["time"][:])
+    if size(ur, 2) == ntime_uv && size(vr, 2) == ntime_uv
+        # [range, time]
+        maxih = min(ntop, size(ur, 1), size(vr, 1))
+        for ih in 1:maxih
+            Ur[:,ih] .= ur[ih,ind] # -> time, height
+            Vr[:,ih] .= vr[ih,ind]
+        end
+    elseif size(ur, 1) == ntime_uv && size(vr, 1) == ntime_uv
+        # [time, range]
+        maxih = min(ntop, size(ur, 2), size(vr, 2))
+        for ih in 1:maxih
+            Ur[:,ih] .= ur[ind,ih]
+            Vr[:,ih] .= vr[ind,ih]
+        end
+    else
+        Ur .= NaN
+        Vr .= NaN
+        return Ur, Vr
+    end
+
+    # questionable: fill all the mean relative velocities
+    isgoodnum(x) = !ismissing(x) && isfinite(x)
+    isf = isgoodnum.(Vr)
+    if any(isf)
+        Vr[.!isf] .= mean(Vr[isf])
+        Ur[.!isf] .= mean(Ur[isf])
+    end    
+    return Ur, Vr
 end
 
 end # module chunks
