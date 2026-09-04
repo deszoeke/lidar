@@ -15,6 +15,8 @@ lidar2019/plots/
 lidar2019/data/
 epsilon_data/
 pluto
+graphify-out
+ASTRAL2024/graphify-out
 
 VectorNavTable.jld2
 doc/VN300 User Manual (UM3000-R0).pdf
