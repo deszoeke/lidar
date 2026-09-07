@@ -133,44 +133,6 @@ function load_lidar_indices_and_files(; lidarstemdir="./data")
     )
 end
 
-function read_streamlinexr_stare!(file_path, h, beams, bb, nheaderlines=17; startat=1, endat=0)
-    nz = size(beams[:height][:], 1)
-    nlines = h[:nlines]
-    ngates = h[:ngates]
-    nbeamsmax = round(Int, (nlines - nheaderlines) / (1 + ngates))
-    endat = endat == 0 ? nbeamsmax : mod(endat - 1, nbeamsmax) + 1
-    nbeams = min(endat - startat + 1, nbeamsmax)
-
-    beam_timeangles = zeros(Float64, nbeams, 5)
-    beam_velrad = zeros(Float64, nbeams, ngates, 4)
-
-    open(file_path) do file
-        for _ in 1:nheaderlines
-            readline(file)
-        end
-        for _ in 1:((1 + ngates) * (startat - 1))
-            readline(file)
-        end
-        for ibeam in 1:nbeams
-            beam_timeangles[ibeam, :] .= parse.(Float64, split(readline(file)))
-            for igate in 1:ngates
-                beam_velrad[ibeam, igate, :] .= parse.(Float64, split(readline(file)))
-            end
-        end
-    end
-
-    setindex!(beams[:time], beam_timeangles[:, 1], bb)
-    setindex!(beams[:azimuth], beam_timeangles[:, 2], bb)
-    setindex!(beams[:elevangle], beam_timeangles[:, 3], bb)
-    setindex!(beams[:pitch], beam_timeangles[:, 4], bb)
-    setindex!(beams[:roll], beam_timeangles[:, 5], bb)
-    beams[:height][1:nz] .= (beam_velrad[1, 1:nz, 1] .+ 0.5) .* h[:gatelength]
-    setindex!(beams[:dopplervel], beam_velrad[:, 1:nz, 2], bb, 1:nz)
-    setindex!(beams[:intensity], beam_velrad[:, 1:nz, 3], bb, 1:nz)
-    setindex!(beams[:beta], beam_velrad[:, 1:nz, 4], bb, 1:nz)
-    nothing
-end
-
 function setup_sync_context(; lidarstemdir="./data", uv_path=joinpath("data/netcdf", "ekamsat_lidar_uv_20240428-20240613.nc"), nx=4000, nz=80)
     Env = load_lidar_indices_and_files(; lidarstemdir=lidarstemdir)
     Vn = read_vecnav_dict()

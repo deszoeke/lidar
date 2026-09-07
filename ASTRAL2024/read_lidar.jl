@@ -16,7 +16,7 @@ using JLD2
 # using MAT
 # using PyPlot
 
-export read_streamlinexr_stare #, read_streamlinexr_head
+export read_streamlinexr_stare, read_streamlinexr_stare! #, read_streamlinexr_head
 export get_daily_meanuv, read_daily_Vn
 export read_streamlinexr_beam_timeangles
 
@@ -179,6 +179,73 @@ function read_streamlinexr_stare!(file_path, h, beams, nheaderlines=17; nbeams0=
     beams[:dopplervel][bb,:] .= beam_velrad[:,:,2] # m/s
     beams[:intensity ][bb,:] .= beam_velrad[:,:,3] # SNR + 1
     beams[:beta      ][bb,:] .= beam_velrad[:,:,4] # m-1 sr-1  backscatter?
+end
+
+"""
+modifying read_streamlinexr_stare!(file_path, header, beams, bb)
+Read data and fill in the beams for a single file, at explicit big-index range bb.
+"""
+function read_streamlinexr_stare!(file_path, h, beams, bb, nheaderlines=17; startat=1, endat=0)
+    # beams is a Dict of PeriodicVector and PeriodicMatrix
+    # bb is the big_index range, which will be interpreted periodically by arrays in beams
+
+    # use header information in h
+    nz = size(beams[:height][:],1)
+
+    nlines = h[:nlines]
+    ngates = h[:ngates]
+
+    # beams could be rays or times
+    nbeamsmax = round(Int, (nlines-nheaderlines) / (1+ngates)) # = nrays*ntimes # total number available
+    # but nbeams may be reduced by startat, endat
+    endat = mod(endat-1, nbeamsmax) + 1 # clobbers name but does not write to original argument
+    nbeams = min(endat - startat + 1, nbeamsmax) # actual number of beams requested, or total number available
+
+    # allocates for each file; this is not too much to affect perfomance
+    beam_timeangles = zeros(Float64, (nbeams, 5))
+    beam_velrad = zeros(Float64, nbeams, ngates, 4)
+
+    # for User wind profiles beam <--> VAD ray
+    # for Stare beam <--> time
+
+    # open and read the file
+    open(file_path) do file
+        for _ in 1:nheaderlines # skip header lines
+            readline(file)
+        end
+        for _ in 1:( (1+ngates) * (startat-1) ) # skip beams before startat
+            readline(file)
+        end
+
+        # now read data # nbeams is already limited by endat-startat+1
+        for ibeam = 1:nbeams
+            # beam described by a batch of 1+ngates lines
+            # Read the beam parameter line
+            line = readline(file)
+            try
+                beam_timeangles[ibeam,:] .= parse.(Float64, split(line))
+            catch
+                @show line
+            end
+            # Read each gate in the beam
+            for igate = 1:ngates
+                line = readline(file)
+                beam_velrad[ibeam, igate,:] .= parse.(Float64, split(line))
+            end
+        end
+    end # close the file
+
+    # parse the variables into the dict beams by beam
+    setindex!(beams[:time],      beam_timeangles[:,1], bb) # decimal hours
+    setindex!(beams[:azimuth],   beam_timeangles[:,2], bb) # degrees
+    setindex!(beams[:elevangle], beam_timeangles[:,3], bb) # degrees
+    setindex!(beams[:pitch],     beam_timeangles[:,4], bb)
+    setindex!(beams[:roll],      beam_timeangles[:,5], bb)
+    # by gate
+    beams[:height][1:nz] .= (beam_velrad[1,1:nz,1].+0.5) .* h[:gatelength] # center of gate
+    setindex!(beams[:dopplervel], beam_velrad[:,1:nz,2], bb, 1:nz) # m/s
+    setindex!(beams[:intensity],  beam_velrad[:,1:nz,3], bb, 1:nz) # SNR + 1
+    setindex!(beams[:beta],       beam_velrad[:,1:nz,4], bb, 1:nz) # m-1 sr-1  backscatter
 end
 
 """
