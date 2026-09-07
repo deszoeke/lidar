@@ -312,66 +312,42 @@ ci1,ci2, li1,li2, it1,iz1,it2,iz2 = lidarindices(1000, 80)
 rangegate = 24.0 # for ASTRAL 2024 Halo Photonics StreamLineXR
 
 """
-zm, dr2, dz2, D2 = displacements( ci1,ci2, Udt,Vdt, pitch,roll, w; rangegate=rangegate)
-Displacements of sample pairs for one (vertical) subvolume.
+zm, dr2, dz2, D2 = displacements(ci1,ci2,it1,iz1,it2,iz2,Udt,Vdt,pitch,roll,w; rangegate=rangegate)
+Displacements of sample pairs for one (vertical) subvolume using precomputed pair-index vectors.
 """
-function displacements( ci1,ci2, Udt,Vdt, pitch,roll, w; rangegate=rangegate , timestep=timestep)
-    # get the individual indices
-    it1 = map(idx->idx[1], ci1) #  t index of first point(s)
-    iz1 = map(idx->idx[2], ci1) #  z index of first
-    it2 = map(idx->idx[1], ci2) #  t       of second points(s)
-    iz2 = map(idx->idx[2], ci2) #  z          second
-
-    rng(iz) = rangegate * (iz-1 + 0.5) # center of gates
+function displacements(ci1, ci2, it1, iz1, it2, iz2, Udt, Vdt, pitch, roll, w; rangegate=rangegate)
+    rng(iz) = rangegate * (iz - 1 + 0.5)
 
     # horiz translation of the sample volumes by mean wind
     Udtbar = @. (Udt[iz2] + Udt[iz1]) / 2
     Vdtbar = @. (Vdt[iz2] + Vdt[iz1]) / 2
     X = @. Udtbar * (it2 - it1)
     Y = @. Vdtbar * (it2 - it1)
+
     # vertical middle of pair
-    zm = @. (rng(iz2) * cos(pitch[it2])*cos(roll[it2]) + rng(iz1) * cos(pitch[it1])*cos(roll[it1])) / 2
+    zm = @. (rng(iz2) * cos(pitch[it2]) * cos(roll[it2]) + rng(iz1) * cos(pitch[it1]) * cos(roll[it1])) / 2
+
     # displacement between pair of points
-    dz = @.     rng(iz2) * cos(pitch[it2])*cos(roll[it2]) - rng(iz1) * cos(pitch[it1])*cos(roll[it1])
-    dx = @. X + rng(iz2) *-sin(pitch[it2])                - rng(iz1) *-sin(pitch[it1])
-    dy = @. Y + rng(iz2) * cos(pitch[it2])*sin(roll[it2]) - rng(iz1) * cos(pitch[it1])*sin(roll[it1])
-    # distance between
+    dz = @. rng(iz2) * cos(pitch[it2]) * cos(roll[it2]) - rng(iz1) * cos(pitch[it1]) * cos(roll[it1])
+    dx = @. X + rng(iz2) * -sin(pitch[it2]) - rng(iz1) * -sin(pitch[it1])
+    dy = @. Y + rng(iz2) * cos(pitch[it2]) * sin(roll[it2]) - rng(iz1) * cos(pitch[it1]) * sin(roll[it1])
+
     dz2 = dz .* dz
-    dr2 = @. dz2 + dx*dx + dy*dy
-    # CORRECT W for HEAVE and for TILTING into the horizontal wind
-    # vel structure function
+    dr2 = @. dz2 + dx * dx + dy * dy
     D2 = @. (w[ci2] - w[ci1])^2
-    # return properties of pairs
     return zm, dr2, dz2, D2
 end
 
 """
-zm, dr2, dz2, D2, var_dr2, var_dz2 = displacements(ci1, ci2, Udt, Vdt, pitch, roll, w, σ_pitch, σ_roll;
-                                                     rangegate=rangegate, timestep=timestep)
-
-Displacements with uncertainty propagation from pitch/roll measurement errors.
-
-Multiple dispatch version that propagates pitch/roll uncertainties through
-the displacement calculation for use with weighted total least squares.
-
-# Additional Arguments (vs base method)
-- `σ_pitch`: pitch uncertainty (rad)
-- `σ_roll`: roll uncertainty (rad)
-
-# Additional Returns
-- `var_dr2`: variance of dr² from pitch/roll uncertainty
-- `var_dz2`: variance of dz² from pitch/roll uncertainty
+zm, dr2, dz2, D2, var_dr2, var_dz2 = displacements(ci1,ci2,it1,iz1,it2,iz2,Udt,Vdt,pitch,roll,w; σ_pitch=σ_pitch, σ_roll=σ_roll, rangegate=rangegate)
+Computes structure function D2 for
+Displacements of sample pairs for one (vertical) subvolume using precomputed pair-index vectors,
+including variance estimates.
 """
-function displacements(ci1, ci2, Udt, Vdt, pitch, roll, w, σ_pitch::Real, σ_roll::Real;
-                      rangegate=rangegate, timestep=timestep)
-    # Base displacement calculation (same as original method)
-    it1 = map(idx->idx[1], ci1)
-    iz1 = map(idx->idx[2], ci1)
-    it2 = map(idx->idx[1], ci2)
-    iz2 = map(idx->idx[2], ci2)
-
-    rng(iz) = rangegate * (iz-1 + 0.5)
-
+function displacements(ci1, ci2, it1, iz1, it2, iz2,
+            Udt, Vdt, pitch, roll, w,
+            σ_pitch::Real, σ_roll::Real; rangegate=rangegate)
+    rng(iz) = rangegate * (iz - 1 + 0.5)
     Udtbar = @. (Udt[iz2] + Udt[iz1]) / 2
     Vdtbar = @. (Vdt[iz2] + Vdt[iz1]) / 2
     X = @. Udtbar * (it2 - it1)
