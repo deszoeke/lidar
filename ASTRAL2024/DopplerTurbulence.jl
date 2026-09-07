@@ -88,12 +88,12 @@ function findindices(xs, xl)
     return ind
 end
 
-"average within +-half points of the index of xl"
-function indavg(xl, ind; half=5)
+"average xl within windows to right of points of the index ind of xl"
+function indavg(xl, ind; full=20)
     xm = zeros(Float64, size(ind))
     for (i,idx) in enumerate(ind)
-        ii = max(1,idx-half) : min(length(xl),idx+half)
-        xm[i] = sum(Float64.(xl[ii])) / (2*half+1)
+        ii = max(1,idx) : min(length(xl),idx+full)
+        xm[i] = mean(Float64.(xl[ii]))
     end
     return xm
 end
