@@ -5,6 +5,7 @@ using Pkg; Pkg.activate(".")
 
 using Dates
 using Statistics
+using Rotations
 using Interpolations
 using DSP
 using FFTW
@@ -109,9 +110,63 @@ end
 trigs(pitch, roll) = ( cos(pitch), sin(pitch), cos(roll), sin(roll) )
 # cospitch, sinpitch, cosroll, sinroll = trigs(pitch, roll)
 
-function wtrue(w, Ur, Vr, pitch, roll)
+function wtrue_trigs(w, Ur, Vr, pitch, roll)
+    # approximate, better to use rotations
     cospitch, sinpitch, cosroll, sinroll = trigs(pitch, roll)
     wtrue = ( w + Ur*sinpitch - Vr*cospitch*sinroll ) / (cospitch*cosroll)
+end
+
+"""
+wtrue(dopplervel, Ur, Vr, heaveveldown, roll, pitch)
+Return true radial velocity component in lidar beam frame (+away).
+Rotate vertical VelNED and mean ship-relative wind (Ur, Vr)
+from inertial level ship coorindates
+to lidar beam coordinates using roll and pitch.
+"""
+function wtrue( dopplervel, Ur, Vr, heaveveldown, roll, pitch )
+    # external ship frame
+    vvn_ship = [0, 0, heaveveldown] # VectorNav vertical velocity vector (NED coordinate)
+    wnd_ship = [Ur, Vr, 0]          # mean horizontal relative wind, w=0 (NED coordinate)
+    wnd_vn_ship = wnd_ship - vvn_ship
+
+    # rotate from ship NED frame to lidar NED frame
+    R = RotX(roll*π/180) * RotY(pitch*π/180)
+
+    # mean vertical-radial-lidar relative velocity in the lidar platform body frame (NED)
+    # includes heave-induced velocity
+    wnd_lidar =  R * wnd_vn_ship # lidar NED frame (down-positive) vector
+
+    # signs: lidar upward heave vel > 0 ==> lidar VelNED2 < 0, induced radial velocity < 0 (towards)
+
+    # scalar true radial velocity (+up), adjusting for heave velocity
+    # and mean wind component in beam direction.
+    # wturb and dopplervel is away-positive. true radialvel is dopplervel + platform vel
+    # wtrue = wrel + wplatform
+    # trueradialvel is +up
+    trueradialvel = dopplervel + -wnd_lidar[3] # negate downward wnd_lidar: NED +down, dopplervel +up
+end
+
+function wtrue( dopplervel, surgevel, swayvel, heaveveldown, Ur, Vr, roll, pitch )
+    # external ship frame
+    vvn_ship = [surgevel, swayvel, heaveveldown] # VectorNav vertical velocity vector (NED coordinate)
+    wnd_ship = [Ur, Vr, 0]          # mean horizontal relative wind, w=0 (NED coordinate)
+    wnd_vn_ship = wnd_ship - vvn_ship
+
+    # rotate from ship NED frame to lidar NED frame
+    R = RotX(roll*π/180) * RotY(pitch*π/180)
+
+    # mean vertical-radial-lidar relative velocity in the lidar platform body frame (NED)
+    # includes heave-induced velocity
+    wnd_lidar =  R * wnd_vn_ship # lidar NED frame (down-positive) vector
+
+    # signs: lidar upward heave vel > 0 ==> lidar VelNED2 < 0, induced radial velocity < 0 (towards)
+
+    # scalar true radial velocity (+up), adjusting for heave velocity
+    # and mean wind component in beam direction.
+    # wturb and dopplervel is away-positive. true radialvel is dopplervel + platform vel
+    # wtrue = wrel + wplatform
+    # trueradialvel is +up
+    trueradialvel = dopplervel + -wnd_lidar[3] # negate downward wnd_lidar: NED +down, dopplervel +up
 end
 
 # displacements with no adjustment for tilting into the horizontal wind 
