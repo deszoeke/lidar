@@ -22,6 +22,7 @@ export displacement_variance_pitch_roll, propagate_rho_uncertainty,
 export pd, m2n, n2m, missmean, anom, binavg, hp, findindices, indavg,
        trigs, wtrue_trigs, wtrue, uniquepairs, allcross, rng, lidarindices,
        rangegate, displacements, rhopair
+export get_sf_level_cache
 export epsilon, fit_valid_xy
 export epsilon_ci95_from_a_ci, fit_stats_onepass, trim_structure_inputs, equal_bin
 export tls_slope_intercept, D2_rho_stare, D2_rho_stare_qc
@@ -553,6 +554,20 @@ end
 function tls_slope_intercept(r::Vector, d::Vector, sigma_r::Real, sigma_d::Real) 
     n = length(r)
     tls_slope_intercept(r, d, fill(sigma_r, n), fill(sigma_d, n))
+end
+
+# Cache per-level pair indices by (nt, nz, nlevelstats) to avoid rebuilding O(nt^2) lists each call.
+const _sf_level_cache = Dict{Tuple{Int, Int, Int}, Vector{NamedTuple}}()
+
+# this avoids reallocating the pair indices in D2_rho_stare
+function get_sf_level_cache(nt, nz; nlevelstats=1)
+    key = (nt, nz, nlevelstats)
+    get!(_sf_level_cache, key) do
+        [begin
+            ci1, ci2, li1, li2, it1, iz1, it2, iz2 = lidarindices(nt, nz, izo; nlevelstats=nlevelstats)
+            (; ci1, ci2, it1, iz1, it2, iz2)
+        end for izo in 1:nz]
+    end
 end
 
 """
