@@ -1,9 +1,9 @@
 {
   "DopplerTurbulence.jl": {
-    "mtime": 1778443424.858775,
-    "seen": 1788810664.434844,
-    "ast_hash": "a40df8d0530942850f79d66923bbaac4",
-    "semantic_hash": "a40df8d0530942850f79d66923bbaac4"
+    "mtime": 1788814317.625488,
+    "seen": 1788815358.682841,
+    "ast_hash": "5335318498fc1960168f042db160c02e",
+    "semantic_hash": ""
   },
   "chunk_failure_scan.jl": {
     "mtime": 1777746476.9988317,
@@ -66,10 +66,10 @@
     "semantic_hash": "33026da4b82e17fda4738d959a28fa72"
   },
   "lidar_vn_sync.jl": {
-    "mtime": 1778007834.5649295,
-    "seen": 1788810664.434855,
-    "ast_hash": "bca176a87eb21997a89d700bb5fb6d66",
-    "semantic_hash": "bca176a87eb21997a89d700bb5fb6d66"
+    "mtime": 1788815118.6756222,
+    "seen": 1788815358.683112,
+    "ast_hash": "b25c951560ffdc0079fe8d26d3293bf1",
+    "semantic_hash": ""
   },
   "old/deprecated/read_lidar_20240807.jl": {
     "mtime": 1775773981.5945942,
@@ -96,10 +96,10 @@
     "semantic_hash": "a5eaad84f381acd3805bcc93dcea7e89"
   },
   "read_lidar.jl": {
-    "mtime": 1778974089.0058014,
-    "seen": 1788810664.434861,
-    "ast_hash": "2953f82002f8ba215693c6cebfe0a1ad",
-    "semantic_hash": "2953f82002f8ba215693c6cebfe0a1ad"
+    "mtime": 1788815069.3299758,
+    "seen": 1788815358.683233,
+    "ast_hash": "0c2176c1b2057283d73b0bdddd5124d2",
+    "semantic_hash": ""
   },
   "readers.jl": {
     "mtime": 1775773981.60164,
@@ -278,7 +278,7 @@
   ".vscode/mcp.json": {
     "mtime": 1777432681.473734,
     "seen": 1788810664.434842,
-    "ast_hash": "9232c4b05c3c3724cfe64ef11bb96a75",
-    "semantic_hash": "9232c4b05c3c3724cfe64ef11bb96a75"
+    "ast_hash": "",
+    "semantic_hash": ""
   }
 }
