@@ -18,6 +18,11 @@ using .DisplacementUncertainty
 export displacement_variance_pitch_roll, propagate_rho_uncertainty,
        combine_variances, estimate_pitch_roll_uncertainty
 
+# Export utility functions for use in notebooks
+export pd, m2n, n2m, missmean, anom, binavg, hp, findindices, indavg,
+       trigs, wtrue_trigs, wtrue, uniquepairs, allcross, rng, lidarindices,
+       rangegate, displacements, rhopair
+
 # utility functions
 pd = permutedims
 m2n(x) = ismissing(x) ? NaN : x
@@ -173,67 +178,6 @@ end
 # U, V vary slowly; pitch,roll,w vary fast
 # there are nt*(nt-1)/2 ~ O(nt^2) outputs, so correct stuff first
 
-#=
-"return the coherent component of signal1 and signal2"
-function coherent_component(signal1::Vector{Float64}, signal2::Vector{Float64})
-    # Fourier Transform of the signals
-    S1 = fft(signal1)
-    S2 = fft(signal2)
-    
-    # Compute cross-spectral density
-    P12 = S1 .* conj(S2)
-    # P21 = conj(P12)
-    
-    # Compute auto-spectral density
-    P11 = S1 .* conj(S1)
-    P22 = S2 .* conj(S2)
-    
-    # Compute coherence
-    coherence = abs.(P12).^2 ./ (P11 .* P22)
-    
-    # Compute the coherent part
-    coherent_part_S1 = coherence .* S2
-    coherent_part_S2 = coherence .* S1
-    
-    # Inverse Fourier Transform to get the time-domain signals
-    coherent_signal1 = real(ifft(coherent_part_S1))
-    coherent_signal2 = real(ifft(coherent_part_S2))
-    
-    return coherent_signal1, coherent_signal2
-end
-
-"remove the coherent component of signal1 and signal2"
-function remove_coherent_component(signal1::Vector{Float64}, signal2::Vector{Float64})
-    # Fourier Transform of the signals
-    S1 = fft(signal1)
-    S2 = fft(signal2)
-    
-    # Compute cross-spectral density
-    P12 = S1 .* conj(S2)
-    # P21 = conj(P12)
-    
-    # Compute auto-spectral density
-    P11 = S1 .* conj(S1)
-    P22 = S2 .* conj(S2)
-    
-    # Compute coherence
-    coherence = abs.(P12).^2 ./ (P11 .* P22)
-    
-    # Compute the coherent part
-    coherent_part_S1 = coherence .* S2
-    coherent_part_S2 = coherence .* S1
-    
-    # Remove the coherent part
-    clean_S1 = S1 .- coherent_part_S1
-    clean_S2 = S2 .- coherent_part_S2
-    
-    # Inverse Fourier Transform to get the time-domain signals
-    clean_signal1 = real(ifft(clean_S1))
-    clean_signal2 = real(ifft(clean_S2))
-    
-    return clean_signal1, clean_signal2
-end
-=#
 
 # functions for structure functions
 
