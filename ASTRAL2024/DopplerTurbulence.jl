@@ -21,14 +21,20 @@ export displacement_variance_pitch_roll, propagate_rho_uncertainty,
 pd = permutedims
 m2n(x) = ismissing(x) ? NaN : x
 
-"bin average y(x) in bins b of coordinate x"
-function binavg(y, x, b)
+"""
+    binavg(y, x, b; f=identity, w=y->1)
+Bin average y(x) in bins b of coordinate x.
+Skip missing by passing the optional function arguments
+f(y) = ismissing(y) ? 0 : y;   w(y) = !ismissing(y)
+"""
+function binavg(y, x, b; f=identity, w=y->1)
     a = zeros(length(b))
     c = zeros(length(b))
     for (i,x) in enumerate(x)
-        bi = findlast(j -> j < x, b)
-        a[bi] += y[i]
-        c[bi] += 1
+        bi = searchsortedlast(b, x)
+        bi = clamp(bi, 1, length(b))
+        a[bi] += f(y[i])
+        c[bi] += w(y[i])
     end
     return a./c
 end
