@@ -1,0 +1,15 @@
+{
+  "mcpServers": {
+    "graphify": {
+      "type": "stdio",
+      "command": "bash",
+      "args": [
+        ".claude/hooks/run-in-lidar-env.sh",
+        "python",
+        "-m",
+        "graphify.serve",
+        "graphify-out/graph.json"
+      ]
+    }
+  }
+}

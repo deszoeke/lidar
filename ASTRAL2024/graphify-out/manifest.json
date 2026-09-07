@@ -1,0 +1,278 @@
+{
+  "DopplerTurbulence.jl": {
+    "mtime": 1778443424.858775,
+    "seen": 1788804567.667663,
+    "ast_hash": "a40df8d0530942850f79d66923bbaac4",
+    "semantic_hash": ""
+  },
+  "chunk_failure_scan.jl": {
+    "mtime": 1777746476.9988317,
+    "seen": 1788804567.667666,
+    "ast_hash": "a64ccfda3f600e12c84231788fe00da3",
+    "semantic_hash": ""
+  },
+  "codeIdeas/foo.jl": {
+    "mtime": 1775773981.5806284,
+    "seen": 1788804567.6676679,
+    "ast_hash": "4edcc6c8ee11445e6b8ef23ae6e057eb",
+    "semantic_hash": ""
+  },
+  "codeIdeas/iterative_heave_rain.jl": {
+    "mtime": 1775773981.5853105,
+    "seen": 1788804567.667669,
+    "ast_hash": "af4db649632f5dc53051956a50e8907a",
+    "semantic_hash": ""
+  },
+  "codeIdeas/rain_flag_scan.jl": {
+    "mtime": 1775773981.5835571,
+    "seen": 1788804567.66767,
+    "ast_hash": "63ed054efb3686dffba3b7ffd828b3dd",
+    "semantic_hash": ""
+  },
+  "compute_hmix_epsilon.jl": {
+    "mtime": 1775773981.5766983,
+    "seen": 1788804567.667673,
+    "ast_hash": "a35747e75b8145af6d666229a505b03c",
+    "semantic_hash": ""
+  },
+  "displacement_uncertainty.jl": {
+    "mtime": 1778437766.76678,
+    "seen": 1788804567.667674,
+    "ast_hash": "cdc0072c27726834156ce0d9a60197e5",
+    "semantic_hash": ""
+  },
+  "epsi_jld2nc.jl": {
+    "mtime": 1777852598.1639667,
+    "seen": 1788804567.6676748,
+    "ast_hash": "f5a624805eb077e0371f4a1400c2c28c",
+    "semantic_hash": ""
+  },
+  "extend_pycall_missing.jl": {
+    "mtime": 1777508680.3973224,
+    "seen": 1788804567.667676,
+    "ast_hash": "fbde349589aedba849d1482073b998d9",
+    "semantic_hash": ""
+  },
+  "lidar_index.jl": {
+    "mtime": 1776551061.8692572,
+    "seen": 1788804567.667677,
+    "ast_hash": "17cc4f4a3a692749ffb9b83eb9602206",
+    "semantic_hash": ""
+  },
+  "lidar_uv.jl": {
+    "mtime": 1779483936.65861,
+    "seen": 1788804567.6676779,
+    "ast_hash": "33026da4b82e17fda4738d959a28fa72",
+    "semantic_hash": ""
+  },
+  "lidar_vn_sync.jl": {
+    "mtime": 1778007834.5649295,
+    "seen": 1788804567.6676779,
+    "ast_hash": "bca176a87eb21997a89d700bb5fb6d66",
+    "semantic_hash": ""
+  },
+  "old/deprecated/read_lidar_20240807.jl": {
+    "mtime": 1775773981.5945942,
+    "seen": 1788804567.667679,
+    "ast_hash": "6e3e97f0c0bf6c9f46e0ef6fbd50a4f2",
+    "semantic_hash": ""
+  },
+  "old/deprecated/read_lidar_trybuggyoffsets.jl": {
+    "mtime": 1775773981.5870037,
+    "seen": 1788804567.66768,
+    "ast_hash": "9c464d45b7cd742e0db919ac46c91499",
+    "semantic_hash": ""
+  },
+  "old/fft_derivative_test.jl": {
+    "mtime": 1775773981.5784714,
+    "seen": 1788804567.667681,
+    "ast_hash": "0e7b570db04b6b9a34c49a9b9ff99860",
+    "semantic_hash": ""
+  },
+  "old/lidar_turbulence_cleanup.jl": {
+    "mtime": 1777508680.397683,
+    "seen": 1788804567.667682,
+    "ast_hash": "a5eaad84f381acd3805bcc93dcea7e89",
+    "semantic_hash": ""
+  },
+  "read_lidar.jl": {
+    "mtime": 1778974089.0058014,
+    "seen": 1788804567.667682,
+    "ast_hash": "2953f82002f8ba215693c6cebfe0a1ad",
+    "semantic_hash": ""
+  },
+  "readers.jl": {
+    "mtime": 1775773981.60164,
+    "seen": 1788804567.6676831,
+    "ast_hash": "aacb089bc61c252543c8118b92f84209",
+    "semantic_hash": ""
+  },
+  "save_lidar_dt.jl": {
+    "mtime": 1777609050.3127048,
+    "seen": 1788804567.667684,
+    "ast_hash": "b56a03fac72e7c4bbfa6010742e27f32",
+    "semantic_hash": ""
+  },
+  "save_lidar_index.jl": {
+    "mtime": 1777608104.6321561,
+    "seen": 1788804567.667685,
+    "ast_hash": "e1551232c1ccfc89f445145255066b73",
+    "semantic_hash": ""
+  },
+  "save_stare_hourly_netcdf.jl": {
+    "mtime": 1776551701.351903,
+    "seen": 1788804567.667686,
+    "ast_hash": "d27012645490f3c0e6e36591d7b13faf",
+    "semantic_hash": ""
+  },
+  "save_stare_mdv_sync_pass2.jl": {
+    "mtime": 1776653043.521991,
+    "seen": 1788804567.667687,
+    "ast_hash": "27ffb78fdc40866e759a12fb7c8bc294",
+    "semantic_hash": ""
+  },
+  "time_tests.jl": {
+    "mtime": 1775773981.603286,
+    "seen": 1788804567.667687,
+    "ast_hash": "31407208da022ce241b7d101f1e84eaa",
+    "semantic_hash": ""
+  },
+  "timing_lidar.jl": {
+    "mtime": 1775773981.5980518,
+    "seen": 1788804567.667688,
+    "ast_hash": "dbec5573394ecebe9fa7fa2ca89e2e9f",
+    "semantic_hash": ""
+  },
+  "vectornav2jld.jl": {
+    "mtime": 1775773981.574309,
+    "seen": 1788804567.6676888,
+    "ast_hash": "5f10879569f23c7ed7bd8abef2f4d6fe",
+    "semantic_hash": ""
+  },
+  ".github/agents/editor.agent.md": {
+    "mtime": 1777429759.2967896,
+    "seen": 1788804567.66769,
+    "ast_hash": "3db2dfc756d14bd646356aa555694264",
+    "semantic_hash": ""
+  },
+  ".github/agents/orchestrator.agent.md": {
+    "mtime": 1777429759.29743,
+    "seen": 1788804567.667691,
+    "ast_hash": "f928c0b5b1af1649ee81c61747b1ea2a",
+    "semantic_hash": ""
+  },
+  ".github/agents/planner.agent.md": {
+    "mtime": 1779165286.4665747,
+    "seen": 1788804567.667692,
+    "ast_hash": "739a8170208802d3adbf2534e09d0685",
+    "semantic_hash": ""
+  },
+  ".github/agents/tester.agent.md": {
+    "mtime": 1777429759.29844,
+    "seen": 1788804567.667692,
+    "ast_hash": "660ff5fbb9b86faf606b97d657dc4ced",
+    "semantic_hash": ""
+  },
+  ".github/copilot-instructions.md": {
+    "mtime": 1778506849.1496277,
+    "seen": 1788804567.6676931,
+    "ast_hash": "c6f5e7d0a78798e14d26b7b92370ee70",
+    "semantic_hash": ""
+  },
+  ".github/plans/EXECUTIVE_SUMMARY_OFFSET_FIX.md": {
+    "mtime": 1776726435.2056925,
+    "seen": 1788804567.667694,
+    "ast_hash": "acace1652886842501a2439acce4f41c",
+    "semantic_hash": ""
+  },
+  ".github/plans/OFFSET_EQUATIONS_AND_RESET_STRATEGY.md": {
+    "mtime": 1776725933.3766372,
+    "seen": 1788804567.667695,
+    "ast_hash": "b0929a4e563d327faf3066ac0eeeeeb8",
+    "semantic_hash": ""
+  },
+  "ABLwh20260409.md": {
+    "mtime": 1775773178.6422472,
+    "seen": 1788804567.6676962,
+    "ast_hash": "ca9dc65f900044b87b022972041fbf75",
+    "semantic_hash": ""
+  },
+  "AGENTS.md": {
+    "mtime": 1778476168.0974116,
+    "seen": 1788804567.667697,
+    "ast_hash": "405c29ee1ad2ee539f7f8cfabd7054d1",
+    "semantic_hash": ""
+  },
+  "CLAUDE.md": {
+    "mtime": 1788808493.9437578,
+    "seen": 1788809556.564147,
+    "ast_hash": "087d6f76c5168f56b198e41903a795e8",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1775957046.1705616,
+    "seen": 1788804567.667698,
+    "ast_hash": "6a8fef691d25beaa7a192b13af7f61f3",
+    "semantic_hash": ""
+  },
+  "TODO.md": {
+    "mtime": 1776657638.6824064,
+    "seen": 1788804567.6676989,
+    "ast_hash": "b52013b0e0fac129a400ae94aa64e3d4",
+    "semantic_hash": ""
+  },
+  "cleanup_after_sigma_pitch_roll.md": {
+    "mtime": 1778444390.5631573,
+    "seen": 1788804567.6677,
+    "ast_hash": "53874e51f0e75b003143def665f71886",
+    "semantic_hash": ""
+  },
+  "lidar_vn_sync_workbench_shortTestOutput.txt": {
+    "mtime": 1777480967.8181536,
+    "seen": 1788804567.667701,
+    "ast_hash": "8eb215d1be3790ffc0c9892875d07025",
+    "semantic_hash": ""
+  },
+  "motion_timing.md": {
+    "mtime": 1739234037.319663,
+    "seen": 1788804567.667702,
+    "ast_hash": "de3e0ac1dfd3b5bd997672824f97a200",
+    "semantic_hash": ""
+  },
+  "production-add-qc.md": {
+    "mtime": 1775957046.1705596,
+    "seen": 1788804567.6677032,
+    "ast_hash": "b89897e0b8fbfec2bbe15a7db2d04920",
+    "semantic_hash": ""
+  },
+  ".claude/hooks/check-graphify-deps.sh": {
+    "mtime": 1788809356.3455665,
+    "seen": 1788809556.563383,
+    "ast_hash": "f1f54834132cb8eb341d7661a9b30bcd",
+    "semantic_hash": ""
+  },
+  ".claude/hooks/run-in-lidar-env.sh": {
+    "mtime": 1788809342.6211886,
+    "seen": 1788809556.5633862,
+    "ast_hash": "23a200700c81e2ebf346cdc57800c607",
+    "semantic_hash": ""
+  },
+  ".claude/settings.json": {
+    "mtime": 1788809014.0037096,
+    "seen": 1788809556.563387,
+    "ast_hash": "1fc00befd29ddd5c6492e1095fd7e394",
+    "semantic_hash": ""
+  },
+  ".codex/hooks.json": {
+    "mtime": 1776400632.1359231,
+    "seen": 1788809556.5633879,
+    "ast_hash": "b1643d69c38ea633ec815c49798d8da1",
+    "semantic_hash": ""
+  },
+  ".mcp.json": {
+    "mtime": 1788809351.7825916,
+    "seen": 1788809556.5633888,
+    "ast_hash": "a1f2db6152487f0f75385e6a032903ee",
+    "semantic_hash": ""
+  }
+}

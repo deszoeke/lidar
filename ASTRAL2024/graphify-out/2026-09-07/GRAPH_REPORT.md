@@ -1,11 +1,11 @@
 # Graph Report - ASTRAL2024  (2026-09-07)
 
 ## Corpus Check
-- 46 files · ~45,174 words
+- 43 files · ~44,293 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 697 nodes · 1039 edges · 47 communities (40 shown, 6 thin omitted)
+- 681 nodes · 1026 edges · 44 communities (40 shown, 4 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS
 - Token cost: 0 input · 0 output
 
@@ -33,11 +33,11 @@
 - vectornav2jld.jl
 - Executive Summary: Timing Offset Double-Count Bug Fix
 - Cleanup Plan After Pitch/Roll Uncertainty Implementation
-- Dates
+- chunk_failure_scan.jl
 - read_lidar
 - read_lidar
 - codeIdeas/foo.jl
-- Printf
+- Dates
 - read_lidar
 - read_lidar
 - old/fft_derivative_test.jl
@@ -58,9 +58,6 @@
 - CLAUDE.md
 - extend_pycall_missing.jl
 - copilot-instructions.md
-- graphify
-- check-graphify-deps.sh
-- run-in-lidar-env.sh
 
 ## God Nodes (most connected - your core abstractions)
 1. `LidarVNSync` - 91 edges
@@ -80,7 +77,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (47 total, 6 thin omitted)
+## Communities (44 total, 4 thin omitted)
 
 ### Community 0 - "LidarVNSync"
 Cohesion: 0.05
@@ -154,7 +151,7 @@ Nodes (14): After (New Code):, Before (Old Code):, Code Changes, Configurable Pr
 Cohesion: 0.14
 Nodes (13): Additional Issues Found During Testing, Cleanup Plan After Pitch/Roll Uncertainty Implementation, Implementation Order, Import Organization, Issue: Check other dependents of DopplerTurbulence.jl, Issue: DisplacementUncertainty imported mid-notebook, Issue: Methods duplicated between DopplerTurbulence.jl and notebook, Issue: TEST 1 uses VN-aligned data, doesn't belong in displacement_uncertainty (+5 more)
 
-### Community 18 - "Dates"
+### Community 18 - "chunk_failure_scan.jl"
 Cohesion: 0.18
 Nodes (10): band_coherence_welch_5_20s(), Dates, FFTW, LidarVNSync, NCDatasets, Pkg, Printf, Statistics (+2 more)
 
@@ -170,9 +167,9 @@ Nodes (8): get_daily_meanuv(), Dates, Interpolations, JLD2, NCDatasets, read_lid
 Cohesion: 0.31
 Nodes (7): estimate_heave_ts(), iterative_despike_rain(), Statistics, nanmedian(), rain_mask_vertical(), running_median(), subtract_rain_layers!()
 
-### Community 22 - "Printf"
+### Community 22 - "Dates"
 Cohesion: 0.22
-Nodes (7): Printf, read_streamlinexr_stare, find_hpl_files(), Dates, Pkg, Printf, read_lidar
+Nodes (7): Dates, read_streamlinexr_stare, find_hpl_files(), Dates, Pkg, Printf, read_lidar
 
 ### Community 23 - "read_lidar"
 Cohesion: 0.31
@@ -238,26 +235,22 @@ Nodes (4): NCDatasets, Pkg, PythonPlot, Statistics
 Cohesion: 0.50
 Nodes (3): Agenda, EKAMSAT ABL Working Group, Lidar turbulence analysis - Simon
 
-### Community 40 - "CLAUDE.md"
-Cohesion: 0.18
-Nodes (10): Environment, graphify, Key data structures, Key function signatures, LidarVNSync Core API Conventions, Other agent contexts in this repo, Selecting chunks by date — correct idiom, Style: Caveman Mode (default) (+2 more)
-
 ## Knowledge Gaps
-- **210 isolated node(s):** `check-graphify-deps.sh script`, `run-in-lidar-env.sh script`, `bash`, `Revise`, `Pkg` (+205 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 344 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **6 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **199 isolated node(s):** `Revise`, `Pkg`, `Dates`, `Statistics`, `Interpolations` (+194 more)
+  These have ≤1 connection - possible missing edges or undocumented components.
+- **4 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Dates` connect `Dates` to `LidarVNSync`, `JLD2`, `ASTRAL2024/old/lidar_turbulence_cleanup.jl`, `read_lidar`, `NoaaDas`, `timing_lidar`, `DopplerTurbulence`, `chunks`, `time_tests.jl`, `lidar_index`, `compute_hmix_epsilon.jl`, `vectornav2jld.jl`, `Printf`, `read_lidar`, `read_lidar`?**
-  _High betweenness centrality (0.211) - this node is a cross-community bridge._
-- **Why does `LidarVNSync` connect `LidarVNSync` to `JLD2`, `ASTRAL2024/old/lidar_turbulence_cleanup.jl`, `timing_lidar`, `DopplerTurbulence`, `Statistics`, `vectornav2jld.jl`, `Dates`, `Printf`, `read_lidar`?**
-  _High betweenness centrality (0.160) - this node is a cross-community bridge._
+- **Why does `Dates` connect `Dates` to `LidarVNSync`, `JLD2`, `ASTRAL2024/old/lidar_turbulence_cleanup.jl`, `read_lidar`, `NoaaDas`, `timing_lidar`, `DopplerTurbulence`, `chunks`, `time_tests.jl`, `lidar_index`, `compute_hmix_epsilon.jl`, `vectornav2jld.jl`, `chunk_failure_scan.jl`, `read_lidar`, `read_lidar`?**
+  _High betweenness centrality (0.221) - this node is a cross-community bridge._
+- **Why does `LidarVNSync` connect `LidarVNSync` to `JLD2`, `ASTRAL2024/old/lidar_turbulence_cleanup.jl`, `timing_lidar`, `DopplerTurbulence`, `Statistics`, `vectornav2jld.jl`, `chunk_failure_scan.jl`, `Dates`, `read_lidar`?**
+  _High betweenness centrality (0.168) - this node is a cross-community bridge._
 - **Why does `PyPlot` connect `ASTRAL2024/old/lidar_turbulence_cleanup.jl` to `old/lidar_turbulence_cleanup.jl`?**
-  _High betweenness centrality (0.104) - this node is a cross-community bridge._
-- **What connects `check-graphify-deps.sh script`, `run-in-lidar-env.sh script`, `bash` to the rest of the system?**
-  _210 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _High betweenness centrality (0.109) - this node is a cross-community bridge._
+- **What connects `Revise`, `Pkg`, `Dates` to the rest of the system?**
+  _199 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `LidarVNSync` be split into smaller, more focused modules?**
   _Cohesion score 0.05063291139240506 - nodes in this community are weakly interconnected._
 - **Should `ASTRAL2024/old/lidar_turbulence_cleanup.jl` be split into smaller, more focused modules?**
