@@ -1,0 +1,7 @@
+# graphify: keep the graph (GRAPH_REPORT.md, graph.json, manifest.json, labels, cost.json)
+# ignore regenerable caches, snapshots, viewer, and machine-local files
+cache/
+20*/
+graph.html
+.graphify_python
+.graphify_root
