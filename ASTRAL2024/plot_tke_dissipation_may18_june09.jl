@@ -19,14 +19,18 @@ for i in eachindex(epsi)
     plot_epsi[i] = (ismissing(e) || !isfinite(e) || e <= 0) ? NaN : e
 end
 
-# Temporary visualization only: the old MDV file's post-gap times are six days early.
-mdv = load(joinpath(@__DIR__, "epsilon_data", "epsi_stare_chunks_vn0_r20260412_1306.jld"))
+length(ARGS) <= 1 || error("Usage: julia --project=. plot_tke_dissipation_may18_june09.jl [corrected_mdv.jld2]")
+provisional = isempty(ARGS)
+mdv_path = provisional ?
+    joinpath(@__DIR__, "epsilon_data", "epsi_stare_chunks_vn0_r20260412_1306.jld") :
+    abspath(only(ARGS))
+mdv = load(mdv_path)
 isequal(mdv["height"], height) || error("MDV and current height grids differ")
 issorted(start_dt) || error("Current chunk times are not sorted")
 matched_rows = Set{Int}()
 unmatched_rows = 0
 for (i, old_time) in enumerate(mdv["dtime_st"])
-    shifted_time = old_time + Day(6)
+    shifted_time = old_time + (provisional ? Day(6) : Day(0))
     DateTime(2024, 5, 19) <= shifted_time < DateTime(2024, 6, 1) || continue
     j = searchsortedfirst(start_dt, shifted_time)
     candidates = filter(k -> 1 <= k <= length(start_dt), [j - 1, j])
@@ -44,8 +48,8 @@ for (i, old_time) in enumerate(mdv["dtime_st"])
         end
     end
 end
-unmatched_rows == 0 || @warn "Provisional MDV chunks did not match current timestamps" unmatched_rows
-println("Matched $(length(matched_rows)) provisional MDV chunks")
+unmatched_rows == 0 || @warn "MDV chunks did not match current timestamps" unmatched_rows
+println("Matched $(length(matched_rows)) $(provisional ? "provisional" : "corrected") MDV chunks")
 
 # Keep long gaps blank rather than stretching an adjacent pcolormesh cell across them.
 mesh_time = DateTime[]
@@ -79,7 +83,7 @@ xlim([DateTime(2024, 5, 18), DateTime(2024, 6, 10)])
 ylim([0, 1.5])
 ylabel("height (km)")
 xlabel("date 2024")
-title("EKAMSAT TKE dissipation rate: provisional MDV before June 1")
+title("EKAMSAT TKE dissipation rate: $(provisional ? "provisional" : "corrected") MDV before June 1")
 axvline(DateTime(2024, 6, 1), color="k", linestyle="--", linewidth=1)
 cb = colorbar(pc, pad=0.12)
 cb.set_label(L"\epsilon\;(\mathrm{m}^2\ \mathrm{s}^{-3})")
@@ -113,6 +117,7 @@ ax_hmix.tick_params(axis="y", labelcolor="k")
 # ax_hmix.legend(loc="upper right")
 tight_layout()
 
-outfile = joinpath(@__DIR__, "epsilon_data", "tke_dissipation_may18_june09_provisional_mdv.png")
+outfile = joinpath(@__DIR__, "epsilon_data",
+                   "tke_dissipation_may18_june09_$(provisional ? "provisional" : "corrected")_mdv.png")
 savefig(outfile, dpi=300)
 println(outfile)

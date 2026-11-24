@@ -5,6 +5,10 @@ using Pkg; Pkg.activate(".")
 
 using Dates
 using Statistics
+using LinearAlgebra
+using SparseArrays
+using TotalLeastSquares
+using Distributions
 using Rotations
 using Interpolations
 using DSP
@@ -803,7 +807,7 @@ including variance estimates.
 function small_displacements(ci1, ci2, it1, iz1, it2, iz2,
             Udt::Float64, Vdt::Float64, pitch, roll, w,
             σ_pitch::Real, σ_roll::Real; 
-            rangegate=rangegate, Lmax=125.0 )
+            rangegate=rangegate, Lmin=0.0, Lmax=125.0 )
 
     # simplified to 1-level so iz1==iz2, dz=0
     rng(iz) = rangegate * (iz - 1 + 0.5) # range function
@@ -811,10 +815,10 @@ function small_displacements(ci1, ci2, it1, iz1, it2, iz2,
     # limit to small displacements in the inertial range
     # Lmax2 = Lmax^2
     dS = sqrt(Udt^2 + Vdt^2)   # scalar wind displacement for one time step
-    itmax = floor(Int, Lmax/dS) # scalar maximum index
+    itmax = min(floor(Int, Lmax/dS), length(pitch) - 1) # scalar maximum index
     r_bin_edges = dS * ((0:itmax) .+ 0.5) # bin by displacements later
 
-    ii = @. abs(it2 - it1) <= itmax
+    ii = @. (abs(it2 - it1) <= itmax) & (abs(it2 - it1) * dS >= Lmin)
     ni = count(ii)
     var_dr2 = Vector{Float64}(undef, ni)
     var_dz2 = Vector{Float64}(undef, ni)
@@ -923,13 +927,19 @@ function transfer_fcn(r2, dS2, rangegate2=rangegate^2)
 end
 
 """
-D2_rho_small_disp(w, pitch, roll, Ur, Vr, σ_pitch, σ_roll; nbin_out_max=25)
-Replaces D2_rho_stare_qc, but also returns fit-quality metrics and confidence intervals.
-No gating is applied; A and epsilon behavior remains unchanged.
+D2_rho_small_disp(w, pitch, roll, Ur, Vr, σ_pitch, σ_roll; Lmin=0.0, Lmax=125.0)
+Fit binned structure functions using per-level mean winds and TLS. `Lmin` and
+`Lmax` bound horizontal separations in meters; at least `min_fit_bins` are required.
 """
 function D2_rho_small_disp(w, pitch, roll, Ur, Vr, 
                          σ_pitch::Real, σ_roll::Real;
-                         nbin_out=100, method="tls", Lscale_max=3500.0)
+                         nbin_out=100, method="tls", Lscale_max=3500.0,
+                         timestep=1.02, Lmin=0.0, Lmax=125.0, min_fit_bins=5)
+
+    0 <= Lmin < Lmax || throw(ArgumentError("Require 0 <= Lmin < Lmax"))
+    timestep > 0 || throw(ArgumentError("timestep must be positive"))
+    min_fit_bins >= 3 || throw(ArgumentError("min_fit_bins must be at least 3"))
+    method == "tls" || throw(ArgumentError("Only TLS fitting is supported"))
     
     # paramters for good D2 for slope fits
     k0 = 3
@@ -980,27 +990,29 @@ function D2_rho_small_disp(w, pitch, roll, Ur, Vr,
     rhovarbin = Matrix{Union{Missing, Float64}}(missing, nbin_out, nz)
     D2varbin = Matrix{Union{Missing, Float64}}(missing, nbin_out, nz)
 
-    # Item 1 and 2: reuse pair indices and pass precomputed index vectors into displacements.
-    level_cache = get_sf_level_cache(nt, nz)
-    # Item 3: precompute scaled wind once per call.
-    Udt = Ur * timestep # vert vector
-    Vdt = Vr * timestep
-    dS2 = Udt.^2 .+ Vdt.^2 # vector
-
+    _, _, _, _, it1, _, it2, _ = lidarindices(nt, 1, 1)
     for izo in 1:nz # loop vertical
-        lc = level_cache[izo]
         rhoscale_max = max(Lscale_max, 5.0 * rng(izo))^(2/3) #superfluous
+        good_wind = [i for i in 1:nt if !ismissing(Ur[i, izo]) &&
+                     !ismissing(Vr[i, izo]) && isfinite(Ur[i, izo]) &&
+                     isfinite(Vr[i, izo])]
+        isempty(good_wind) && continue
+        Udt = Float64(mean(Ur[good_wind, izo]) * timestep)
+        Vdt = Float64(mean(Vr[good_wind, izo]) * timestep)
+        isfinite(Udt) && isfinite(Vdt) && 0 < hypot(Udt, Vdt) <= Lmax || continue
 
+        iz = fill(izo, length(it1))
+        ci1, ci2 = CartesianIndex.(it1, iz), CartesianIndex.(it2, iz)
         zm, dr2, dz2, D2, var_dr2, var_dz2, r_bin_edges = small_displacements(
-            lc.ci1, lc.ci2, lc.it1, lc.iz1, lc.it2, lc.iz2, 
-            Udt[izo], Vdt[izo], pitch, roll, w, σ_pitch, σ_roll )
+            ci1, ci2, it1, iz, it2, iz,
+            Udt, Vdt, pitch, roll, w, σ_pitch, σ_roll; Lmin=Lmin, Lmax=Lmax )
 
         rho = rhopair.(dr2, dz2) # r^2/3 * (1-(dz/dr)^2/4) for each pair
         # filter and coarsely exclude energy containing scales
         # (already displacements from small_displacements are stricter)
-        jj = map(r -> !ismissing(r) 
-                 && isfinite(r) 
-                 && (r <= rhoscale_max), rho)
+        jj = map((r, dr) -> !ismissing(r) && isfinite(r) &&
+                 r <= rhoscale_max && isfinite(dr) &&
+                 Lmin^2 <= dr <= Lmax^2, rho, dr2)
         zerodz = zeros(sum(jj)) # dz2 and var_dz2 are scalar zeros for small displacement version
         rho_var = propagate_rho_uncertainty.(
             dr2[jj], zerodz, var_dr2[jj], zerodz )
@@ -1010,7 +1022,7 @@ function D2_rho_small_disp(w, pitch, roll, Ur, Vr,
         nrho[izo] = sum(jj .& .!ismissing.(D2) .& isfinite.(D2))
 
         (nbin_actual_, n_inbin, D2inbin_, rhoinbin_, D2varbin_, rhovarbin_) = small_bin(
-            rho[jj], D2[jj], rho_var, dr2, r_bin_edges.^2 )
+            rho[jj], D2[jj], rho_var, dr2[jj], r_bin_edges.^2 )
         # rhobin_ centers eliminated
         nbin_actual = min(nbin_actual_, nbin_out)
         # println("nbin_actual_=$(nbin_actual_), nbin_out=$(nbin_out), nbin_actual=$(nbin_actual)")
@@ -1021,7 +1033,11 @@ function D2_rho_small_disp(w, pitch, roll, Ur, Vr,
         D2varbin[1:nbin_actual, izo] .= D2varbin_[1:nbin_actual]
         
         # bins for slope-intercept fitting
-        ks = k0:min(k1, nbin_actual, round(Int, fac*argmax(D2bin[1:nbin_actual, izo])))
+        finite_bins = [k for k in 1:nbin_actual if isfinite(D2inbin_[k])]
+        isempty(finite_bins) && continue
+        peak_bin = finite_bins[argmax(D2inbin_[finite_bins])]
+        first_bin = max(k0, findfirst(>(0), n_inbin[1:nbin_actual]))
+        ks = first_bin:min(first_bin + k1 - k0, nbin_actual, round(Int, fac * peak_bin))
 
         # good values to condition matrices properly
         good(x) = !ismissing(x) && isfinite(x)
@@ -1030,7 +1046,7 @@ function D2_rho_small_disp(w, pitch, roll, Ur, Vr,
                .& good.(rhovarbin[ks, izo]).& ( rhovarbin[ks, izo] .> 0 )
                .& good.(D2varbin[ks, izo] ).& ( D2varbin[ks, izo] .> 0 )
                )
-        if sum(ii) >= 5
+        if sum(ii) >= min_fit_bins
             if method == "tls"
                 # total least squares fit of D2 = A * rho + noise, with errors in both variables
                 try 
@@ -1044,15 +1060,11 @@ function D2_rho_small_disp(w, pitch, roll, Ur, Vr,
                     A[izo] = A_
                     noise[izo] = noise_
                 catch e
-                    nrmissing = sum(ismissing.(rhovarbin[ks, izo][ii])) # should be 0
-                    ndmissing = sum(ismissing.(D2varbin[ks, izo][ii])) # should be 0
-                    nrzero = sum((rhovarbin[ks, izo][ii].==0)) # should be 0
-                    ndzero = sum((D2varbin[ks, izo][ii].==0)) # should be 0
-                    @warn "TLS failed for level $izo with $nrmissing missing $nrzero zero rhovarbin and $ndmissing missing $ndzero zero D2varbin"
+                    @warn "TLS failed for level $izo" exception=(e, catch_backtrace())
                 end
             end
         end
-        stats = fit_stats_onepass(rhoinbin_, D2inbin_)
+        stats = fit_stats_onepass(rhobin[ks, izo][ii], D2bin[ks, izo][ii])
 
         nbins_fit[izo] = stats.nbins
         # A[izo] = stats.A

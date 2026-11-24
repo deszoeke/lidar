@@ -2747,17 +2747,6 @@
       "source_location": "L331"
     },
     {
-      "id": "distributions",
-      "label": "Distributions",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "small_production_script.jl",
-      "file_type": "code",
-      "norm_label": "distributions",
-      "source_file": "small_production_script.jl",
-      "source_location": "L32"
-    },
-    {
       "id": "profile",
       "label": "Profile",
       "_origin": "ast",
@@ -2888,6 +2877,17 @@
       "norm_label": "dates",
       "source_file": "small_production_script.jl",
       "source_location": "L22"
+    },
+    {
+      "id": "small_production_script_jl_distributions",
+      "label": "Distributions",
+      "_origin": "ast",
+      "community": 21,
+      "community_name": "small_production_script.jl",
+      "file_type": "code",
+      "norm_label": "distributions",
+      "source_file": "small_production_script.jl",
+      "source_location": "L32"
     },
     {
       "id": "small_production_script_jl_dopplerturbulence",
@@ -3066,6 +3066,17 @@
       "source_location": "L25"
     },
     {
+      "id": "small_production_script_jl_sparsearrays",
+      "label": "SparseArrays",
+      "_origin": "ast",
+      "community": 21,
+      "community_name": "small_production_script.jl",
+      "file_type": "code",
+      "norm_label": "sparsearrays",
+      "source_file": "small_production_script.jl",
+      "source_location": "L23"
+    },
+    {
       "id": "small_production_script_jl_statistics",
       "label": "Statistics",
       "_origin": "ast",
@@ -3086,6 +3097,17 @@
       "norm_label": "timing_lidar",
       "source_file": "small_production_script.jl",
       "source_location": "L47"
+    },
+    {
+      "id": "small_production_script_jl_totalleastsquares",
+      "label": "TotalLeastSquares",
+      "_origin": "ast",
+      "community": 21,
+      "community_name": "small_production_script.jl",
+      "file_type": "code",
+      "norm_label": "totalleastsquares",
+      "source_file": "small_production_script.jl",
+      "source_location": "L24"
     },
     {
       "id": "small_production_script_kolmogorov_length_scale",
@@ -3207,28 +3229,6 @@
       "norm_label": "_wrap()",
       "source_file": "small_production_script.jl",
       "source_location": "L207"
-    },
-    {
-      "id": "sparsearrays",
-      "label": "SparseArrays",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "small_production_script.jl",
-      "file_type": "code",
-      "norm_label": "sparsearrays",
-      "source_file": "small_production_script.jl",
-      "source_location": "L23"
-    },
-    {
-      "id": "totalleastsquares",
-      "label": "TotalLeastSquares",
-      "_origin": "ast",
-      "community": 21,
-      "community_name": "small_production_script.jl",
-      "file_type": "code",
-      "norm_label": "totalleastsquares",
-      "source_file": "small_production_script.jl",
-      "source_location": "L24"
     },
     {
       "id": "save_lidar_index",
@@ -4078,17 +4078,6 @@
       "source_location": "L17"
     },
     {
-      "id": "base_iterators",
-      "label": "Base.Iterators",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "NoaaDas",
-      "file_type": "code",
-      "norm_label": "base.iterators",
-      "source_file": "readers.jl",
-      "source_location": "L632"
-    },
-    {
       "id": "readers",
       "label": "readers.jl",
       "_origin": "ast",
@@ -4208,39 +4197,6 @@
       "norm_label": "get_das_pathfiles()",
       "source_file": "readers.jl",
       "source_location": "L44"
-    },
-    {
-      "id": "readers_get_nav_file",
-      "label": "get_nav_file()",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "NoaaDas",
-      "file_type": "code",
-      "norm_label": "get_nav_file()",
-      "source_file": "readers.jl",
-      "source_location": "L664"
-    },
-    {
-      "id": "readers_get_posmv_file",
-      "label": "get_posmv_file()",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "NoaaDas",
-      "file_type": "code",
-      "norm_label": "get_posmv_file()",
-      "source_file": "readers.jl",
-      "source_location": "L644"
-    },
-    {
-      "id": "readers_itr_expand",
-      "label": "itr_expand()",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "NoaaDas",
-      "file_type": "code",
-      "norm_label": "itr_expand()",
-      "source_file": "readers.jl",
-      "source_location": "L682"
     },
     {
       "id": "readers_jl_dates",
@@ -4397,28 +4353,6 @@
       "source_location": "L317"
     },
     {
-      "id": "readers_read_gyro_data",
-      "label": "read_gyro_data()",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "NoaaDas",
-      "file_type": "code",
-      "norm_label": "read_gyro_data()",
-      "source_file": "readers.jl",
-      "source_location": "L752"
-    },
-    {
-      "id": "readers_read_gyro_dict",
-      "label": "read_gyro_dict()",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "NoaaDas",
-      "file_type": "code",
-      "norm_label": "read_gyro_dict()",
-      "source_file": "readers.jl",
-      "source_location": "L791"
-    },
-    {
       "id": "readers_read_hed_dict",
       "label": "read_hed_dict()",
       "_origin": "ast",
@@ -4441,28 +4375,6 @@
       "source_location": "L237"
     },
     {
-      "id": "readers_read_pashr_data",
-      "label": "read_pashr_data()",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "NoaaDas",
-      "file_type": "code",
-      "norm_label": "read_pashr_data()",
-      "source_file": "readers.jl",
-      "source_location": "L687"
-    },
-    {
-      "id": "readers_read_pashr_dict",
-      "label": "read_pashr_dict()",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "NoaaDas",
-      "file_type": "code",
-      "norm_label": "read_pashr_dict()",
-      "source_file": "readers.jl",
-      "source_location": "L729"
-    },
-    {
       "id": "readers_read_scs_data",
       "label": "read_scs_data()",
       "_origin": "ast",
@@ -4483,17 +4395,6 @@
       "norm_label": "read_scs_dict()",
       "source_file": "readers.jl",
       "source_location": "L546"
-    },
-    {
-      "id": "readers_shipposmv",
-      "label": "ShipPosmv",
-      "_origin": "ast",
-      "community": 3,
-      "community_name": "NoaaDas",
-      "file_type": "code",
-      "norm_label": "shipposmv",
-      "source_file": "readers.jl",
-      "source_location": "L629"
     },
     {
       "id": "readers_yday",
@@ -5681,7 +5582,7 @@
       "file_type": "code",
       "norm_label": "displacementuncertainty",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L15"
+      "source_location": "L19"
     },
     {
       "id": "dopplerturbulence_allcross",
@@ -5692,7 +5593,7 @@
       "file_type": "code",
       "norm_label": "allcross()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L196"
+      "source_location": "L200"
     },
     {
       "id": "dopplerturbulence_anom",
@@ -5703,7 +5604,7 @@
       "file_type": "code",
       "norm_label": "anom()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L66"
+      "source_location": "L70"
     },
     {
       "id": "dopplerturbulence_binavg",
@@ -5714,7 +5615,7 @@
       "file_type": "code",
       "norm_label": "binavg()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L42"
+      "source_location": "L46"
     },
     {
       "id": "dopplerturbulence_d2_rho_small_disp",
@@ -5725,7 +5626,7 @@
       "file_type": "code",
       "norm_label": "d2_rho_small_disp()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L930"
+      "source_location": "L934"
     },
     {
       "id": "dopplerturbulence_d2_rho_stare",
@@ -5736,7 +5637,7 @@
       "file_type": "code",
       "norm_label": "d2_rho_stare()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L577"
+      "source_location": "L581"
     },
     {
       "id": "dopplerturbulence_d2_rho_stare_qc",
@@ -5747,7 +5648,7 @@
       "file_type": "code",
       "norm_label": "d2_rho_stare_qc()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L668"
+      "source_location": "L672"
     },
     {
       "id": "dopplerturbulence_displacements",
@@ -5758,7 +5659,7 @@
       "file_type": "code",
       "norm_label": "displacements()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L268"
+      "source_location": "L272"
     },
     {
       "id": "dopplerturbulence_dopplerturbulence",
@@ -5780,7 +5681,7 @@
       "file_type": "code",
       "norm_label": "epsilon()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L340"
+      "source_location": "L344"
     },
     {
       "id": "dopplerturbulence_epsilon_ci95_from_a_ci",
@@ -5791,7 +5692,7 @@
       "file_type": "code",
       "norm_label": "epsilon_ci95_from_a_ci()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L358"
+      "source_location": "L362"
     },
     {
       "id": "dopplerturbulence_equal_bin",
@@ -5802,7 +5703,7 @@
       "file_type": "code",
       "norm_label": "equal_bin()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L481"
+      "source_location": "L485"
     },
     {
       "id": "dopplerturbulence_findindices",
@@ -5813,7 +5714,7 @@
       "file_type": "code",
       "norm_label": "findindices()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L89"
+      "source_location": "L93"
     },
     {
       "id": "dopplerturbulence_fit_stats_onepass",
@@ -5824,7 +5725,7 @@
       "file_type": "code",
       "norm_label": "fit_stats_onepass()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L381"
+      "source_location": "L385"
     },
     {
       "id": "dopplerturbulence_fit_valid_xy",
@@ -5835,7 +5736,7 @@
       "file_type": "code",
       "norm_label": "fit_valid_xy()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L352"
+      "source_location": "L356"
     },
     {
       "id": "dopplerturbulence_get_epsilon",
@@ -5846,7 +5747,7 @@
       "file_type": "code",
       "norm_label": "get_epsilon()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L1121"
+      "source_location": "L1133"
     },
     {
       "id": "dopplerturbulence_get_noise",
@@ -5857,7 +5758,7 @@
       "file_type": "code",
       "norm_label": "get_noise()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L1084"
+      "source_location": "L1096"
     },
     {
       "id": "dopplerturbulence_get_sf_level_cache",
@@ -5868,7 +5769,7 @@
       "file_type": "code",
       "norm_label": "get_sf_level_cache()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L563"
+      "source_location": "L567"
     },
     {
       "id": "dopplerturbulence_get_slope",
@@ -5879,7 +5780,7 @@
       "file_type": "code",
       "norm_label": "get_slope()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L1106"
+      "source_location": "L1118"
     },
     {
       "id": "dopplerturbulence_hp",
@@ -5890,7 +5791,7 @@
       "file_type": "code",
       "norm_label": "hp()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L73"
+      "source_location": "L77"
     },
     {
       "id": "dopplerturbulence_indavg",
@@ -5901,7 +5802,7 @@
       "file_type": "code",
       "norm_label": "indavg()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L104"
+      "source_location": "L108"
     },
     {
       "id": "dopplerturbulence_inv_transfer_fcn",
@@ -5912,7 +5813,7 @@
       "file_type": "code",
       "norm_label": "inv_transfer_fcn()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L914"
+      "source_location": "L918"
     },
     {
       "id": "dopplerturbulence_jl_dates",
@@ -5924,6 +5825,17 @@
       "norm_label": "dates",
       "source_file": "DopplerTurbulence.jl",
       "source_location": "L6"
+    },
+    {
+      "id": "dopplerturbulence_jl_distributions",
+      "label": "Distributions",
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "DopplerTurbulence",
+      "file_type": "code",
+      "norm_label": "distributions",
+      "source_file": "DopplerTurbulence.jl",
+      "source_location": "L11"
     },
     {
       "id": "dopplerturbulence_jl_dopplerturbulence",
@@ -5945,7 +5857,7 @@
       "file_type": "code",
       "norm_label": "dsp",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L10"
+      "source_location": "L14"
     },
     {
       "id": "dopplerturbulence_jl_fftw",
@@ -5956,7 +5868,7 @@
       "file_type": "code",
       "norm_label": "fftw",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L11"
+      "source_location": "L15"
     },
     {
       "id": "dopplerturbulence_jl_interpolations",
@@ -5967,7 +5879,18 @@
       "file_type": "code",
       "norm_label": "interpolations",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L9"
+      "source_location": "L13"
+    },
+    {
+      "id": "dopplerturbulence_jl_linearalgebra",
+      "label": "LinearAlgebra",
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "DopplerTurbulence",
+      "file_type": "code",
+      "norm_label": "linearalgebra",
+      "source_file": "DopplerTurbulence.jl",
+      "source_location": "L8"
     },
     {
       "id": "dopplerturbulence_jl_pkg",
@@ -6000,7 +5923,18 @@
       "file_type": "code",
       "norm_label": "rotations",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L8"
+      "source_location": "L12"
+    },
+    {
+      "id": "dopplerturbulence_jl_sparsearrays",
+      "label": "SparseArrays",
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "DopplerTurbulence",
+      "file_type": "code",
+      "norm_label": "sparsearrays",
+      "source_file": "DopplerTurbulence.jl",
+      "source_location": "L9"
     },
     {
       "id": "dopplerturbulence_jl_statistics",
@@ -6014,6 +5948,17 @@
       "source_location": "L7"
     },
     {
+      "id": "dopplerturbulence_jl_totalleastsquares",
+      "label": "TotalLeastSquares",
+      "_origin": "ast",
+      "community": 5,
+      "community_name": "DopplerTurbulence",
+      "file_type": "code",
+      "norm_label": "totalleastsquares",
+      "source_file": "DopplerTurbulence.jl",
+      "source_location": "L10"
+    },
+    {
       "id": "dopplerturbulence_lidarindices",
       "label": "lidarindices()",
       "_origin": "ast",
@@ -6022,7 +5967,7 @@
       "file_type": "code",
       "norm_label": "lidarindices()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L206"
+      "source_location": "L210"
     },
     {
       "id": "dopplerturbulence_m2n",
@@ -6033,7 +5978,7 @@
       "file_type": "code",
       "norm_label": "m2n()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L34"
+      "source_location": "L38"
     },
     {
       "id": "dopplerturbulence_masklowi",
@@ -6044,7 +5989,7 @@
       "file_type": "code",
       "norm_label": "masklowi()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L60"
+      "source_location": "L64"
     },
     {
       "id": "dopplerturbulence_missmean",
@@ -6055,7 +6000,7 @@
       "file_type": "code",
       "norm_label": "missmean()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L63"
+      "source_location": "L67"
     },
     {
       "id": "dopplerturbulence_n2m",
@@ -6066,7 +6011,7 @@
       "file_type": "code",
       "norm_label": "n2m()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L57"
+      "source_location": "L61"
     },
     {
       "id": "dopplerturbulence_rhopair",
@@ -6077,7 +6022,7 @@
       "file_type": "code",
       "norm_label": "rhopair()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L334"
+      "source_location": "L338"
     },
     {
       "id": "dopplerturbulence_rng",
@@ -6088,7 +6033,7 @@
       "file_type": "code",
       "norm_label": "rng()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L200"
+      "source_location": "L204"
     },
     {
       "id": "dopplerturbulence_small_bin",
@@ -6099,7 +6044,7 @@
       "file_type": "code",
       "norm_label": "small_bin()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L859"
+      "source_location": "L863"
     },
     {
       "id": "dopplerturbulence_small_displacements",
@@ -6110,7 +6055,7 @@
       "file_type": "code",
       "norm_label": "small_displacements()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L803"
+      "source_location": "L807"
     },
     {
       "id": "dopplerturbulence_tls_slope_intercept",
@@ -6121,7 +6066,7 @@
       "file_type": "code",
       "norm_label": "tls_slope_intercept()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L527"
+      "source_location": "L531"
     },
     {
       "id": "dopplerturbulence_transfer_fcn",
@@ -6132,7 +6077,7 @@
       "file_type": "code",
       "norm_label": "transfer_fcn()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L921"
+      "source_location": "L925"
     },
     {
       "id": "dopplerturbulence_trigs",
@@ -6143,7 +6088,7 @@
       "file_type": "code",
       "norm_label": "trigs()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L121"
+      "source_location": "L125"
     },
     {
       "id": "dopplerturbulence_trim_structure_inputs",
@@ -6154,7 +6099,7 @@
       "file_type": "code",
       "norm_label": "trim_structure_inputs()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L460"
+      "source_location": "L464"
     },
     {
       "id": "dopplerturbulence_uniquepairs",
@@ -6165,7 +6110,7 @@
       "file_type": "code",
       "norm_label": "uniquepairs()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L192"
+      "source_location": "L196"
     },
     {
       "id": "dopplerturbulence_wtrue",
@@ -6176,7 +6121,7 @@
       "file_type": "code",
       "norm_label": "wtrue()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L137"
+      "source_location": "L141"
     },
     {
       "id": "dopplerturbulence_wtrue_trigs",
@@ -6187,7 +6132,7 @@
       "file_type": "code",
       "norm_label": "wtrue_trigs()",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L124"
+      "source_location": "L128"
     },
     {
       "id": "lidar_vn_sync_append_nan_offset_log",
@@ -7020,6 +6965,303 @@
       "source_location": "L267"
     },
     {
+      "id": "recompute_mdv_fallback",
+      "label": "recompute_mdv_fallback.jl",
+      "_origin": "ast",
+      "community": 68,
+      "community_name": "recompute_mdv_fallback.jl",
+      "file_type": "code",
+      "norm_label": "recompute_mdv_fallback.jl",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L1"
+    },
+    {
+      "id": "recompute_mdv_fallback_aligned_vn",
+      "label": "aligned_vn()",
+      "_origin": "ast",
+      "community": 68,
+      "community_name": "recompute_mdv_fallback.jl",
+      "file_type": "code",
+      "norm_label": "aligned_vn()",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L105"
+    },
+    {
+      "id": "recompute_mdv_fallback_blend",
+      "label": "blend()",
+      "_origin": "ast",
+      "community": 68,
+      "community_name": "recompute_mdv_fallback.jl",
+      "file_type": "code",
+      "norm_label": "blend()",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L77"
+    },
+    {
+      "id": "recompute_mdv_fallback_chunk_winds",
+      "label": "chunk_winds()",
+      "_origin": "ast",
+      "community": 68,
+      "community_name": "recompute_mdv_fallback.jl",
+      "file_type": "code",
+      "norm_label": "chunk_winds()",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L79"
+    },
+    {
+      "id": "recompute_mdv_fallback_daily_wind",
+      "label": "daily_wind!()",
+      "_origin": "ast",
+      "community": 68,
+      "community_name": "recompute_mdv_fallback.jl",
+      "file_type": "code",
+      "norm_label": "daily_wind!()",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L57"
+    },
+    {
+      "id": "recompute_mdv_fallback_fit_epsilon",
+      "label": "fit_epsilon()",
+      "_origin": "ast",
+      "community": 68,
+      "community_name": "recompute_mdv_fallback.jl",
+      "file_type": "code",
+      "norm_label": "fit_epsilon()",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L120"
+    },
+    {
+      "id": "recompute_mdv_fallback_good",
+      "label": "good()",
+      "_origin": "ast",
+      "community": 68,
+      "community_name": "recompute_mdv_fallback.jl",
+      "file_type": "code",
+      "norm_label": "good()",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L13"
+    },
+    {
+      "id": "recompute_mdv_fallback_interpolate_at",
+      "label": "interpolate_at()",
+      "_origin": "ast",
+      "community": 68,
+      "community_name": "recompute_mdv_fallback.jl",
+      "file_type": "code",
+      "norm_label": "interpolate_at()",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L16"
+    },
+    {
+      "id": "recompute_mdv_fallback_jl_dates",
+      "label": "Dates",
+      "_origin": "ast",
+      "community": 68,
+      "community_name": "recompute_mdv_fallback.jl",
+      "file_type": "code",
+      "norm_label": "dates",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L4"
+    },
+    {
+      "id": "recompute_mdv_fallback_jl_dopplerturbulence",
+      "label": "DopplerTurbulence",
+      "_origin": "ast",
+      "community": 68,
+      "community_name": "recompute_mdv_fallback.jl",
+      "file_type": "code",
+      "norm_label": "dopplerturbulence",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L11"
+    },
+    {
+      "id": "recompute_mdv_fallback_jl_jld2",
+      "label": "JLD2",
+      "_origin": "ast",
+      "community": 68,
+      "community_name": "recompute_mdv_fallback.jl",
+      "file_type": "code",
+      "norm_label": "jld2",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L7"
+    },
+    {
+      "id": "recompute_mdv_fallback_jl_ncdatasets",
+      "label": "NCDatasets",
+      "_origin": "ast",
+      "community": 68,
+      "community_name": "recompute_mdv_fallback.jl",
+      "file_type": "code",
+      "norm_label": "ncdatasets",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L6"
+    },
+    {
+      "id": "recompute_mdv_fallback_jl_pkg",
+      "label": "Pkg",
+      "_origin": "ast",
+      "community": 68,
+      "community_name": "recompute_mdv_fallback.jl",
+      "file_type": "code",
+      "norm_label": "pkg",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L1"
+    },
+    {
+      "id": "recompute_mdv_fallback_jl_statistics",
+      "label": "Statistics",
+      "_origin": "ast",
+      "community": 68,
+      "community_name": "recompute_mdv_fallback.jl",
+      "file_type": "code",
+      "norm_label": "statistics",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L5"
+    },
+    {
+      "id": "recompute_mdv_fallback_load_wind_context",
+      "label": "load_wind_context()",
+      "_origin": "ast",
+      "community": 68,
+      "community_name": "recompute_mdv_fallback.jl",
+      "file_type": "code",
+      "norm_label": "load_wind_context()",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L29"
+    },
+    {
+      "id": "recompute_mdv_fallback_main",
+      "label": "main()",
+      "_origin": "ast",
+      "community": 68,
+      "community_name": "recompute_mdv_fallback.jl",
+      "file_type": "code",
+      "norm_label": "main()",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L146"
+    },
+    {
+      "id": "recompute_mdv_fallback_paired_variance",
+      "label": "paired_variance()",
+      "_origin": "ast",
+      "community": 68,
+      "community_name": "recompute_mdv_fallback.jl",
+      "file_type": "code",
+      "norm_label": "paired_variance()",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L133"
+    },
+    {
+      "id": "recompute_mdv_fallback_tonan",
+      "label": "tonan()",
+      "_origin": "ast",
+      "community": 68,
+      "community_name": "recompute_mdv_fallback.jl",
+      "file_type": "code",
+      "norm_label": "tonan()",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L14"
+    },
+    {
+      "id": "base_iterators",
+      "label": "Base.Iterators",
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "ShipPosmv",
+      "file_type": "code",
+      "norm_label": "base.iterators",
+      "source_file": "readers.jl",
+      "source_location": "L632"
+    },
+    {
+      "id": "readers_get_nav_file",
+      "label": "get_nav_file()",
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "ShipPosmv",
+      "file_type": "code",
+      "norm_label": "get_nav_file()",
+      "source_file": "readers.jl",
+      "source_location": "L664"
+    },
+    {
+      "id": "readers_get_posmv_file",
+      "label": "get_posmv_file()",
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "ShipPosmv",
+      "file_type": "code",
+      "norm_label": "get_posmv_file()",
+      "source_file": "readers.jl",
+      "source_location": "L644"
+    },
+    {
+      "id": "readers_itr_expand",
+      "label": "itr_expand()",
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "ShipPosmv",
+      "file_type": "code",
+      "norm_label": "itr_expand()",
+      "source_file": "readers.jl",
+      "source_location": "L682"
+    },
+    {
+      "id": "readers_read_gyro_data",
+      "label": "read_gyro_data()",
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "ShipPosmv",
+      "file_type": "code",
+      "norm_label": "read_gyro_data()",
+      "source_file": "readers.jl",
+      "source_location": "L752"
+    },
+    {
+      "id": "readers_read_gyro_dict",
+      "label": "read_gyro_dict()",
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "ShipPosmv",
+      "file_type": "code",
+      "norm_label": "read_gyro_dict()",
+      "source_file": "readers.jl",
+      "source_location": "L791"
+    },
+    {
+      "id": "readers_read_pashr_data",
+      "label": "read_pashr_data()",
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "ShipPosmv",
+      "file_type": "code",
+      "norm_label": "read_pashr_data()",
+      "source_file": "readers.jl",
+      "source_location": "L687"
+    },
+    {
+      "id": "readers_read_pashr_dict",
+      "label": "read_pashr_dict()",
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "ShipPosmv",
+      "file_type": "code",
+      "norm_label": "read_pashr_dict()",
+      "source_file": "readers.jl",
+      "source_location": "L729"
+    },
+    {
+      "id": "readers_shipposmv",
+      "label": "ShipPosmv",
+      "_origin": "ast",
+      "community": 69,
+      "community_name": "ShipPosmv",
+      "file_type": "code",
+      "norm_label": "shipposmv",
+      "source_file": "readers.jl",
+      "source_location": "L629"
+    },
+    {
       "id": "old_lidar_turbulence_cleanup_binavg",
       "label": "binavg()",
       "_origin": "ast",
@@ -7106,6 +7348,39 @@
       "norm_label": "remove_mdv()",
       "source_file": "old/lidar_turbulence_cleanup.jl",
       "source_location": "L188"
+    },
+    {
+      "id": "random",
+      "label": "Random",
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "test_mdv_fallback.jl",
+      "file_type": "code",
+      "norm_label": "random",
+      "source_file": "test_mdv_fallback.jl",
+      "source_location": "L2"
+    },
+    {
+      "id": "test",
+      "label": "Test",
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "test_mdv_fallback.jl",
+      "file_type": "code",
+      "norm_label": "test",
+      "source_file": "test_mdv_fallback.jl",
+      "source_location": "L1"
+    },
+    {
+      "id": "test_mdv_fallback",
+      "label": "test_mdv_fallback.jl",
+      "_origin": "ast",
+      "community": 70,
+      "community_name": "test_mdv_fallback.jl",
+      "file_type": "code",
+      "norm_label": "test_mdv_fallback.jl",
+      "source_file": "test_mdv_fallback.jl",
+      "source_location": "L1"
     },
     {
       "id": "read_lidar_anom",
@@ -8446,6 +8721,18 @@
     },
     {
       "source": "dopplerturbulence_d2_rho_small_disp",
+      "target": "dopplerturbulence_small_displacements",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "DopplerTurbulence.jl",
+      "source_location": "L1006",
+      "weight": 1.0
+    },
+    {
+      "source": "dopplerturbulence_d2_rho_small_disp",
       "target": "dopplerturbulence_small_bin",
       "relation": "calls",
       "_origin": "ast",
@@ -8453,7 +8740,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L1012",
+      "source_location": "L1024",
       "weight": 1.0
     },
     {
@@ -8465,7 +8752,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L1037",
+      "source_location": "L1053",
       "weight": 1.0
     },
     {
@@ -8477,7 +8764,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L1055",
+      "source_location": "L1067",
       "weight": 1.0
     },
     {
@@ -8489,19 +8776,19 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L939",
+      "source_location": "L949",
       "weight": 1.0
     },
     {
       "source": "dopplerturbulence_d2_rho_small_disp",
-      "target": "dopplerturbulence_get_sf_level_cache",
+      "target": "dopplerturbulence_lidarindices",
       "relation": "calls",
       "_origin": "ast",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L984",
+      "source_location": "L993",
       "weight": 1.0
     },
     {
@@ -8513,19 +8800,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L992",
-      "weight": 1.0
-    },
-    {
-      "source": "dopplerturbulence_d2_rho_small_disp",
-      "target": "dopplerturbulence_small_displacements",
-      "relation": "calls",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "call",
-      "source_file": "DopplerTurbulence.jl",
-      "source_location": "L994",
+      "source_location": "L995",
       "weight": 1.0
     },
     {
@@ -8537,7 +8812,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L578",
+      "source_location": "L582",
       "weight": 1.0
     },
     {
@@ -8549,7 +8824,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L606",
+      "source_location": "L610",
       "weight": 1.0
     },
     {
@@ -8561,7 +8836,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L613",
+      "source_location": "L617",
       "weight": 1.0
     },
     {
@@ -8573,7 +8848,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L614",
+      "source_location": "L618",
       "weight": 1.0
     },
     {
@@ -8585,7 +8860,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L620",
+      "source_location": "L624",
       "weight": 1.0
     },
     {
@@ -8597,7 +8872,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L637",
+      "source_location": "L641",
       "weight": 1.0
     },
     {
@@ -8609,7 +8884,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L643",
+      "source_location": "L647",
       "weight": 1.0
     },
     {
@@ -8621,7 +8896,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L672",
+      "source_location": "L676",
       "weight": 1.0
     },
     {
@@ -8633,7 +8908,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L718",
+      "source_location": "L722",
       "weight": 1.0
     },
     {
@@ -8645,7 +8920,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L725",
+      "source_location": "L729",
       "weight": 1.0
     },
     {
@@ -8657,7 +8932,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L726",
+      "source_location": "L730",
       "weight": 1.0
     },
     {
@@ -8669,7 +8944,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L741",
+      "source_location": "L745",
       "weight": 1.0
     },
     {
@@ -8681,7 +8956,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L760",
+      "source_location": "L764",
       "weight": 1.0
     },
     {
@@ -8693,7 +8968,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L778",
+      "source_location": "L782",
       "weight": 1.0
     },
     {
@@ -8705,7 +8980,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L322",
+      "source_location": "L326",
       "weight": 1.0
     },
     {
@@ -8717,7 +8992,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L377",
+      "source_location": "L381",
       "weight": 1.0
     },
     {
@@ -8729,7 +9004,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L382",
+      "source_location": "L386",
       "weight": 1.0
     },
     {
@@ -8741,7 +9016,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L443",
+      "source_location": "L447",
       "weight": 1.0
     },
     {
@@ -8753,7 +9028,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L1121",
+      "source_location": "L1133",
       "weight": 1.0
     },
     {
@@ -8765,7 +9040,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L567",
+      "source_location": "L571",
       "weight": 1.0
     },
     {
@@ -8777,7 +9052,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L221",
+      "source_location": "L225",
       "weight": 1.0
     },
     {
@@ -8789,7 +9064,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L236",
+      "source_location": "L240",
       "weight": 1.0
     },
     {
@@ -8801,7 +9076,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L845",
+      "source_location": "L849",
       "weight": 1.0
     },
     {
@@ -8813,7 +9088,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L556",
+      "source_location": "L560",
       "weight": 1.0
     },
     {
@@ -8825,7 +9100,7 @@
       "confidence_score": 1.0,
       "context": "call",
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L126",
+      "source_location": "L130",
       "weight": 1.0
     },
     {
@@ -10989,6 +11264,186 @@
       "weight": 1.0
     },
     {
+      "source": "recompute_mdv_fallback_blend",
+      "target": "recompute_mdv_fallback_good",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L77",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback_chunk_winds",
+      "target": "recompute_mdv_fallback_interpolate_at",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L84",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback_chunk_winds",
+      "target": "recompute_mdv_fallback_daily_wind",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L88",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback_chunk_winds",
+      "target": "recompute_mdv_fallback_blend",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L99",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback_fit_epsilon",
+      "target": "recompute_mdv_fallback_good",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L127",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback_interpolate_at",
+      "target": "recompute_mdv_fallback_good",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback_load_wind_context",
+      "target": "recompute_mdv_fallback_good",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L50",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback_main",
+      "target": "recompute_mdv_fallback_load_wind_context",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L167",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback_main",
+      "target": "recompute_mdv_fallback_good",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L198",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback_main",
+      "target": "recompute_mdv_fallback_chunk_winds",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L215",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback_main",
+      "target": "recompute_mdv_fallback_aligned_vn",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L224",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback_main",
+      "target": "recompute_mdv_fallback_paired_variance",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L233",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback_main",
+      "target": "recompute_mdv_fallback_fit_epsilon",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L238",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback_paired_variance",
+      "target": "recompute_mdv_fallback_good",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L137",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback_tonan",
+      "target": "recompute_mdv_fallback_good",
+      "relation": "calls",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "call",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
       "source": "small_production_script_avg_good",
       "target": "small_production_script_isgoodnum",
       "relation": "calls",
@@ -11602,7 +12057,7 @@
     },
     {
       "source": "dopplerturbulence_dopplerturbulence",
-      "target": "dopplerturbulence_jl_dsp",
+      "target": "dopplerturbulence_jl_totalleastsquares",
       "relation": "imports",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -11614,7 +12069,7 @@
     },
     {
       "source": "dopplerturbulence_dopplerturbulence",
-      "target": "dopplerturbulence_jl_fftw",
+      "target": "dopplerturbulence_jl_distributions",
       "relation": "imports",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -11626,7 +12081,43 @@
     },
     {
       "source": "dopplerturbulence_dopplerturbulence",
-      "target": "displacementuncertainty",
+      "target": "dopplerturbulence_jl_rotations",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "DopplerTurbulence.jl",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "dopplerturbulence_dopplerturbulence",
+      "target": "dopplerturbulence_jl_interpolations",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "DopplerTurbulence.jl",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "dopplerturbulence_dopplerturbulence",
+      "target": "dopplerturbulence_jl_dsp",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "DopplerTurbulence.jl",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "dopplerturbulence_dopplerturbulence",
+      "target": "dopplerturbulence_jl_fftw",
       "relation": "imports",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -11634,6 +12125,18 @@
       "context": "import",
       "source_file": "DopplerTurbulence.jl",
       "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "dopplerturbulence_dopplerturbulence",
+      "target": "displacementuncertainty",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "DopplerTurbulence.jl",
+      "source_location": "L19",
       "weight": 1.0
     },
     {
@@ -11686,7 +12189,7 @@
     },
     {
       "source": "dopplerturbulence_dopplerturbulence",
-      "target": "dopplerturbulence_jl_rotations",
+      "target": "dopplerturbulence_jl_linearalgebra",
       "relation": "imports",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -11698,7 +12201,7 @@
     },
     {
       "source": "dopplerturbulence_dopplerturbulence",
-      "target": "dopplerturbulence_jl_interpolations",
+      "target": "dopplerturbulence_jl_sparsearrays",
       "relation": "imports",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -12669,6 +13172,78 @@
       "weight": 1.0
     },
     {
+      "source": "recompute_mdv_fallback",
+      "target": "recompute_mdv_fallback_jl_pkg",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback",
+      "target": "recompute_mdv_fallback_jl_dopplerturbulence",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback",
+      "target": "recompute_mdv_fallback_jl_dates",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback",
+      "target": "recompute_mdv_fallback_jl_statistics",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback",
+      "target": "recompute_mdv_fallback_jl_ncdatasets",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback",
+      "target": "recompute_mdv_fallback_jl_jld2",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
       "source": "save_lidar_dt",
       "target": "save_lidar_dt_jl_ncdatasets",
       "relation": "imports",
@@ -12946,6 +13521,18 @@
     },
     {
       "source": "small_production_script",
+      "target": "small_production_script_jl_sparsearrays",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "small_production_script.jl",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "small_production_script",
       "target": "small_production_script_jl_statistics",
       "relation": "imports",
       "_origin": "ast",
@@ -12958,19 +13545,7 @@
     },
     {
       "source": "small_production_script",
-      "target": "sparsearrays",
-      "relation": "imports",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "context": "import",
-      "source_file": "small_production_script.jl",
-      "source_location": "L23",
-      "weight": 1.0
-    },
-    {
-      "source": "small_production_script",
-      "target": "totalleastsquares",
+      "target": "small_production_script_jl_totalleastsquares",
       "relation": "imports",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -13066,7 +13641,7 @@
     },
     {
       "source": "small_production_script",
-      "target": "distributions",
+      "target": "small_production_script_jl_distributions",
       "relation": "imports",
       "_origin": "ast",
       "confidence": "EXTRACTED",
@@ -13182,6 +13757,30 @@
       "context": "import",
       "source_file": "small_production_script.jl",
       "source_location": "L94",
+      "weight": 1.0
+    },
+    {
+      "source": "test_mdv_fallback",
+      "target": "test",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "test_mdv_fallback.jl",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "test_mdv_fallback",
+      "target": "random",
+      "relation": "imports",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "context": "import",
+      "source_file": "test_mdv_fallback.jl",
+      "source_location": "L2",
       "weight": 1.0
     },
     {
@@ -14924,7 +15523,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L104",
+      "source_location": "L108",
       "weight": 1.0
     },
     {
@@ -14935,7 +15534,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L1084",
+      "source_location": "L1096",
       "weight": 1.0
     },
     {
@@ -14946,7 +15545,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L1106",
+      "source_location": "L1118",
       "weight": 1.0
     },
     {
@@ -14957,7 +15556,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L1121",
+      "source_location": "L1133",
       "weight": 1.0
     },
     {
@@ -14968,7 +15567,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L121",
+      "source_location": "L125",
       "weight": 1.0
     },
     {
@@ -14979,7 +15578,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L124",
+      "source_location": "L128",
       "weight": 1.0
     },
     {
@@ -14990,7 +15589,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L160",
+      "source_location": "L164",
       "weight": 1.0
     },
     {
@@ -15001,7 +15600,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L192",
+      "source_location": "L196",
       "weight": 1.0
     },
     {
@@ -15012,7 +15611,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L196",
+      "source_location": "L200",
       "weight": 1.0
     },
     {
@@ -15023,7 +15622,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L200",
+      "source_location": "L204",
       "weight": 1.0
     },
     {
@@ -15034,7 +15633,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L206",
+      "source_location": "L210",
       "weight": 1.0
     },
     {
@@ -15045,7 +15644,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L297",
+      "source_location": "L301",
       "weight": 1.0
     },
     {
@@ -15056,18 +15655,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L334",
-      "weight": 1.0
-    },
-    {
-      "source": "dopplerturbulence_dopplerturbulence",
-      "target": "dopplerturbulence_m2n",
-      "relation": "defines",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "DopplerTurbulence.jl",
-      "source_location": "L34",
+      "source_location": "L338",
       "weight": 1.0
     },
     {
@@ -15078,7 +15666,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L340",
+      "source_location": "L344",
       "weight": 1.0
     },
     {
@@ -15089,7 +15677,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L352",
+      "source_location": "L356",
       "weight": 1.0
     },
     {
@@ -15100,7 +15688,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L358",
+      "source_location": "L362",
+      "weight": 1.0
+    },
+    {
+      "source": "dopplerturbulence_dopplerturbulence",
+      "target": "dopplerturbulence_m2n",
+      "relation": "defines",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DopplerTurbulence.jl",
+      "source_location": "L38",
       "weight": 1.0
     },
     {
@@ -15111,7 +15710,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L381",
+      "source_location": "L385",
       "weight": 1.0
     },
     {
@@ -15122,7 +15721,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L42",
+      "source_location": "L46",
       "weight": 1.0
     },
     {
@@ -15133,7 +15732,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L460",
+      "source_location": "L464",
       "weight": 1.0
     },
     {
@@ -15144,7 +15743,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L500",
+      "source_location": "L504",
       "weight": 1.0
     },
     {
@@ -15155,7 +15754,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L554",
+      "source_location": "L558",
       "weight": 1.0
     },
     {
@@ -15166,18 +15765,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L563",
-      "weight": 1.0
-    },
-    {
-      "source": "dopplerturbulence_dopplerturbulence",
-      "target": "dopplerturbulence_n2m",
-      "relation": "defines",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "DopplerTurbulence.jl",
-      "source_location": "L57",
+      "source_location": "L567",
       "weight": 1.0
     },
     {
@@ -15188,7 +15776,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L577",
+      "source_location": "L581",
+      "weight": 1.0
+    },
+    {
+      "source": "dopplerturbulence_dopplerturbulence",
+      "target": "dopplerturbulence_n2m",
+      "relation": "defines",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DopplerTurbulence.jl",
+      "source_location": "L61",
       "weight": 1.0
     },
     {
@@ -15199,7 +15798,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L60",
+      "source_location": "L64",
       "weight": 1.0
     },
     {
@@ -15210,18 +15809,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L63",
-      "weight": 1.0
-    },
-    {
-      "source": "dopplerturbulence_dopplerturbulence",
-      "target": "dopplerturbulence_anom",
-      "relation": "defines",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "DopplerTurbulence.jl",
-      "source_location": "L66",
+      "source_location": "L67",
       "weight": 1.0
     },
     {
@@ -15232,7 +15820,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L668",
+      "source_location": "L672",
+      "weight": 1.0
+    },
+    {
+      "source": "dopplerturbulence_dopplerturbulence",
+      "target": "dopplerturbulence_anom",
+      "relation": "defines",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DopplerTurbulence.jl",
+      "source_location": "L70",
       "weight": 1.0
     },
     {
@@ -15243,7 +15842,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L73",
+      "source_location": "L77",
       "weight": 1.0
     },
     {
@@ -15254,7 +15853,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L803",
+      "source_location": "L807",
       "weight": 1.0
     },
     {
@@ -15265,18 +15864,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L859",
-      "weight": 1.0
-    },
-    {
-      "source": "dopplerturbulence_dopplerturbulence",
-      "target": "dopplerturbulence_findindices",
-      "relation": "defines",
-      "_origin": "ast",
-      "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
-      "source_file": "DopplerTurbulence.jl",
-      "source_location": "L89",
+      "source_location": "L863",
       "weight": 1.0
     },
     {
@@ -15287,7 +15875,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L914",
+      "source_location": "L918",
       "weight": 1.0
     },
     {
@@ -15298,7 +15886,18 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L921",
+      "source_location": "L925",
+      "weight": 1.0
+    },
+    {
+      "source": "dopplerturbulence_dopplerturbulence",
+      "target": "dopplerturbulence_findindices",
+      "relation": "defines",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "DopplerTurbulence.jl",
+      "source_location": "L93",
       "weight": 1.0
     },
     {
@@ -15309,7 +15908,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "DopplerTurbulence.jl",
-      "source_location": "L930",
+      "source_location": "L934",
       "weight": 1.0
     },
     {
@@ -17689,6 +18288,127 @@
       "weight": 1.0
     },
     {
+      "source": "recompute_mdv_fallback",
+      "target": "recompute_mdv_fallback_aligned_vn",
+      "relation": "defines",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L105",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback",
+      "target": "recompute_mdv_fallback_fit_epsilon",
+      "relation": "defines",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L120",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback",
+      "target": "recompute_mdv_fallback_good",
+      "relation": "defines",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback",
+      "target": "recompute_mdv_fallback_paired_variance",
+      "relation": "defines",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L133",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback",
+      "target": "recompute_mdv_fallback_tonan",
+      "relation": "defines",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback",
+      "target": "recompute_mdv_fallback_main",
+      "relation": "defines",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L146",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback",
+      "target": "recompute_mdv_fallback_interpolate_at",
+      "relation": "defines",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback",
+      "target": "recompute_mdv_fallback_load_wind_context",
+      "relation": "defines",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback",
+      "target": "recompute_mdv_fallback_daily_wind",
+      "relation": "defines",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L57",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback",
+      "target": "recompute_mdv_fallback_blend",
+      "relation": "defines",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L77",
+      "weight": 1.0
+    },
+    {
+      "source": "recompute_mdv_fallback",
+      "target": "recompute_mdv_fallback_chunk_winds",
+      "relation": "defines",
+      "_origin": "ast",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "recompute_mdv_fallback.jl",
+      "source_location": "L79",
+      "weight": 1.0
+    },
+    {
       "source": "save_lidar_index",
       "target": "save_lidar_index_load_file_beam_inds",
       "relation": "defines",
@@ -19452,5 +20172,5 @@
       "source_file": "production-add-qc.md"
     }
   ],
-  "built_at_commit": "b73fb73860f69c8fb874b4834965046e81dd90d5"
+  "built_at_commit": "b047ef58ce1f71280b440cc0ffc4d8faa20b8ebc"
 }

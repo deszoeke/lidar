@@ -1,16 +1,16 @@
 # Graph Report - ASTRAL2024  (2026-11-24)
 
 ## Corpus Check
-- 48 files · ~55,118 words
+- 50 files · ~57,113 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 725 nodes · 973 edges · 68 communities (50 shown, 17 thin omitted)
+- 750 nodes · 1011 edges · 71 communities (52 shown, 18 thin omitted)
 - Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 23 edges (avg confidence: 0.87)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `b73fb738`
+- Built from commit: `b047ef58`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -82,10 +82,13 @@
 - check-graphify-deps.sh
 - run-in-lidar-env.sh
 - trigs
+- recompute_mdv_fallback.jl
+- ShipPosmv
+- test_mdv_fallback.jl
 
 ## God Nodes (most connected - your core abstractions)
 1. `LidarVNSync` - 76 edges
-2. `DopplerTurbulence` - 46 edges
+2. `DopplerTurbulence` - 50 edges
 3. `timing_lidar` - 29 edges
 4. `read_lidar` - 23 edges
 5. `chunks` - 19 edges
@@ -115,7 +118,7 @@
 - **Timing Offset Double-Count Bug: Diagnosis, Equations, Fix, and Failure-Mode Rationale** — github_plans_executive_summary_offset_fix_double_count_bug, github_plans_executive_summary_offset_fix_offset_composition_fix, github_plans_offset_equations_and_reset_strategy_offset_equations, github_plans_offset_equations_and_reset_strategy_prior_reset_strategy, todo_sync_failure_modes [INFERRED 0.85]
 - **Structure-Function Dissipation Retrieval Pipeline** — readme_structure_function_fit, readme_epsilon_retrieval, production_add_qc_fit_stats_onepass, production_add_qc_se_epsilon_propagation, production_add_qc_epsilon_sentinels [INFERRED 0.85]
 
-## Communities (68 total, 17 thin omitted)
+## Communities (71 total, 18 thin omitted)
 
 ### Community 0 - "read_lidar"
 Cohesion: 0.08
@@ -130,16 +133,16 @@ Cohesion: 0.06
 Nodes (18): chunks, Dates, DSP, FFTW, Interpolations, JLD2, NCDatasets, NoaaDas (+10 more)
 
 ### Community 3 - "NoaaDas"
-Cohesion: 0.11
-Nodes (36): Base.Iterators, das_dict(), DasFps, DasGps, DasScs, declat(), declon(), get_das_filenames() (+28 more)
+Cohesion: 0.16
+Nodes (27): das_dict(), DasFps, DasGps, DasScs, declat(), declon(), get_das_filenames(), get_das_pathfiles() (+19 more)
 
 ### Community 4 - "timing_lidar"
 Cohesion: 0.10
 Nodes (21): ba(), cross_correlation(), dtregress(), DVM(), find_lags_iterative(), gps2dt(), gps2utc(), gpstime2gpsvndt() (+13 more)
 
 ### Community 5 - "DopplerTurbulence"
-Cohesion: 0.07
-Nodes (35): Module Consolidation into DopplerTurbulence.jl, DisplacementUncertainty, allcross(), anom(), D2_rho_small_disp(), D2_rho_stare(), D2_rho_stare_qc(), displacements() (+27 more)
+Cohesion: 0.06
+Nodes (39): Module Consolidation into DopplerTurbulence.jl, DisplacementUncertainty, allcross(), anom(), D2_rho_small_disp(), D2_rho_stare(), D2_rho_stare_qc(), displacements() (+31 more)
 
 ### Community 6 - "Turbulence processing"
 Cohesion: 0.09
@@ -203,7 +206,7 @@ Nodes (7): allcross(), anom(), D2_rho_stare(), displacements(), lidarindices(), 
 
 ### Community 21 - "small_production_script.jl"
 Cohesion: 0.05
-Nodes (25): Distributions, Profile, PyCall, chunks, Dates, DopplerTurbulence, DSP, FFTW (+17 more)
+Nodes (25): Profile, PyCall, chunks, Dates, Distributions, DopplerTurbulence, DSP, FFTW (+17 more)
 
 ### Community 22 - "save_lidar_index.jl"
 Cohesion: 0.25
@@ -317,25 +320,33 @@ Nodes (6): findindices(), good(), offset_cov(), offset_range_covs(), offset_subs
 Cohesion: 0.33
 Nodes (5): Dates, JLD2, Pkg, PythonPlot, Statistics
 
+### Community 68 - "recompute_mdv_fallback.jl"
+Cohesion: 0.21
+Nodes (17): aligned_vn(), blend(), chunk_winds(), daily_wind!(), fit_epsilon(), good(), interpolate_at(), Dates (+9 more)
+
+### Community 69 - "ShipPosmv"
+Cohesion: 0.39
+Nodes (9): Base.Iterators, get_nav_file(), get_posmv_file(), itr_expand(), read_gyro_data(), read_gyro_dict(), read_pashr_data(), read_pashr_dict() (+1 more)
+
 ## Knowledge Gaps
-- **252 isolated node(s):** `check-graphify-deps.sh script`, `run-in-lidar-env.sh script`, `bash`, `Revise`, `Pkg` (+247 more)
-  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 389 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
-- **17 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **264 isolated node(s):** `check-graphify-deps.sh script`, `run-in-lidar-env.sh script`, `bash`, `Revise`, `Pkg` (+259 more)
+  These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 401 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
+- **18 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `LidarVNSync` connect `LidarVNSync` to `chunk_lidar_datetimes`, `setup_sync_context_nc`, `extract_sync_window`, `process_sync_data`, `coarse_and_fine_lag`?**
-  _High betweenness centrality (0.017) - this node is a cross-community bridge._
+  _High betweenness centrality (0.016) - this node is a cross-community bridge._
 - **Why does `Module Consolidation into DopplerTurbulence.jl` connect `DopplerTurbulence` to `Cleanup Plan After Pitch/Roll Uncertainty Implementation`, `Turbulence processing`?**
   _High betweenness centrality (0.011) - this node is a cross-community bridge._
 - **What connects `check-graphify-deps.sh script`, `run-in-lidar-env.sh script`, `bash` to the rest of the system?**
-  _252 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _264 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `read_lidar` be split into smaller, more focused modules?**
   _Cohesion score 0.08170731707317073 - nodes in this community are weakly interconnected._
 - **Should `LidarVNSync` be split into smaller, more focused modules?**
   _Cohesion score 0.06818181818181818 - nodes in this community are weakly interconnected._
 - **Should `lidar_turbulence_cleanup.jl` be split into smaller, more focused modules?**
   _Cohesion score 0.058823529411764705 - nodes in this community are weakly interconnected._
-- **Should `NoaaDas` be split into smaller, more focused modules?**
-  _Cohesion score 0.11470985155195682 - nodes in this community are weakly interconnected._
+- **Should `timing_lidar` be split into smaller, more focused modules?**
+  _Cohesion score 0.10344827586206896 - nodes in this community are weakly interconnected._
