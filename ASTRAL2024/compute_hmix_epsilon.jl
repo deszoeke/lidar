@@ -1,5 +1,5 @@
 using Pkg
-Pkg.activate(".")
+Pkg.activate(@__DIR__)
 
 using Dates
 using JLD2
@@ -175,4 +175,6 @@ function main(; min_valid_below::Int = 1)
     println("done. wrote $(length(out_paths)) h_mix files to $(OUT_DIR)")
 end
 
-main()
+if abspath(PROGRAM_FILE) == @__FILE__
+    main()
+end
